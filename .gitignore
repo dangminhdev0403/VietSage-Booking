@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Editor & OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
+# Coverage / Testing
+coverage/
+.nyc_output/
+
+# Prisma generated & SQLite test dbs
+*.sqlite
+*.sqlite-journal
+
+# MCP Local Secrets
+.mcp.json
+

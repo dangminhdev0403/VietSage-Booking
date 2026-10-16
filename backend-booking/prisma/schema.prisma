@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountRole {
+  SUPER_ADMIN
+  ADMIN
+  HOTEL_PARTNER
+  TRAVELER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum SyncStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+// -------------------------------------------------------------
+// 1. Identity & Access Context
+// -------------------------------------------------------------
+
+model Account {
+  id              String                  @id @default(uuid())
+  username        String                  @unique
+  passwordHash    String                  @map("password_hash")
+  displayName     String                  @map("display_name")
+  email           String                  @unique
+  role            AccountRole             @default(TRAVELER)
+  isActive        Boolean                 @default(true) @map("is_active")
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+
+  roleAssignments AccountRoleAssignment[]
+  refreshSessions RefreshSession[]
+  auditEvents     AuditEvent[]
+  bookings        Booking[]
+
+  @@map("accounts")
+}
+
+model Role {
+  id                 String                  @id @default(uuid())
+  code               String                  @unique
+  name               String
+  description        String?
+  isSystem           Boolean                 @default(false) @map("is_system")
+  isActive           Boolean                 @default(true) @map("is_active")
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+
+  rolePermissions    RolePermission[]
+  accountAssignments AccountRoleAssignment[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id             String           @id @default(uuid())
+  key            String           @unique
+  label          String
+  description    String
+  boundedContext String           @map("bounded_context")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId        String     @map("role_id")
+  permissionKey String     @map("permission_key")
+  assignedAt    DateTime   @default(now()) @map("assigned_at")
+
+  role          Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permissionKey], references: [key], onDelete: Cascade)
+
+  @@id([roleId, permissionKey])
+  @@map("role_permissions")
+}
+
+model AccountRoleAssignment {
+  accountId  String   @map("account_id")
+  roleId     String   @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([accountId, roleId])
+  @@map("account_role_assignments")
+}
+
+model RefreshSession {
+  id        String    @id @default(uuid())
+  accountId String    @map("account_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@map("refresh_sessions")
+}
+
+model AuditEvent {
+  id             String   @id @default(uuid())
+  actorId        String   @map("actor_id")
+  action         String
+  boundedContext String   @map("bounded_context")
+  resourceType   String   @map("resource_type")
+  resourceId     String   @map("resource_id")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  actor          Account  @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([actorId, createdAt])
+  @@index([boundedContext, resourceType, resourceId])
+  @@map("audit_events")
+}
+
+// -------------------------------------------------------------
+// 2. Property & Service Catalog Context
+// -------------------------------------------------------------
+
+model Property {
+  id           String      @id @default(uuid())
+  name         String
+  slug         String      @unique
+  city         String
+  address      String
+  description  String?
+  starRating   Float       @default(4.0) @map("star_rating")
+  thumbnailUrl String?     @map("thumbnail_url")
+  images       Json?
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  roomTypes    RoomType[]
+  bookings     Booking[]
+
+  @@index([city])
+  @@map("properties")
+}
+
+model RoomType {
+  id          String          @id @default(uuid())
+  propertyId  String          @map("property_id")
+  name        String
+  description String?
+  maxGuests   Int             @default(2) @map("max_guests")
+  basePrice   Int             @map("base_price") // minor unit / VND
+  amenities   Json?
+  isActive    Boolean         @default(true) @map("is_active")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  property    Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  allotments  RoomAllotment[]
+  bookings    Booking[]
+
+  @@map("room_types")
+}
+
+model AddonService {
+  id          String   @id @default(uuid())
+  name        String
+  category    String   // airport_transfer, breakfast, spa, tour
+  price       Int      // in VND
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  bookingAddons BookingAddon[]
+
+  @@map("addon_services")
+}
+
+// -------------------------------------------------------------
+// 3. Inventory & Dynamic Rates Context
+// -------------------------------------------------------------
+
+model RoomAllotment {
+  id          String   @id @default(uuid())
+  roomTypeId  String   @map("room_type_id")
+  date        DateTime @db.Date
+  totalRooms  Int      @default(10) @map("total_rooms")
+  bookedRooms Int      @default(0) @map("booked_rooms")
+  price       Int      // overridden price for specific date
+  isBlocked   Boolean  @default(false) @map("is_blocked")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  roomType    RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, date])
+  @@map("room_allotments")
+}
+
+// -------------------------------------------------------------
+// 4. Booking Engine Context
+// -------------------------------------------------------------
+
+model Booking {
+  id              String        @id @default(uuid())
+  bookingCode     String        @unique @map("booking_code")
+  propertyId      String        @map("property_id")
+  roomTypeId      String?       @map("room_type_id")
+  accountId       String?       @map("account_id")
+  guestName       String        @map("guest_name")
+  guestEmail      String        @map("guest_email")
+  guestPhone      String        @map("guest_phone")
+  checkIn         DateTime      @map("check_in") @db.Date
+  checkOut        DateTime      @map("check_out") @db.Date
+  nights          Int           @default(1)
+  totalPrice      Int           @map("total_price")
+  status          BookingStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(UNPAID) @map("payment_status")
+  specialRequests String?       @map("special_requests")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  roomType        RoomType?     @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+  account         Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  addons          BookingAddon[]
+
+  @@index([bookingCode])
+  @@index([guestEmail])
+  @@index([propertyId])
+  @@map("bookings")
+}
+
+model BookingAddon {
+  id             String       @id @default(uuid())
+  bookingId      String       @map("booking_id")
+  addonServiceId String       @map("addon_service_id")
+  quantity       Int          @default(1)
+  unitPrice      Int          @map("unit_price")
+  totalPrice     Int          @map("total_price")
+
+  booking        Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  addonService   AddonService @relation(fields: [addonServiceId], references: [id], onDelete: Restrict)
+
+  @@map("booking_addons")
+}
+
+// -------------------------------------------------------------
+// 5. VietSage Integration Context
+// -------------------------------------------------------------
+
+model VietSageSyncLog {
+  id         String     @id @default(uuid())
+  syncType   String     @map("sync_type") // inventory, property, booking_push
+  direction  String     // INBOUND, OUTBOUND
+  status     SyncStatus @default(PENDING)
+  payload    Json?
+  response   Json?
+  error      String?
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  @@index([syncType, status])
+  @@map("vietsage_sync_logs")
+}

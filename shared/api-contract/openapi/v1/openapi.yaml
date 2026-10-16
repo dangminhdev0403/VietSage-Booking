@@ -1,0 +1,307 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Booking Manager OTA API",
+    "version": "1.0.0",
+    "description": "API contract for booking-manager (OTA Platform) integrated with VietSage."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Authenticate user and issue tokens",
+        "operationId": "login",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful" }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register a new traveler or partner account",
+        "operationId": "register",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "display_name", "email"],
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" },
+                  "display_name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "role": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registration successful" }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token using refresh token",
+        "operationId": "refreshToken",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refresh_token"],
+                "properties": {
+                  "refresh_token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token refreshed successfully" }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Get current user profile and active permissions",
+        "operationId": "getProfile",
+        "x-implementation-status": "implemented",
+        "responses": {
+          "200": { "description": "Current profile" }
+        }
+      }
+    },
+    "/api/v1/properties": {
+      "get": {
+        "summary": "List properties with destination and date filtering",
+        "operationId": "listProperties",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          { "name": "city", "in": "query", "schema": { "type": "string" } },
+          { "name": "keyword", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "page_size", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "List of hotels & properties" }
+        }
+      },
+      "post": {
+        "summary": "Create a new property (Admin / Partner)",
+        "operationId": "createProperty",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "city", "address"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "city": { "type": "string" },
+                  "address": { "type": "string" },
+                  "description": { "type": "string" },
+                  "star_rating": { "type": "number" },
+                  "thumbnail_url": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Property created" }
+        }
+      }
+    },
+    "/api/v1/properties/{id}": {
+      "get": {
+        "summary": "Get detailed property information by ID",
+        "operationId": "getProperty",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Property details" }
+        }
+      }
+    },
+    "/api/v1/services": {
+      "get": {
+        "summary": "List add-on travel and hospitality services",
+        "operationId": "listServices",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          { "name": "category", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "List of add-on services" }
+        }
+      },
+      "post": {
+        "summary": "Create an add-on service",
+        "operationId": "createService",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "category", "price"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "category": { "type": "string" },
+                  "price": { "type": "integer" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Service created" }
+        }
+      }
+    },
+    "/api/v1/bookings": {
+      "get": {
+        "summary": "List bookings for traveler, partner, or admin",
+        "operationId": "listBookings",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "page_size", "in": "query", "schema": { "type": "integer", "default": 10 } }
+        ],
+        "responses": {
+          "200": { "description": "List of reservations" }
+        }
+      },
+      "post": {
+        "summary": "Create a new OTA booking",
+        "operationId": "createBooking",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["property_id", "guest_name", "guest_email", "guest_phone", "check_in", "check_out", "total_price"],
+                "properties": {
+                  "property_id": { "type": "string" },
+                  "room_type_id": { "type": "string" },
+                  "guest_name": { "type": "string" },
+                  "guest_email": { "type": "string" },
+                  "guest_phone": { "type": "string" },
+                  "check_in": { "type": "string" },
+                  "check_out": { "type": "string" },
+                  "total_price": { "type": "integer" },
+                  "special_requests": { "type": "string" },
+                  "service_ids": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Booking created" }
+        }
+      }
+    },
+    "/api/v1/bookings/{id}": {
+      "get": {
+        "summary": "Get booking details by ID or booking code",
+        "operationId": "getBooking",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Booking details" }
+        }
+      }
+    },
+    "/api/v1/bookings/{id}/status": {
+      "patch": {
+        "summary": "Update reservation status (confirmed, cancelled, etc.)",
+        "operationId": "updateBookingStatus",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": { "type": "string", "enum": ["PENDING", "CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED"] },
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status updated" }
+        }
+      }
+    },
+    "/api/v1/vietsage/sync": {
+      "post": {
+        "summary": "Trigger bi-directional sync with VietSage PMS",
+        "operationId": "syncVietSage",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sync_type": { "type": "string", "enum": ["all", "inventory", "bookings"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Sync completed" }
+        }
+      }
+    }
+  }
+}
