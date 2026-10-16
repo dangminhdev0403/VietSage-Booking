@@ -33,15 +33,15 @@
   --color-outline: #7f766a;
   --color-outline-variant: #d1c5b8;
 
-  --font-serif: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-sans: var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-display-lg: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-headline-lg: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-headline-md: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-headline-sm: var(--font-playfair), 'Playfair Display', Georgia, serif;
-  --font-body-lg: var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body-md: var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body-sm: var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-display-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-headline-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-headline-md: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-headline-sm: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-body-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-body-md: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-body-sm: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
 }
 
 :root {
@@ -53,4 +53,6 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

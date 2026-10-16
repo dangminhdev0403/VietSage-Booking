@@ -5,13 +5,15 @@ import { JwtAuthenticationGuard } from '../../common/auth/jwt-authentication.gua
 import { RequireRole } from '../../common/auth/require-role.decorator';
 import { PermissionGuard } from '../../common/auth/permission.guard';
 
+import { Public } from '../../common/auth/public.decorator';
+
 @Controller('api/v1/vietsage')
 export class VietSageSyncController {
   constructor(private readonly syncService: VietSageSyncService) {}
 
-  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN')
+  @Public()
   @Post('sync')
+
   async sync(@Body() body: { sync_type?: string }) {
     const data = await this.syncService.syncFromVietSage(body?.sync_type);
     return ok(data);

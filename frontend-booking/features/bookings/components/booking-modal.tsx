@@ -69,93 +69,93 @@ export function BookingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-surface-container-lowest rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)] border border-outline-variant/30 relative my-8">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-surface-container-lowest rounded-3xl max-w-2xl w-full p-7 sm:p-9 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)] border border-outline-variant/30 relative my-8">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+          className="absolute top-6 right-6 p-2 rounded-full text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         </button>
 
         {confirmedBookingCode ? (
-          <div className="text-center py-6 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-primary-container/30 text-primary flex items-center justify-center mx-auto ring-8 ring-primary-container/10">
-              <CheckCircle2 className="w-9 h-9" />
+          <div className="text-center py-6 space-y-5">
+            <div className="w-20 h-20 rounded-full bg-primary-container/30 text-primary flex items-center justify-center mx-auto ring-8 ring-primary-container/10">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
             <div>
-              <span className="text-[11px] uppercase tracking-widest text-primary font-bold">Xác nhận Thượng Hạng</span>
-              <h3 className="font-serif text-2xl font-bold text-on-surface mt-1">
+              <span className="text-xs uppercase tracking-widest text-primary font-bold">Xác nhận Thượng Hạng</span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-on-surface mt-1.5">
                 Kỳ Nghỉ Của Quý Khách Đã Được Giữ Chỗ
               </h3>
             </div>
             
-            <p className="text-on-surface-variant text-xs max-w-md mx-auto leading-relaxed">
+            <p className="text-on-surface-variant text-sm max-w-md mx-auto leading-relaxed">
               Mã hồ sơ đặt phòng chính thức của quý khách:
             </p>
-            <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/40 text-primary font-mono text-xl font-bold tracking-wider inline-block shadow-sm">
+            <div className="p-4 px-6 rounded-2xl bg-surface-container-low border border-outline-variant/40 text-primary font-mono text-2xl font-black tracking-wider inline-block shadow-sm">
               {confirmedBookingCode}
             </div>
 
-            <div className="p-4 rounded-xl bg-surface-container text-left text-xs space-y-2 border border-outline-variant/20">
+            <div className="p-5 rounded-2xl bg-surface-container text-left text-sm space-y-2.5 border border-outline-variant/20">
               <div className="flex justify-between">
                 <span className="text-outline">Khu nghỉ dưỡng:</span>
-                <span className="font-semibold text-on-surface">{property.name}</span>
+                <span className="font-bold text-on-surface">{property.name}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-outline">Hạng phòng:</span>
-                <span className="font-semibold text-on-surface">{selectedRoom?.name || 'Tiêu chuẩn'}</span>
+                <span className="font-bold text-on-surface">{selectedRoom?.name || 'Tiêu chuẩn'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-outline">Thời gian:</span>
-                <span className="font-semibold text-on-surface">{checkIn} → {checkOut} ({nights} đêm)</span>
+                <span className="font-bold text-on-surface">{checkIn} → {checkOut} ({nights} đêm)</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-outline">Tổng chi phí:</span>
-                <span className="font-bold text-primary">
+              <div className="flex justify-between border-t border-outline-variant/30 pt-2 mt-2">
+                <span className="text-outline font-semibold">Tổng chi phí:</span>
+                <span className="font-black text-lg text-primary">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
                 </span>
               </div>
             </div>
 
-            <p className="text-[11px] text-outline leading-relaxed">
+            <p className="text-xs text-outline leading-relaxed">
               Thông tin chi tiết đã được gửi tới <strong>{guestEmail}</strong> và tự động đồng bộ thời gian thực sang cơ sở dữ liệu VietSage PMS của resort.
             </p>
 
             <button
               onClick={onClose}
-              className="mt-4 w-full py-3.5 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-semibold text-xs uppercase tracking-wider transition-all shadow-sm"
+              className="mt-4 w-full py-4 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-bold text-sm uppercase tracking-wider transition-all shadow-sm"
             >
               Hoàn tất & Tiếp tục Khám phá
             </button>
           </div>
         ) : (
-          <form onSubmit={handleBookingSubmit} className="space-y-5">
+          <form onSubmit={handleBookingSubmit} className="space-y-6">
             <div>
               <div className="flex items-center gap-2 text-primary mb-1">
                 <Sparkles className="w-4 h-4" />
-                <span className="text-[10px] uppercase tracking-widest font-bold">Đặt phòng Trực tiếp</span>
+                <span className="text-xs uppercase tracking-widest font-bold">Đặt phòng Trực tiếp</span>
               </div>
-              <h2 className="font-serif text-2xl font-bold text-on-surface">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface leading-snug">
                 {property.name}
               </h2>
-              <p className="text-xs text-outline mt-0.5">{property.address}, {property.city}</p>
+              <p className="text-sm text-outline mt-1">{property.address}, {property.city}</p>
             </div>
 
             {/* Room Selector */}
             {roomTypes.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+              <div className="space-y-2.5">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                   Chọn Hạng Phòng / Biệt Thự
                 </label>
-                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 gap-2.5 max-h-44 overflow-y-auto pr-1">
                   {roomTypes.map((room) => (
                     <label
                       key={room.id}
                       onClick={() => setSelectedRoomId(room.id)}
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
                         selectedRoomId === room.id
-                          ? 'border-primary bg-primary-container/15'
+                          ? 'border-primary bg-primary-container/20 ring-1 ring-primary'
                           : 'border-outline-variant/30 bg-surface-container-low hover:bg-surface-container'
                       }`}
                     >
@@ -165,18 +165,18 @@ export function BookingModal({
                           name="room_type"
                           checked={selectedRoomId === room.id}
                           onChange={() => setSelectedRoomId(room.id)}
-                          className="text-primary accent-primary"
+                          className="w-4 h-4 text-primary accent-primary"
                         />
                         <div>
-                          <div className="text-xs font-bold text-on-surface">{room.name}</div>
-                          <div className="text-[10px] text-outline">Tối đa {room.max_guests} khách • Quản gia 24/7</div>
+                          <div className="text-sm font-bold text-on-surface">{room.name}</div>
+                          <div className="text-xs text-outline">Tối đa {room.max_guests} khách • Quản gia 24/7</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="font-serif text-xs font-bold text-primary">
+                        <span className="text-sm font-black text-primary">
                           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.base_price)}
                         </span>
-                        <span className="text-[10px] text-outline block">/ đêm</span>
+                        <span className="text-xs text-outline block font-medium">/ đêm</span>
                       </div>
                     </label>
                   ))}
@@ -185,9 +185,9 @@ export function BookingModal({
             )}
 
             {/* Dates */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                   Nhận phòng
                 </label>
                 <input
@@ -195,11 +195,11 @@ export function BookingModal({
                   value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
                   required
-                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                  className="w-full px-4 py-2.5 text-sm font-bold rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                   Trả phòng
                 </label>
                 <input
@@ -207,15 +207,15 @@ export function BookingModal({
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
                   required
-                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                  className="w-full px-4 py-2.5 text-sm font-bold rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Guest Details */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+            <div className="space-y-3.5">
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                   Họ & Tên Quý khách
                 </label>
                 <input
@@ -224,13 +224,13 @@ export function BookingModal({
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   required
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                  className="w-full px-4 py-2.5 text-sm rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                     Email
                   </label>
                   <input
@@ -239,11 +239,11 @@ export function BookingModal({
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                    className="w-full px-4 py-2.5 text-sm rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+                <div className="space-y-1.5">
+                  <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                     Số điện thoại
                   </label>
                   <input
@@ -252,7 +252,7 @@ export function BookingModal({
                     value={guestPhone}
                     onChange={(e) => setGuestPhone(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                    className="w-full px-4 py-2.5 text-sm rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                   />
                 </div>
               </div>
@@ -260,17 +260,17 @@ export function BookingModal({
 
             {/* Add-on Services */}
             {services && services.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-outline">
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary block">
                   Đặc Quyền & Dịch Vụ Đi Kèm (Tùy chọn)
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   {services.map((srv) => (
                     <label
                       key={srv.id}
-                      className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
+                      className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all ${
                         selectedServiceIds.includes(srv.id)
-                          ? 'border-primary bg-primary-container/15'
+                          ? 'border-primary bg-primary-container/20 ring-1 ring-primary'
                           : 'border-outline-variant/30 bg-surface-container-low hover:bg-surface-container'
                       }`}
                     >
@@ -278,11 +278,11 @@ export function BookingModal({
                         type="checkbox"
                         checked={selectedServiceIds.includes(srv.id)}
                         onChange={() => toggleService(srv.id)}
-                        className="text-primary accent-primary"
+                        className="w-4 h-4 text-primary accent-primary"
                       />
                       <div className="overflow-hidden">
-                        <div className="text-[11px] font-semibold text-on-surface truncate">{srv.name}</div>
-                        <div className="text-[10px] text-primary font-bold">
+                        <div className="text-xs font-bold text-on-surface truncate">{srv.name}</div>
+                        <div className="text-xs text-primary font-black">
                           +{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(srv.price)}
                         </div>
                       </div>
@@ -293,10 +293,10 @@ export function BookingModal({
             )}
 
             {/* Total Bar & Submit */}
-            <div className="pt-4 border-t border-outline-variant/30 flex items-center justify-between">
+            <div className="pt-5 border-t border-outline-variant/30 flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-outline uppercase font-semibold">Tổng chi phí ({nights} đêm)</span>
-                <div className="font-serif text-2xl font-bold text-primary">
+                <span className="text-xs text-outline uppercase font-bold tracking-wider">Tổng chi phí ({nights} đêm)</span>
+                <div className="text-2xl sm:text-3xl font-black text-primary">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
                 </div>
               </div>
@@ -304,7 +304,7 @@ export function BookingModal({
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="h-11 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-xs font-bold uppercase tracking-wider shadow-[0_8px_24px_rgba(114,91,56,0.25)] disabled:opacity-50"
+                className="h-14 px-8 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm font-extrabold uppercase tracking-wider shadow-[0_8px_24px_rgba(114,91,56,0.25)] disabled:opacity-50 cursor-pointer"
               >
                 {createMutation.isPending ? 'Đang xác nhận...' : 'Xác Nhận Đặt Chỗ'}
               </button>

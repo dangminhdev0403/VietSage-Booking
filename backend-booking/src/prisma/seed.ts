@@ -103,6 +103,31 @@ async function main() {
     },
   });
 
+  const prop3 = await prisma.property.upsert({
+    where: { slug: 'vietsage-serene-phuquoc' },
+    update: {},
+    create: {
+      name: 'Aurum Serene Haven Reserve & Villas',
+      slug: 'vietsage-serene-phuquoc',
+      city: 'Phú Quốc',
+      address: 'Bãi Dài, Gành Dầu, Đặc khu Phú Quốc',
+      description: 'Khu biệt thự hoàng gia tách biệt với thế giới bên ngoài, sở hữu hồ bơi nước mặn vô cực, quản gia riêng 24/7 và bãi biển riêng tư.',
+      starRating: 5.0,
+      thumbnailUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
+    },
+  });
+
+  const room3 = await prisma.roomType.create({
+    data: {
+      propertyId: prop3.id,
+      name: 'Oceanfront Sunset Luxury Villa',
+      description: 'Biệt thự hướng biển có hồ bơi vô cực riêng, phòng khách view panorama hoàng hôn và quản gia tận tâm.',
+      maxGuests: 4,
+      basePrice: 14500000,
+    },
+  });
+
+
   // 5. Sample Addon Services
   const services = [
     { name: 'Đưa đón sân bay riêng (Xe VIP)', category: 'airport_transfer', price: 450000, description: 'Đón tiễn chu đáo, tài xế chuyên nghiệp đón tại cổng ga đến.' },

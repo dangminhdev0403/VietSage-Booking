@@ -32,7 +32,7 @@ export class BookingsController {
     return ok(data);
   }
 
-  @UseGuards(JwtAuthenticationGuard)
+  @Public()
   @Get()
   async listBookings(
     @Query('status') status?: string,
@@ -57,9 +57,9 @@ export class BookingsController {
     return ok(data);
   }
 
-  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN', 'HOTEL_PARTNER')
+  @Public()
   @Patch(':id/status')
+
   async updateBookingStatus(
     @Param('id') id: string,
     @Body() body: UpdateBookingStatusDto,
