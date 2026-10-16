@@ -36,7 +36,7 @@ export default function AdminPage() {
         body: JSON.stringify({ sync_type: 'all' }),
       });
       const data = await res.json();
-      setSyncFeedback(data.data?.message || 'Đồng bộ với VietSage PMS thành công!');
+      setSyncFeedback(data.data?.message || 'Đồng bộ với hệ thống đối tác thành công!');
       refetch();
     } catch (err: any) {
       setSyncFeedback('Đồng bộ thất bại: ' + (err.message || 'Lỗi kết nối'));
@@ -67,10 +67,10 @@ export default function AdminPage() {
             <span className="text-xs uppercase tracking-wider text-primary font-bold">Kênh Đối Tác & Điều Hành</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface mt-2">
-            Quản Trị Đặt Phòng Aurum Haven & VietSage PMS
+            Quản Trị Đặt Phòng VietSageBooking
           </h1>
           <p className="text-sm text-outline mt-1.5">
-            Điều hành đặt phòng, đối soát doanh thu và liên kết thời gian thực với VietSage PMS.
+            Điều hành đặt phòng, đối soát doanh thu và liên kết dữ liệu thời gian thực.
           </p>
         </div>
 
@@ -80,8 +80,9 @@ export default function AdminPage() {
           className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container text-sm font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap cursor-pointer shrink-0"
         >
           <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-          <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ VietSage PMS'}</span>
+          <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ Dữ liệu'}</span>
         </button>
+
       </div>
 
       {syncFeedback && (
@@ -123,7 +124,7 @@ export default function AdminPage() {
             <span className="text-xs text-outline uppercase tracking-wider font-bold block">Kết Nối Hệ Thống</span>
             <span className="text-sm font-bold text-tertiary flex items-center gap-2 mt-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse"></span>
-              VietSage PMS Online
+              Cổng Đối Tác Trực Tuyến
             </span>
           </div>
         </div>

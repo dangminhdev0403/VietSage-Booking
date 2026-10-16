@@ -119,8 +119,9 @@ export function BookingModal({
             </div>
 
             <p className="text-xs text-outline leading-relaxed">
-              Thông tin chi tiết đã được gửi tới <strong>{guestEmail}</strong> và tự động đồng bộ thời gian thực sang cơ sở dữ liệu VietSage PMS của resort.
+              Thông tin chi tiết đã được gửi tới <strong>{guestEmail}</strong> và đã được chuyển tiếp trực tiếp đến khu nghỉ dưỡng để sẵn sàng đón tiếp quý khách.
             </p>
+
 
             <button
               onClick={onClose}
