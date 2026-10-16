@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   ShieldCheck,
   Calendar,
@@ -120,15 +119,15 @@ export default function AdminPage() {
           <div className="p-16 text-center text-outline text-sm">Đang tải danh sách đặt phòng...</div>
         ) : error ? (
           <div className="p-16 text-center space-y-4">
-            <div className="text-sm font-semibold text-outline max-w-md mx-auto leading-relaxed">
-              Yêu cầu xác thực tài khoản Quản trị viên (ADMIN) để xem danh sách và giám sát các đơn lưu trú.
+            <div className="text-sm font-semibold text-rose-600 max-w-md mx-auto leading-relaxed">
+              Không thể tải danh sách đơn đặt phòng. Vui lòng kiểm tra lại kết nối.
             </div>
-            <Link
-              href="/login"
-              className="inline-block px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
+            <button
+              onClick={() => refetch()}
+              className="inline-block px-6 py-2.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs"
             >
-              Đăng Nhập Quản Trị
-            </Link>
+              Tải lại danh sách
+            </button>
           </div>
         ) : bookings.length === 0 ? (
           <div className="p-20 text-center text-outline text-sm">Chưa có đơn đặt phòng nào phù hợp bộ lọc.</div>

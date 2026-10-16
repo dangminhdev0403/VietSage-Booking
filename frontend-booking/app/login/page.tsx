@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -28,6 +28,10 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login';
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const errorParam = searchParams.get('error');
+
+  const { status } = useSession();
 
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
 
@@ -49,8 +53,19 @@ function LoginContent() {
 
   // Status state
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(
+    errorParam === 'forbidden'
+      ? 'Tài khoản của bạn không có quyền truy cập khu vực Quản trị.'
+      : null
+  );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // If already authenticated, redirect to destination immediately
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace(callbackUrl);
+    }
+  }, [status, callbackUrl, router]);
 
   // Handle Login
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -73,7 +88,7 @@ function LoginContent() {
       if (res?.error) {
         setErrorMessage('Tên đăng nhập hoặc mật khẩu không chính xác.');
       } else {
-        router.push('/');
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (err: unknown) {
