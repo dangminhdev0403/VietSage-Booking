@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 
 interface TypingTextProps {
   words: string[];
@@ -19,21 +19,28 @@ export function TypingText({
   className = '',
   cursorClassName = '',
 }: TypingTextProps) {
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
   const [index, setIndex] = useState(0);
-  const [subIndex, setSubIndex] = useState(0);
+  const [subIndex, setSubIndex] = useState(words[0]?.length || 0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [blink, setBlink] = useState(true);
 
   // Blinking cursor
   useEffect(() => {
+    if (!isMounted) return;
     const timeout2 = setInterval(() => {
       setBlink((prev) => !prev);
     }, 500);
     return () => clearInterval(timeout2);
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
-    if (words.length === 0) return;
+    if (!isMounted || words.length === 0) return;
 
     if (subIndex === words[index].length + 1 && !isDeleting) {
       const timeout = setTimeout(() => {
@@ -55,11 +62,16 @@ export function TypingText({
     }, isDeleting ? deletingSpeed : typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [subIndex, index, isDeleting, words, typingSpeed, deletingSpeed, pauseTime]);
+  }, [isMounted, subIndex, index, isDeleting, words, typingSpeed, deletingSpeed, pauseTime]);
+
+  const currentWord = words[index] || '';
+  const displayText = isMounted ? currentWord.substring(0, subIndex) : (words[0] || '');
 
   return (
-    <span className={`inline-flex items-center whitespace-nowrap ${className}`}>
-      <span className="inline-block whitespace-nowrap">{words[index].substring(0, subIndex)}</span>
+    <span className={`inline-flex items-center whitespace-nowrap ${className}`} suppressHydrationWarning>
+      <span className="inline-block whitespace-nowrap" suppressHydrationWarning>
+        {displayText}
+      </span>
       <span
         aria-hidden="true"
         className={`ml-1.5 sm:ml-2 inline-block w-[3px] sm:w-[4px] h-[0.85em] rounded-full transition-opacity duration-150 ${
