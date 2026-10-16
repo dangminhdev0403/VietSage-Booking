@@ -41,3 +41,7 @@ coverage/
 # MCP Local Secrets
 .mcp.json
 
+# Local code knowledge graph and scoped context packs
+# Regenerate with: graphify update .
+graphify-out/
+

@@ -1,6 +1,13 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 
+interface AuthUserPayload {
+  id?: string;
+  role?: string;
+  accessToken?: string;
+  refreshToken?: string;
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -58,18 +65,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-        token.accessToken = (user as any).accessToken;
-        token.refreshToken = (user as any).refreshToken;
+        const u = user as unknown as AuthUserPayload;
+        token.id = u.id;
+        token.role = u.role;
+        token.accessToken = u.accessToken;
+        token.refreshToken = u.refreshToken;
       }
       return token;
     },
     session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        (session.user as any).role = token.role;
-        (session as any).accessToken = token.accessToken;
+        const sUser = session.user as unknown as AuthUserPayload;
+        sUser.role = token.role as string | undefined;
+        sUser.accessToken = token.accessToken as string | undefined;
+        const s = session as unknown as AuthUserPayload;
+        s.accessToken = token.accessToken as string | undefined;
       }
       return session;
     },

@@ -14,7 +14,7 @@
     { "method": "GET", "path": "/api/v1/bookings", "implementation_status": "implemented", "description": "List bookings for traveler, partner, or admin" },
     { "method": "POST", "path": "/api/v1/bookings", "implementation_status": "implemented", "description": "Create a new OTA booking" },
     { "method": "GET", "path": "/api/v1/bookings/{id}", "implementation_status": "implemented", "description": "Get booking details by ID or booking code" },
-    { "method": "PATCH", "path": "/api/v1/bookings/{id}/status", "implementation_status": "implemented", "description": "Update reservation status (confirmed, cancelled, etc.)" },
-    { "method": "POST", "path": "/api/v1/vietsage/sync", "implementation_status": "implemented", "description": "Trigger bi-directional sync with VietSage PMS" }
+    { "method": "PATCH", "path": "/api/v1/bookings/{id}/status", "implementation_status": "implemented", "description": "Cancel reservation (local OTA mutation)" },
+    { "method": "POST", "path": "/api/v1/vietsage/sync", "implementation_status": "planned", "description": "Planned service-boundary synchronization with VietSage PMS" }
   ]
 }

@@ -4,12 +4,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
-  User,
   LogIn,
   LogOut,
   Shield,
   ChevronDown,
-  Building,
   CheckCircle2,
 } from 'lucide-react';
 import { LoginModal } from './login-modal';
@@ -42,9 +40,9 @@ export function UserMenu() {
       <>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer active:scale-95"
         >
-          <LogIn className="w-4 h-4 text-primary" />
+          <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
           <span>Đăng nhập</span>
         </button>
 
@@ -56,7 +54,8 @@ export function UserMenu() {
     );
   }
 
-  const role = (session.user as any)?.role || 'TRAVELER';
+  const user = session.user as { name?: string | null; email?: string | null; role?: string };
+  const role = user.role || 'TRAVELER';
   const isAdminOrPartner = ['SUPER_ADMIN', 'ADMIN', 'HOTEL_PARTNER'].includes(role);
 
   return (

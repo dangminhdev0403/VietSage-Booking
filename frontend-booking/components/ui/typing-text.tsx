@@ -62,9 +62,9 @@ export function TypingText({
       <span className="inline-block whitespace-nowrap">{words[index].substring(0, subIndex)}</span>
       <span
         aria-hidden="true"
-        className={`ml-1.5 inline-block w-[2.5px] h-[0.85em] rounded-full transition-opacity duration-150 ${
+        className={`ml-1.5 sm:ml-2 inline-block w-[3px] sm:w-[4px] h-[0.85em] rounded-full transition-opacity duration-150 ${
           blink ? 'opacity-100' : 'opacity-0'
-        } ${cursorClassName || 'bg-primary-fixed-dim'}`}
+        } ${cursorClassName || 'bg-primary-fixed'}`}
       />
     </span>
   );

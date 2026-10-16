@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Star, MapPin, Sparkles, BedDouble, ShieldCheck, Heart } from 'lucide-react';
+import { Star, MapPin, BedDouble, Heart } from 'lucide-react';
 
 export type Property = {
   id: string;

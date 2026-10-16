@@ -1,56 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   ShieldCheck,
-  RefreshCw,
   Calendar,
   Building2,
-  CheckCircle2,
-  Clock,
-  Ban,
-  ArrowRight,
   TrendingUp,
-  Sparkles,
 } from 'lucide-react';
 import { useBookingsQuery, useUpdateBookingStatusMutation } from '@/features/bookings/hooks/use-bookings';
-import { backendFetch } from '@/lib/api/backend';
 
 export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
-  const { data: bookingsData, isLoading, refetch } = useBookingsQuery({
+  const { data: bookingsData, isLoading, error, refetch } = useBookingsQuery({
     status: statusFilter === 'ALL' ? undefined : statusFilter,
   });
 
   const updateStatusMutation = useUpdateBookingStatusMutation();
 
-  const handleSyncVietSage = async () => {
-    setIsSyncing(true);
-    setSyncFeedback(null);
-    try {
-      const res = await backendFetch('api/v1/vietsage/sync', {
-        method: 'POST',
-        body: JSON.stringify({ sync_type: 'all' }),
-      });
-      const data = await res.json();
-      setSyncFeedback(data.data?.message || 'Đồng bộ với hệ thống đối tác thành công!');
-      refetch();
-    } catch (err: any) {
-      setSyncFeedback('Đồng bộ thất bại: ' + (err.message || 'Lỗi kết nối'));
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
   const handleStatusChange = async (id: string, newStatus: string) => {
+    if (newStatus !== 'CANCELLED') return;
+    if (!confirm('Bạn có chắc chắn muốn hủy đơn đặt phòng PENDING này?')) return;
     try {
       await updateStatusMutation.mutateAsync({ id, status: newStatus });
       refetch();
-    } catch (err: any) {
-      alert('Không thể cập nhật trạng thái: ' + err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Lỗi không xác định';
+      alert('Không thể cập nhật trạng thái: ' + msg);
     }
   };
 
@@ -64,33 +41,16 @@ export default function AdminPage() {
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-primary" />
-            <span className="text-xs uppercase tracking-wider text-primary font-bold">Kênh Đối Tác & Điều Hành</span>
+            <span className="text-xs uppercase tracking-wider text-primary font-bold">Kênh Điều Hành Nội Bộ (OTA Scope)</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface mt-2">
             Quản Trị Đặt Phòng VietSageBooking
           </h1>
-          <p className="text-sm text-outline mt-1.5">
-            Điều hành đặt phòng, đối soát doanh thu và liên kết dữ liệu thời gian thực.
+          <p className="text-sm text-outline mt-1.5 max-w-2xl leading-relaxed">
+            Giám sát yêu cầu đặt chỗ và doanh thu toàn hệ thống. Thao tác xác nhận phòng và check-in/out thuộc thẩm quyền trực tiếp của đối tác lưu trú qua PMS.
           </p>
         </div>
-
-        <button
-          onClick={handleSyncVietSage}
-          disabled={isSyncing}
-          className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container text-sm font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap cursor-pointer shrink-0"
-        >
-          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-          <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ Dữ liệu'}</span>
-        </button>
-
       </div>
-
-      {syncFeedback && (
-        <div className="p-5 rounded-2xl bg-primary-container/20 border border-primary/30 text-primary text-sm font-semibold flex items-center justify-between">
-          <span>{syncFeedback}</span>
-          <button onClick={() => setSyncFeedback(null)} className="text-primary font-bold text-base cursor-pointer">✕</button>
-        </div>
-      )}
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -158,6 +118,18 @@ export default function AdminPage() {
 
         {isLoading ? (
           <div className="p-16 text-center text-outline text-sm">Đang tải danh sách đặt phòng...</div>
+        ) : error ? (
+          <div className="p-16 text-center space-y-4">
+            <div className="text-sm font-semibold text-outline max-w-md mx-auto leading-relaxed">
+              Yêu cầu xác thực tài khoản Quản trị viên (ADMIN) để xem danh sách và giám sát các đơn lưu trú.
+            </div>
+            <Link
+              href="/login"
+              className="inline-block px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
+            >
+              Đăng Nhập Quản Trị
+            </Link>
+          </div>
         ) : bookings.length === 0 ? (
           <div className="p-20 text-center text-outline text-sm">Chưa có đơn đặt phòng nào phù hợp bộ lọc.</div>
         ) : (
@@ -212,30 +184,16 @@ export default function AdminPage() {
                         {b.status}
                       </span>
                     </td>
-                    <td className="py-4.5 px-6 text-right space-x-2">
-                      {b.status === 'PENDING' && (
-                        <button
-                          onClick={() => handleStatusChange(b.id, 'CONFIRMED')}
-                          className="px-3.5 py-1.5 bg-primary hover:bg-primary-container text-on-primary rounded-full text-xs font-bold transition-all cursor-pointer"
-                        >
-                          Xác nhận
-                        </button>
-                      )}
-                      {b.status === 'CONFIRMED' && (
-                        <button
-                          onClick={() => handleStatusChange(b.id, 'CHECKED_IN')}
-                          className="px-3.5 py-1.5 bg-secondary hover:opacity-90 text-on-secondary rounded-full text-xs font-bold transition-all cursor-pointer"
-                        >
-                          Check-in
-                        </button>
-                      )}
-                      {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && (
+                    <td className="py-4.5 px-6 text-right">
+                      {b.status === 'PENDING' ? (
                         <button
                           onClick={() => handleStatusChange(b.id, 'CANCELLED')}
-                          className="px-3.5 py-1.5 bg-surface-container hover:bg-rose-100 hover:text-rose-700 text-outline rounded-full text-xs font-bold transition-all cursor-pointer"
+                          className="px-4 py-1.5 bg-surface-container hover:bg-rose-100 hover:text-rose-700 text-outline rounded-full text-xs font-bold transition-all cursor-pointer"
                         >
-                          Hủy
+                          Hủy đơn
                         </button>
+                      ) : (
+                        <span className="text-xs text-outline/60 italic">—</span>
                       )}
                     </td>
                   </tr>

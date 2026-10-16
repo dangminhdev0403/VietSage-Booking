@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Calendar, User, Mail, Phone, Sparkles, CheckCircle2, ShieldCheck, BedDouble } from 'lucide-react';
+import { X, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useCreateBookingMutation } from '../hooks/use-bookings';
 import { useServicesQuery } from '@/features/catalog/hooks/use-catalog';
 import { Property } from '@/features/catalog/components/property-card';
@@ -21,8 +21,12 @@ export function BookingModal({
   const [checkOut, setCheckOut] = useState('2026-11-03');
   const [selectedRoomId, setSelectedRoomId] = useState(roomTypes[0]?.id || '');
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [specialRequests, setSpecialRequests] = useState('');
-  const [confirmedBookingCode, setConfirmedBookingCode] = useState<string | null>(null);
+  const [specialRequests] = useState('');
+  const [confirmedBooking, setConfirmedBooking] = useState<{
+    booking_code: string;
+    total_price: number;
+    status: string;
+  } | null>(null);
 
   const { data: services } = useServicesQuery();
   const createMutation = useCreateBookingMutation();
@@ -39,7 +43,8 @@ export function BookingModal({
     .filter((s) => selectedServiceIds.includes(s.id))
     .reduce((sum, s) => sum + s.price, 0);
 
-  const totalPrice = roomPrice * nights + servicesPrice;
+  // Local estimate for display before submit
+  const estimatedTotalPrice = roomPrice * nights + servicesPrice;
 
   const toggleService = (id: string) => {
     setSelectedServiceIds((prev) =>
@@ -50,21 +55,33 @@ export function BookingModal({
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const roomTypeId = selectedRoomId || roomTypes[0]?.id;
+      if (!roomTypeId) {
+        alert('Vui lòng chọn hạng phòng trước khi đặt chỗ');
+        return;
+      }
+
+      // Submit WITHOUT client total_price: server derives authoritative pricing
       const res = await createMutation.mutateAsync({
         property_id: property.id,
-        room_type_id: selectedRoomId || undefined,
+        room_type_id: roomTypeId,
         guest_name: guestName,
         guest_email: guestEmail,
         guest_phone: guestPhone,
         check_in: checkIn,
         check_out: checkOut,
-        total_price: totalPrice,
-        special_requests: specialRequests,
-        service_ids: selectedServiceIds,
+        special_requests: specialRequests || undefined,
+        service_ids: selectedServiceIds.length > 0 ? selectedServiceIds : undefined,
       });
-      setConfirmedBookingCode(res.booking_code);
-    } catch (err: any) {
-      alert(err.message || 'Đặt phòng thất bại, vui lòng kiểm tra lại');
+
+      setConfirmedBooking({
+        booking_code: res.booking_code,
+        total_price: res.total_price,
+        status: res.status,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Đặt phòng thất bại, vui lòng kiểm tra lại';
+      alert(msg);
     }
   };
 
@@ -73,28 +90,28 @@ export function BookingModal({
       <div className="bg-surface-container-lowest rounded-3xl max-w-2xl w-full p-7 sm:p-9 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)] border border-outline-variant/30 relative my-8">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+          className="absolute top-6 right-6 p-2 rounded-full text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
         >
           <X className="w-6 h-6" />
         </button>
 
-        {confirmedBookingCode ? (
+        {confirmedBooking ? (
           <div className="text-center py-6 space-y-5">
             <div className="w-20 h-20 rounded-full bg-primary-container/30 text-primary flex items-center justify-center mx-auto ring-8 ring-primary-container/10">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-widest text-primary font-bold">Xác nhận Thượng Hạng</span>
+              <span className="text-xs uppercase tracking-widest text-primary font-bold">Tiếp Nhận Đặt Chỗ</span>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-on-surface mt-1.5">
-                Kỳ Nghỉ Của Quý Khách Đã Được Giữ Chỗ
+                Yêu Cầu Đặt Phòng Đã Được Tiếp Nhận
               </h3>
             </div>
             
             <p className="text-on-surface-variant text-sm max-w-md mx-auto leading-relaxed">
-              Mã hồ sơ đặt phòng chính thức của quý khách:
+              Mã hồ sơ đặt phòng của quý khách (Trạng thái: <strong>{confirmedBooking.status}</strong>):
             </p>
             <div className="p-4 px-6 rounded-2xl bg-surface-container-low border border-outline-variant/40 text-primary font-mono text-2xl font-black tracking-wider inline-block shadow-sm">
-              {confirmedBookingCode}
+              {confirmedBooking.booking_code}
             </div>
 
             <div className="p-5 rounded-2xl bg-surface-container text-left text-sm space-y-2.5 border border-outline-variant/20">
@@ -111,21 +128,20 @@ export function BookingModal({
                 <span className="font-bold text-on-surface">{checkIn} → {checkOut} ({nights} đêm)</span>
               </div>
               <div className="flex justify-between border-t border-outline-variant/30 pt-2 mt-2">
-                <span className="text-outline font-semibold">Tổng chi phí:</span>
+                <span className="text-outline font-semibold">Tổng chi phí xác nhận:</span>
                 <span className="font-black text-lg text-primary">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(confirmedBooking.total_price)}
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-outline leading-relaxed">
-              Thông tin chi tiết đã được gửi tới <strong>{guestEmail}</strong> và đã được chuyển tiếp trực tiếp đến khu nghỉ dưỡng để sẵn sàng đón tiếp quý khách.
+              Thông tin yêu cầu đã được gửi tới <strong>{guestEmail}</strong>. Khách sạn sẽ kiểm tra quỹ phòng và sớm liên hệ để hoàn tất xác nhận đơn lưu trú của quý khách.
             </p>
-
 
             <button
               onClick={onClose}
-              className="mt-4 w-full py-4 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-bold text-sm uppercase tracking-wider transition-all shadow-sm"
+              className="mt-4 w-full py-4 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-bold text-sm uppercase tracking-wider transition-all shadow-sm cursor-pointer"
             >
               Hoàn tất & Tiếp tục Khám phá
             </button>
@@ -296,9 +312,9 @@ export function BookingModal({
             {/* Total Bar & Submit */}
             <div className="pt-5 border-t border-outline-variant/30 flex items-center justify-between">
               <div>
-                <span className="text-xs text-outline uppercase font-bold tracking-wider">Tổng chi phí ({nights} đêm)</span>
+                <span className="text-xs text-outline uppercase font-bold tracking-wider">Tạm tính ({nights} đêm)</span>
                 <div className="text-2xl sm:text-3xl font-black text-primary">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(estimatedTotalPrice)}
                 </div>
               </div>
 

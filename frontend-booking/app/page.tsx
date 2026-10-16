@@ -3,9 +3,7 @@
 import React, { useState } from 'react';
 import {
   Search,
-  MapPin,
   Sparkles,
-  Calendar,
   Users,
   ArrowRight,
   ShieldCheck,
@@ -19,7 +17,7 @@ import { usePropertiesQuery, useServicesQuery } from '@/features/catalog/hooks/u
 import { Property, PropertyCard } from '@/features/catalog/components/property-card';
 import { BookingModal } from '@/features/bookings/components/booking-modal';
 import { TypingText } from '@/components/ui/typing-text';
-import { FadeIn, StaggerContainer } from '@/components/ui/fade-in';
+import { FadeIn } from '@/components/ui/fade-in';
 
 export default function HomePage() {
   const [cityFilter, setCityFilter] = useState('');
@@ -47,28 +45,28 @@ export default function HomePage() {
           <img
             alt="Panoramic luxury resort villa with infinity pool"
             className="w-full h-full object-cover opacity-65 scale-105 transition-transform duration-1000"
-            src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=2000&q=85"
+            src="/images/hero-cover.jpg"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-black/45 to-black/75 mix-blend-multiply"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/60"></div>
         </div>
 
-        <div className="relative z-10 w-full max-w-[1360px] mx-auto px-6 lg:px-10 py-24 flex flex-col items-center text-center">
+        <div className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 sm:pt-16 lg:pt-24 pb-20 sm:pb-24 lg:pb-28 flex flex-col items-center text-center">
           <FadeIn direction="down" duration={0.7}>
-            <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-surface-container-lowest/85 backdrop-blur-md border border-outline-variant/40 shadow-sm mb-6">
-              <Crown className="w-4 h-4 text-primary" />
-              <span className="text-xs sm:text-sm uppercase tracking-wider text-primary font-extrabold">
+            <div className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-surface-container-lowest/85 backdrop-blur-md border border-outline-variant/40 shadow-sm mb-5 sm:mb-6">
+              <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+              <span className="text-[11px] sm:text-sm uppercase tracking-wider text-primary font-extrabold">
                 Kênh Đặt Phòng Trực Tuyến VietSageBooking 2026
               </span>
             </div>
           </FadeIn>
 
           <FadeIn delay={0.15} duration={0.8}>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-5xl tracking-tight leading-[1.18] mb-6 drop-shadow-md">
+            <h1 className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-5xl tracking-tight leading-[1.18] mb-5 sm:mb-6 drop-shadow-md">
               <span className="block font-sans text-white/95">
                 Khám Phá Bản Giao Hưởng
               </span>
-              <span className="block mt-2 sm:mt-3 text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif italic font-normal tracking-wide text-primary-fixed-dim drop-shadow-[0_2px_12px_rgba(224,194,152,0.35)] min-h-[1.3em]">
+              <span className="block mt-2 sm:mt-3 text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-serif italic font-bold sm:font-extrabold tracking-normal text-primary-fixed drop-shadow-[0_4px_24px_rgba(254,222,178,0.45)] min-h-[1.3em]">
                 <TypingText
                   words={[
                     'Nghỉ Dưỡng Thượng Lưu',
@@ -77,7 +75,7 @@ export default function HomePage() {
                     'Kỳ Nghỉ Tinh Hoa',
                   ]}
                   className="whitespace-nowrap"
-                  cursorClassName="bg-primary-fixed-dim shadow-[0_0_8px_rgba(224,194,152,0.8)]"
+                  cursorClassName="bg-primary-fixed shadow-[0_0_12px_rgba(254,222,178,0.9)]"
                 />
               </span>
             </h1>
@@ -249,7 +247,7 @@ export default function HomePage() {
               <img
                 alt="Phu Quoc Sanctuary"
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                src="https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?auto=format&fit=crop&w=1200&q=80"
+                src="/images/dest-phuquoc.jpg"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
               <div className="relative z-10 flex flex-col gap-2.5">
@@ -290,7 +288,7 @@ export default function HomePage() {
                 <img
                   alt="Ha Noi Heritage"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80"
+                  src="/images/dest-hanoi.jpg"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
                 <div className="relative z-10 flex flex-col gap-1.5">
@@ -311,7 +309,7 @@ export default function HomePage() {
                 <img
                   alt="Da Lat Pine Forest"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
+                  src="/images/dest-dalat.jpg"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
                 <div className="relative z-10 flex flex-col gap-1.5">

@@ -217,7 +217,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["property_id", "guest_name", "guest_email", "guest_phone", "check_in", "check_out", "total_price"],
+                "required": ["property_id", "room_type_id", "guest_name", "guest_email", "guest_phone", "check_in", "check_out"],
                 "properties": {
                   "property_id": { "type": "string" },
                   "room_type_id": { "type": "string" },
@@ -226,7 +226,6 @@
                   "guest_phone": { "type": "string" },
                   "check_in": { "type": "string" },
                   "check_out": { "type": "string" },
-                  "total_price": { "type": "integer" },
                   "special_requests": { "type": "string" },
                   "service_ids": { "type": "array", "items": { "type": "string" } }
                 }
@@ -254,7 +253,7 @@
     },
     "/api/v1/bookings/{id}/status": {
       "patch": {
-        "summary": "Update reservation status (confirmed, cancelled, etc.)",
+        "summary": "Cancel booking reservation (local OTA mutation)",
         "operationId": "updateBookingStatus",
         "x-implementation-status": "implemented",
         "parameters": [
@@ -268,7 +267,7 @@
                 "type": "object",
                 "required": ["status"],
                 "properties": {
-                  "status": { "type": "string", "enum": ["PENDING", "CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED"] },
+                  "status": { "type": "string", "enum": ["CANCELLED"] },
                   "reason": { "type": "string" }
                 }
               }
@@ -284,7 +283,7 @@
       "post": {
         "summary": "Trigger bi-directional sync with VietSage PMS",
         "operationId": "syncVietSage",
-        "x-implementation-status": "implemented",
+        "x-implementation-status": "planned",
         "requestBody": {
           "required": false,
           "content": {

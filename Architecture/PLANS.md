@@ -1,56 +1,37 @@
-# Project Plans & Milestones: booking-manager (OTA Platform)
+# Forward Engineering Roadmap: booking-manager (OTA Platform)
 
-## 1. Project Goal
+> Forward engineering roadmap only. Lịch sử phân phối chi tiết thuộc về Git commit và Báo cáo nghiệm thu (Final Report). Tuyệt đối không ghi nhật ký hoàn tất vi mô hoặc append checklist task đã xong vào đây.
 
-Build a production-standard, scalable, user-friendly Online Travel Agency (OTA) booking system integrated with VietSage, adhering strictly to established architectural rules, OpenAPI contracts, and frontend server-state patterns.
+## 1. System Baseline
 
-## 2. Milestones
+Nền tảng OTA đã có baseline scaffold và full-stack prototype. Các nhãn dưới đây không thay runtime verification hoặc production-readiness gates:
+- **Architecture & Contracts**: Monorepo NestJS + Next.js 16 App Router, authoritative OpenAPI v1 contract (`openapi.json`), đồng bộ status.
+- **Identity & Access**: Full-stack Passport.js (Local/JWT) + Auth.js v5 Credentials Provider, session state, role-based guard (`SUPER_ADMIN`, `ADMIN`, `HOTEL_PARTNER`, `TRAVELER`).
+- **Catalog & Booking Engine**: Schema/property projection và flow tạo booking (`OTA-xxxx`) hiện hữu; server pricing, snapshot đầy đủ, authorization và state-machine hardening còn trong roadmap.
+- **Frontend & Design System**: Next.js 16 + Tailwind CSS 4, Aurum Haven Design Tokens (Quiet Luxury), `@dangminhdev04032005/query-resource` 4-layer architecture.
+- **Service Boundary**: Boundary OTA vs PMS rõ ràng, adapter contract VietSageSyncModule.
 
-### Milestone 1: Architecture, Contracts & Monorepo Foundation [COMPLETED]
-- [x] Establish root product workspace conventions, `AGENTS.md`, and `.gitignore`.
-- [x] Author comprehensive architecture documentation in `Architecture/`.
-- [x] Define authoritative OpenAPI v1 contract (`openapi.json` & `openapi.yaml`).
-- [x] Create contract synchronization script `verify-contract.cjs` and verify contract parity.
-- [x] Setup standard envelopes (`ApiSuccessEnvelope`, `ApiErrorEnvelope`).
+---
 
-### Milestone 2: Backend Core & Identity/Access [COMPLETED]
-- [x] Configure Prisma ORM schema for PostgreSQL (Accounts, Roles, Permissions, Sessions, Audit).
-- [x] Implement NestJS GlobalExceptionFilter, Response envelopes, and Logger middleware.
-- [x] Implement JWT Strategy, Guards (`JwtAuthGuard`, `PermissionGuard`), and Decorators (`@CurrentUser`, `@Public`).
-- [x] Seed database with Super Admin and standard OTA roles (`SUPER_ADMIN`, `ADMIN`, `HOTEL_PARTNER`, `TRAVELER`).
+## 2. Forward Priorities
 
-### Milestone 3: OTA Catalog & Booking Engine [COMPLETED]
-- [x] Design OTA Schema: `Property`, `RoomType`, `AddonService`, `RoomAllotment`, `Booking`, `BookingItem`, `VietSageSyncLog`.
-- [x] Implement `CatalogModule` with CRUD and public destination search endpoints.
-- [x] Implement `BookingsModule` with booking creation, code generation (`OTA-xxxx`), and status management.
-- [x] Implement `VietSageSyncModule` (ACL) with sync logs and VietSage outbound adapter.
+### Priority 0 — Security & Structural Hardening
+- [ ] Đóng booking PII/auth scope và bảo vệ sync/reconciliation endpoint.
+- [ ] Loại direct `page.tsx → backendFetch`; đưa workflow vào feature client/resource/hook hoặc BFF phù hợp.
+- [ ] Server-side date/pricing validation; không nhận total có thẩm quyền từ browser.
+- [ ] Giữ Graphify current; dùng graph impact + scoped Repomix trước refactor module.
 
-### Milestone 4: Frontend Architecture & Server-State Integration [COMPLETED]
-- [x] Configure Next.js 16 App Router, Tailwind CSS 4, and `@dangminhdev04032005/query-resource`.
-- [x] Implement shared HTTP client (`lib/api/backend.ts`), Zod schemas (`lib/api/schemas.ts`), and QueryProvider.
-- [x] Implement feature layers: `features/catalog/` and `features/bookings/` following the 4-layer standard.
-- [x] Build modern, user-friendly OTA landing page, hotel search, and booking management UI.
+### Priority 1 — VietSage Live Sync & Two-Way Connector
+- [ ] Triển khai kết nối thực tế hai chiều giữa `booking-manager` và `fullstack-vietSage` qua versioned HTTP API / Webhook.
+- [ ] Đồng bộ Allotment & Real-time Availability (PMS nắm quyền sở hữu tồn kho thực tế, OTA query hold/lock).
+- [ ] Xử lý timeout-after-write, durable idempotency key và cơ chế compensation / reconciliation định kỳ.
 
-### Milestone 5: End-to-End Validation & Contract Parity [COMPLETED]
-- [x] Verify OpenAPI parity with `verify-contract.cjs`.
-- [x] Validate backend compilation and TypeScript build.
-- [x] Validate frontend compilation and linting.
-- [x] Final architecture and deployment report.
+### Priority 2 — Payment Gateway & Webhook Orchestration
+- [ ] Tích hợp cổng thanh toán (VNPay / VietQR / Stripe) cho OTA Checkout.
+- [ ] Webhook handler xác thực signature, chống replay, idempotent transaction snapshot.
+- [ ] State machine thanh toán: Pending → Authorized → Captured → Refunded / Expired.
 
-### Milestone 6: Stitch Design System Inheritance (Aurum Haven) [COMPLETED]
-- [x] Connect Google Stitch MCP and retrieve project `7411068166474105979` ("Hệ Thống Đặt Phòng Khách Sạn").
-- [x] Inherit Design System tokens: "Aurum Haven" (Quiet Luxury / Warm Editorial Minimalism, Deep Bronze `#725b38`, Warm Champagne `#c5a880`, Warm Ivory `#faf9f6`, Playfair Display & Plus Jakarta Sans).
-- [x] Replicate luxury editorial hero section and floating luxury booking bar.
-- [x] Replicate prestige metrics bar and curated destinations bento grid.
-- [x] Restyle PropertyCard and BookingModal with 16:10 aspect ratio, ratings, luxury badges, and instant reservation confirmation.
-- [x] Restyle Partner Admin Dashboard with cohesive quiet luxury tokens.
-- [x] Validate frontend build (`pnpm run build` exits 0 with all routes static-optimized).
-
-### Milestone 7: Full-stack Authentication with Passport.js & Auth.js [COMPLETED]
-- [x] Backend: Implement Passport.js `LocalStrategy` (`passport-local`) and `LocalAuthGuard` in NestJS `IdentityAccessModule`.
-- [x] Backend: Integrate user validation into Passport lifecycle while retaining `JwtStrategy` and `JwtAuthenticationGuard`.
-- [x] Frontend: Install and configure Auth.js (`next-auth@5.0.0-beta.32`) with Credentials Provider pointing to NestJS backend.
-- [x] Frontend: Setup NextAuth Route Handler (`/api/auth/[...nextauth]`) and wrap application in `AuthSessionProvider`.
-- [x] Frontend: Build `LoginModal` with React Portal, `/login` page, and `UserMenu` in public header with session dropdown, role badge, partner link, and sign-out action.
-- [x] End-to-end Verification: Complete login, session storage, dropdown navigation, and sign-out verified via Chrome DevTools MCP.
-
+### Priority 3 — Multi-property Partner Portal & Operations
+- [ ] Giao diện quản lý Allotment, Rate Calendar cho Hotel Partner.
+- [ ] Báo cáo doanh thu OTA, commission tracking và xuất đối soát (Settlement report).
+- [ ] Quản lý Cancellation Policy & Refund SLA tự động theo chính sách phòng.

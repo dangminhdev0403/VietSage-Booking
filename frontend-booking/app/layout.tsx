@@ -16,7 +16,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 const playfair = Playfair_Display({
   subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '600', '700', '800', '900'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
   display: 'swap',
@@ -42,15 +42,15 @@ export default function RootLayout({
               <div className="w-full max-w-[1360px] mx-auto px-6 lg:px-10">
                 <div className="h-20 flex items-center justify-between gap-6">
                   {/* Brand Logo: VietSageBooking */}
-                  <Link href="/" className="flex items-center gap-3.5 group shrink-0">
-                    <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-sm group-hover:bg-primary-container group-hover:text-on-primary-container transition-all">
-                      <Compass className="w-6 h-6 text-amber-200" />
+                  <Link href="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-sm group-hover:bg-primary-container group-hover:text-on-primary-container transition-all">
+                      <Compass className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-2xl font-black text-on-surface tracking-tight leading-tight group-hover:text-primary transition-colors">
+                      <span className="text-xl sm:text-2xl font-black text-on-surface tracking-tight leading-tight group-hover:text-primary transition-colors">
                         VietSage<span className="text-primary font-bold">Booking</span>
                       </span>
-                      <span className="text-xs tracking-wider text-outline font-semibold">
+                      <span className="hidden sm:block text-xs tracking-wider text-outline font-semibold">
                         Đặt Phòng & Nghỉ Dưỡng Trực Tuyến
                       </span>
                     </div>
@@ -85,11 +85,11 @@ export default function RootLayout({
                   </nav>
 
                   {/* Right Public Actions (User Menu + Primary CTA) */}
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <UserMenu />
                     <Link
                       href="/#destinations"
-                      className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm font-extrabold shadow-sm whitespace-nowrap cursor-pointer"
+                      className="hidden sm:inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm font-extrabold shadow-sm whitespace-nowrap cursor-pointer"
                     >
                       <CalendarCheck className="w-4 h-4" />
                       <span>Đặt Kỳ Nghỉ Ngay</span>
