@@ -8,14 +8,16 @@ interface TypingTextProps {
   deletingSpeed?: number;
   pauseTime?: number;
   className?: string;
+  cursorClassName?: string;
 }
 
 export function TypingText({
   words,
   typingSpeed = 90,
   deletingSpeed = 45,
-  pauseTime = 1800,
+  pauseTime = 2200,
   className = '',
+  cursorClassName = '',
 }: TypingTextProps) {
   const [index, setIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
@@ -41,9 +43,11 @@ export function TypingText({
     }
 
     if (subIndex === 0 && isDeleting) {
-      setIsDeleting(false);
-      setIndex((prev) => (prev + 1) % words.length);
-      return;
+      const timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setIndex((prev) => (prev + 1) % words.length);
+      }, 250);
+      return () => clearTimeout(timeout);
     }
 
     const timeout = setTimeout(() => {
@@ -54,12 +58,13 @@ export function TypingText({
   }, [subIndex, index, isDeleting, words, typingSpeed, deletingSpeed, pauseTime]);
 
   return (
-    <span className={`inline-flex items-center ${className}`}>
-      <span>{words[index].substring(0, subIndex)}</span>
+    <span className={`inline-flex items-center whitespace-nowrap ${className}`}>
+      <span className="inline-block whitespace-nowrap">{words[index].substring(0, subIndex)}</span>
       <span
-        className={`ml-1 inline-block w-[3px] h-[0.9em] bg-primary-fixed-dim transition-opacity duration-100 ${
+        aria-hidden="true"
+        className={`ml-1.5 inline-block w-[2.5px] h-[0.85em] rounded-full transition-opacity duration-150 ${
           blink ? 'opacity-100' : 'opacity-0'
-        }`}
+        } ${cursorClassName || 'bg-primary-fixed-dim'}`}
       />
     </span>
   );

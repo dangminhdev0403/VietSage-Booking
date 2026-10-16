@@ -97,6 +97,27 @@ export class AuthService {
     return this.generateTokenPair(account.id, account.username, account.role);
   }
 
+  async validateUser(username: string, pass: string): Promise<any> {
+    const account = await this.prisma.account.findUnique({
+      where: { username },
+    });
+
+    if (!account || !account.isActive) {
+      return null;
+    }
+
+    const isMatch = await bcrypt.compare(pass, account.passwordHash);
+    if (!isMatch) {
+      return null;
+    }
+
+    return account;
+  }
+
+  async loginWithValidatedUser(account: any) {
+    return this.generateTokenPair(account.id, account.username, account.role);
+  }
+
   async refresh(rawDto: RefreshDto) {
     const parsed = refreshSchema.safeParse(rawDto);
     if (!parsed.success) {

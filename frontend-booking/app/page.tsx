@@ -64,17 +64,22 @@ export default function HomePage() {
           </FadeIn>
 
           <FadeIn delay={0.15} duration={0.8}>
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white max-w-5xl tracking-tight leading-[1.18] mb-6 drop-shadow-sm text-balance">
-              Khám Phá Bản Giao Hưởng <br className="hidden sm:inline" />
-              <TypingText
-                words={[
-                  'Nghỉ Dưỡng Thượng Lưu',
-                  'Resort & Biệt Thự Biệt Lập',
-                  'Kỳ Nghỉ Hoàng Hôn Trong Mơ',
-                  'Trải Nghiệm Đẳng Cấp Bản Địa',
-                ]}
-                className="italic font-light text-primary-fixed-dim"
-              />
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-5xl tracking-tight leading-[1.18] mb-6 drop-shadow-md">
+              <span className="block font-sans text-white/95">
+                Khám Phá Bản Giao Hưởng
+              </span>
+              <span className="block mt-2 sm:mt-3 text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif italic font-normal tracking-wide text-primary-fixed-dim drop-shadow-[0_2px_12px_rgba(224,194,152,0.35)] min-h-[1.3em]">
+                <TypingText
+                  words={[
+                    'Nghỉ Dưỡng Thượng Lưu',
+                    'Đẳng Cấp Bản Địa',
+                    'Biệt Thự Biệt Lập',
+                    'Kỳ Nghỉ Tinh Hoa',
+                  ]}
+                  className="whitespace-nowrap"
+                  cursorClassName="bg-primary-fixed-dim shadow-[0_0_8px_rgba(224,194,152,0.8)]"
+                />
+              </span>
             </h1>
           </FadeIn>
 

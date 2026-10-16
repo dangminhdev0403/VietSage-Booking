@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -11,6 +12,7 @@ import { Public } from '../../common/auth/public.decorator';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { JwtAuthenticationGuard } from '../../common/auth/jwt-authentication.guard';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
+import { LocalAuthGuard } from './local-auth.guard';
 import type { LoginDto, RefreshDto, RegisterDto } from './dto/auth.dto';
 
 @Controller('api/v1/auth')
@@ -25,9 +27,10 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() body: LoginDto) {
-    const data = await this.authService.login(body);
+  async login(@Request() req: any, @Body() _body: LoginDto) {
+    const data = await this.authService.loginWithValidatedUser(req.user);
     return ok(data);
   }
 

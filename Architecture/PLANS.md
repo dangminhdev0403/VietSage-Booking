@@ -40,10 +40,17 @@ Build a production-standard, scalable, user-friendly Online Travel Agency (OTA) 
 ### Milestone 6: Stitch Design System Inheritance (Aurum Haven) [COMPLETED]
 - [x] Connect Google Stitch MCP and retrieve project `7411068166474105979` ("Hệ Thống Đặt Phòng Khách Sạn").
 - [x] Inherit Design System tokens: "Aurum Haven" (Quiet Luxury / Warm Editorial Minimalism, Deep Bronze `#725b38`, Warm Champagne `#c5a880`, Warm Ivory `#faf9f6`, Playfair Display & Plus Jakarta Sans).
-- [x] Replicate top navigation header with VIP Concierge 24/7 hotline and Gold Member badge.
 - [x] Replicate luxury editorial hero section and floating luxury booking bar.
 - [x] Replicate prestige metrics bar and curated destinations bento grid.
-- [x] Restyle PropertyCard and BookingModal with 16:10 aspect ratio, ratings, luxury badges, and instant PMS reservation confirmation.
+- [x] Restyle PropertyCard and BookingModal with 16:10 aspect ratio, ratings, luxury badges, and instant reservation confirmation.
 - [x] Restyle Partner Admin Dashboard with cohesive quiet luxury tokens.
 - [x] Validate frontend build (`pnpm run build` exits 0 with all routes static-optimized).
+
+### Milestone 7: Full-stack Authentication with Passport.js & Auth.js [COMPLETED]
+- [x] Backend: Implement Passport.js `LocalStrategy` (`passport-local`) and `LocalAuthGuard` in NestJS `IdentityAccessModule`.
+- [x] Backend: Integrate user validation into Passport lifecycle while retaining `JwtStrategy` and `JwtAuthenticationGuard`.
+- [x] Frontend: Install and configure Auth.js (`next-auth@5.0.0-beta.32`) with Credentials Provider pointing to NestJS backend.
+- [x] Frontend: Setup NextAuth Route Handler (`/api/auth/[...nextauth]`) and wrap application in `AuthSessionProvider`.
+- [x] Frontend: Build `LoginModal` with React Portal, `/login` page, and `UserMenu` in public header with session dropdown, role badge, partner link, and sign-out action.
+- [x] End-to-end Verification: Complete login, session storage, dropdown navigation, and sign-out verified via Chrome DevTools MCP.
 

@@ -34,7 +34,7 @@
   --color-outline-variant: #d1c5b8;
 
   --font-sans: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-playfair), 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
   --font-display-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   --font-headline-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   --font-headline-md: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
