@@ -108,10 +108,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 2. FLOATING LUXURY BOOKING BAR */}
-      <section className="relative z-30 w-full max-w-[1280px] mx-auto px-4 -mt-20 sm:-mt-24">
-        <FadeIn direction="up" delay={0.2} duration={0.7}>
-          <div className="bg-surface-container-lowest/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_50px_rgba(114,91,56,0.16)] p-5 lg:p-7 border border-outline-variant/40">
+      {/* 2. REFINED LUXURY BOOKING BAR (Sleek unified pill, không phình box) */}
+      <section className="relative z-30 w-full max-w-[1140px] mx-auto px-4 -mt-10 sm:-mt-12 lg:-mt-14">
+        <FadeIn direction="up" delay={0.2} duration={0.6}>
+          <div className="bg-surface-container-lowest/95 backdrop-blur-xl rounded-2xl lg:rounded-full shadow-[0_12px_36px_rgba(40,30,15,0.08)] border border-outline-variant/35 p-2.5 lg:p-2">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -119,101 +119,74 @@ export default function HomePage() {
                 const el = document.getElementById('catalog-stream');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center"
+              className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0"
             >
               {/* Destination Selector */}
-              <div className="lg:col-span-4 flex flex-col gap-1.5 p-3.5 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors relative cursor-pointer group">
-                <div className="flex items-center gap-2 text-primary">
-                  <Compass className="w-4 h-4" />
-                  <label className="text-xs uppercase tracking-wider text-primary font-bold cursor-pointer">
-                    Điểm đến Tinh hoa
+              <div className="flex-1 px-4 sm:px-5 py-2 hover:bg-surface-container-low/60 rounded-xl lg:rounded-full transition-colors cursor-pointer group">
+                <div className="flex items-center gap-1.5 text-primary">
+                  <Compass className="w-3.5 h-3.5 text-primary" />
+                  <label className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-extrabold cursor-pointer">
+                    Điểm Đến Tinh Hoa
                   </label>
                 </div>
                 <input
                   type="text"
-                  placeholder="Hà Nội, Đà Lạt, Phú Quốc, Đà Nẵng..."
+                  placeholder="Hà Nội, Phú Quốc, Đà Lạt..."
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  className="bg-transparent text-base sm:text-lg text-on-surface font-bold focus:outline-none w-full"
+                  className="bg-transparent text-sm sm:text-base text-on-surface font-bold focus:outline-none w-full placeholder:text-outline/50 placeholder:font-normal mt-0.5"
                 />
-                <div className="flex items-center gap-2 text-outline text-xs mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-tertiary"></span>
-                  <span>Tập hợp biệt thự di sản sẵn sàng</span>
-                </div>
               </div>
 
+              {/* Subtle Divider */}
+              <div className="hidden lg:block w-px h-9 bg-outline-variant/30 shrink-0 mx-1" />
+
               {/* Keyword / Hotel name */}
-              <div className="lg:col-span-3 flex flex-col gap-1.5 p-3.5 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors">
-                <div className="flex items-center gap-2 text-primary">
-                  <Search className="w-4 h-4" />
-                  <span className="text-xs uppercase tracking-wider text-primary font-bold">
-                    Khách Sạn & Dinh Thự
+              <div className="flex-1 px-4 sm:px-5 py-2 hover:bg-surface-container-low/60 rounded-xl lg:rounded-full transition-colors group">
+                <div className="flex items-center gap-1.5 text-primary">
+                  <Search className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-extrabold">
+                    Khách Sạn & Resort
                   </span>
                 </div>
                 <input
                   type="text"
-                  placeholder="Tìm tên resort, villa..."
+                  placeholder="Tìm resort, biệt thự nghỉ dưỡng..."
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="bg-transparent text-base sm:text-lg text-on-surface font-bold focus:outline-none w-full"
+                  className="bg-transparent text-sm sm:text-base text-on-surface font-bold focus:outline-none w-full placeholder:text-outline/50 placeholder:font-normal mt-0.5"
                 />
-                <span className="text-xs text-outline">Xác nhận tức thì • Giá tốt nhất</span>
               </div>
 
+              {/* Subtle Divider */}
+              <div className="hidden lg:block w-px h-9 bg-outline-variant/30 shrink-0 mx-1" />
+
               {/* Guests & Suites */}
-              <div className="lg:col-span-2 flex flex-col gap-1.5 p-3.5 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors">
-                <div className="flex items-center gap-2 text-primary">
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs uppercase tracking-wider text-primary font-bold">
-                    Số Khách & Phòng
+              <div className="w-full lg:w-48 px-4 sm:px-5 py-2 hover:bg-surface-container-low/60 rounded-xl lg:rounded-full transition-colors shrink-0">
+                <div className="flex items-center gap-1.5 text-primary">
+                  <Users className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-extrabold">
+                    Khách & Phòng
                   </span>
                 </div>
-                <div className="text-base sm:text-lg text-on-surface font-bold truncate">02 Khách</div>
-                <span className="text-xs text-outline truncate">1 Phòng Suite / Villa</span>
+                <div className="text-sm sm:text-base text-on-surface font-bold mt-0.5 truncate">
+                  02 Khách • 1 Villa
+                </div>
               </div>
 
               {/* Submit Button */}
-              <div className="lg:col-span-3 flex items-center">
+              <div className="p-1 lg:pl-2 shrink-0">
                 <button
                   type="submit"
-                  className="w-full h-16 rounded-2xl bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_8px_24px_rgba(114,91,56,0.25)] flex flex-col items-center justify-center group cursor-pointer"
+                  className="w-full lg:w-auto h-12 lg:h-13 px-6 lg:px-8 rounded-xl lg:rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm flex items-center justify-center gap-2 group cursor-pointer active:scale-95"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base tracking-wider uppercase font-extrabold whitespace-nowrap">Tìm Kỳ Nghỉ</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                  <span className="text-xs opacity-90 font-medium">Cam kết Giá Tốt Nhất</span>
+                  <span className="text-xs sm:text-sm tracking-wider uppercase font-extrabold whitespace-nowrap">
+                    Tìm Kỳ Nghỉ
+                  </span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             </form>
-          </div>
-        </FadeIn>
-      </section>
-
-      {/* 3. PRESTIGE METRICS */}
-      <section className="w-full max-w-[1360px] mx-auto px-6 lg:px-10">
-        <FadeIn delay={0.2} duration={0.7}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 bg-surface-container-low rounded-3xl p-8 border border-outline-variant/30 shadow-sm">
-            <div className="flex flex-col items-center text-center p-2">
-              <span className="text-4xl sm:text-5xl text-primary font-black">128+</span>
-              <span className="text-sm sm:text-base font-bold text-on-surface mt-2 whitespace-nowrap">Biệt thự Đảo & Dinh thự</span>
-              <span className="text-xs sm:text-sm text-outline mt-0.5">Biệt lập hoàn toàn với thiên nhiên</span>
-            </div>
-            <div className="flex flex-col items-center text-center p-2">
-              <span className="text-4xl sm:text-5xl text-primary font-black">99.4%</span>
-              <span className="text-sm sm:text-base font-bold text-on-surface mt-2 whitespace-nowrap">Mức độ Hài lòng VIP</span>
-              <span className="text-xs sm:text-sm text-outline mt-0.5">Kiểm chứng bởi Forbes Luxury</span>
-            </div>
-            <div className="flex flex-col items-center text-center p-2">
-              <span className="text-4xl sm:text-5xl text-primary font-black">1:1</span>
-              <span className="text-sm sm:text-base font-bold text-on-surface mt-2 whitespace-nowrap">Tỷ lệ Quản gia Riêng</span>
-              <span className="text-xs sm:text-sm text-outline mt-0.5">Chăm sóc mọi chi tiết 24/7</span>
-            </div>
-            <div className="flex flex-col items-center text-center p-2">
-              <span className="text-4xl sm:text-5xl text-primary font-black">14</span>
-              <span className="text-sm sm:text-base font-bold text-on-surface mt-2 whitespace-nowrap">Nhà hàng Sao Michelin</span>
-              <span className="text-xs sm:text-sm text-outline mt-0.5">Hành trình ẩm thực nghệ thuật</span>
-            </div>
           </div>
         </FadeIn>
       </section>
