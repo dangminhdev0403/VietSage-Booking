@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react'
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
-  LogIn,
+  Search,
   LogOut,
   Shield,
   ChevronDown,
@@ -35,13 +35,15 @@ export function UserMenu() {
 
   if (!isMounted) {
     return (
-      <Link
-        href="/login"
-        className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-      >
-        <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-        <span>Đăng nhập</span>
-      </Link>
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <Link
+          href="/booking/lookup"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+        >
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+          <span>Tra cứu đơn</span>
+        </Link>
+      </div>
     );
   }
 
@@ -53,18 +55,28 @@ export function UserMenu() {
 
   if (!session?.user) {
     return (
-      <Link
-        href="/login"
-        className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-      >
-        <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-        <span>Đăng nhập</span>
-      </Link>
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <Link
+          href="/booking/lookup"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+        >
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+          <span>Tra cứu đơn</span>
+        </Link>
+        <Link
+          href="/login"
+          title="Cổng Quản Trị & Đối Tác Khách Sạn"
+          className="hidden lg:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-outline hover:text-on-surface hover:bg-surface-container text-xs font-semibold transition-colors"
+        >
+          <Shield className="w-3.5 h-3.5 text-outline" />
+          <span>Đối tác</span>
+        </Link>
+      </div>
     );
   }
 
   const user = session.user as { name?: string | null; email?: string | null; role?: string };
-  const role = user.role || 'TRAVELER';
+  const role = user.role || 'HOTEL_PARTNER';
   const isAdminOrPartner = ['SUPER_ADMIN', 'ADMIN', 'HOTEL_PARTNER'].includes(role);
 
   return (
@@ -78,7 +90,7 @@ export function UserMenu() {
         </div>
         <div className="text-left hidden sm:block">
           <div className="text-xs font-bold text-on-surface line-clamp-1 max-w-[120px]">
-            {session.user.name || 'Người Dùng'}
+            {session.user.name || 'Quản Trị / Đối Tác'}
           </div>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-outline transition-transform duration-200" />
@@ -102,30 +114,12 @@ export function UserMenu() {
 
           <div className="space-y-1">
             <Link
-              href="/my-bookings"
-              onClick={() => setIsDropdownOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              <span>Kỳ nghỉ của tôi</span>
-            </Link>
-
-            <Link
               href="/booking/lookup"
               onClick={() => setIsDropdownOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
             >
-              <ChevronDown className="w-4 h-4 text-outline rotate-[-90deg]" />
+              <Search className="w-4 h-4 text-primary" />
               <span>Tra cứu đơn đặt phòng</span>
-            </Link>
-
-            <Link
-              href="/profile"
-              onClick={() => setIsDropdownOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-            >
-              <Shield className="w-4 h-4 text-amber-600" />
-              <span>Hồ sơ & Hội viên Elite</span>
             </Link>
 
             {isAdminOrPartner && (

@@ -5,12 +5,18 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    const tokenHeader = req.headers.get('x-lookup-token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+    if (tokenHeader) {
+      headers['x-lookup-token'] = tokenHeader;
+    }
+
     const res = await backendFetch('api/v1/bookings/lookup', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers,
       body: JSON.stringify(body),
     });
 

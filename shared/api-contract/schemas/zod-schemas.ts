@@ -17,7 +17,7 @@ export const apiErrorSchema = z.object({
   request_id: z.string().optional(),
 });
 
-export const accountRoleSchema = z.enum(["SUPER_ADMIN", "ADMIN", "HOTEL_PARTNER", "TRAVELER"]);
+export const accountRoleSchema = z.enum(["SUPER_ADMIN", "ADMIN", "HOTEL_PARTNER"]);
 
 export const accountSchema = z.object({
   id: z.string(),

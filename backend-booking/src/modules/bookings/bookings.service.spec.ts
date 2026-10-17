@@ -37,12 +37,12 @@ describe('BookingsService', () => {
     isActive: true,
   };
 
-  const travelerUser: AuthenticatedUser = {
-    id: 'u0000000-0000-0000-0000-000000000001',
-    username: 'traveler1',
-    displayName: 'Traveler One',
-    email: 'traveler1@example.com',
-    role: 'TRAVELER',
+  const unauthorizedUser: AuthenticatedUser = {
+    id: 'u0000000-0000-0000-0000-000000000009',
+    username: 'unauthorized',
+    displayName: 'Unauthorized User',
+    email: 'unauthorized@example.com',
+    role: 'UNKNOWN_ROLE' as any,
     permissions: [],
   };
 
@@ -312,8 +312,8 @@ describe('BookingsService', () => {
       );
     });
 
-    it('rejects TRAVELER role with ForbiddenException', async () => {
-      await expect(service.listBookings({}, travelerUser)).rejects.toThrow(
+    it('rejects unauthorized role with ForbiddenException', async () => {
+      await expect(service.listBookings({}, unauthorizedUser)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -337,10 +337,10 @@ describe('BookingsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('rejects TRAVELER role with ForbiddenException', async () => {
+    it('rejects unauthorized role with ForbiddenException', async () => {
       const dto = { status: 'CANCELLED', reason: 'Change of plans' };
       await expect(
-        service.updateBookingStatus('b1', dto as any, travelerUser),
+        service.updateBookingStatus('b1', dto as any, unauthorizedUser),
       ).rejects.toThrow(ForbiddenException);
     });
 

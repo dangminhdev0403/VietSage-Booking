@@ -10,12 +10,6 @@
     },
     {
       "method": "POST",
-      "path": "/api/v1/auth/register",
-      "implementation_status": "implemented",
-      "description": "Register a new traveler account"
-    },
-    {
-      "method": "POST",
       "path": "/api/v1/auth/refresh",
       "implementation_status": "implemented",
       "description": "Refresh access token using refresh token"
@@ -60,7 +54,7 @@
       "method": "GET",
       "path": "/api/v1/bookings",
       "implementation_status": "implemented",
-      "description": "List bookings for traveler, partner, or admin"
+      "description": "List bookings for partner or admin"
     },
     {
       "method": "POST",
@@ -90,7 +84,7 @@
       "method": "PUT",
       "path": "/api/v1/auth/profile",
       "implementation_status": "implemented",
-      "description": "Update traveler or partner profile"
+      "description": "Update staff or partner profile"
     },
     {
       "method": "PUT",

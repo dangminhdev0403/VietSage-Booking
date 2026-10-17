@@ -19,8 +19,8 @@ export function PublicFooter() {
           <span>Hỗ trợ 24/7</span>
           <span>Xác nhận tức thì</span>
           <span className="text-outline-variant">•</span>
-          <Link href="/admin" className="hover:text-primary transition-colors text-[11px] font-medium lowercase">
-            portal đối tác
+          <Link href="/login" className="hover:text-primary transition-colors text-xs font-semibold normal-case">
+            Cổng Quản Trị &amp; Đối Tác
           </Link>
         </div>
       </div>

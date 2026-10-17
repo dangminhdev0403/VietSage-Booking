@@ -36,9 +36,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-    if (!account || !account.isActive) {
+    if (
+      !account ||
+      !account.isActive ||
+      (account.role !== 'SUPER_ADMIN' &&
+        account.role !== 'ADMIN' &&
+        account.role !== 'HOTEL_PARTNER')
+    ) {
       throw new UnauthorizedException(
-        'Tài khoản không tồn tại hoặc đã bị khóa',
+        'Tài khoản không tồn tại, đã bị khóa, hoặc không có quyền truy cập hệ thống quản trị',
       );
     }
 
@@ -54,7 +60,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       username: account.username,
       displayName: account.displayName,
       email: account.email,
-      role: account.role,
+      role: account.role as 'SUPER_ADMIN' | 'ADMIN' | 'HOTEL_PARTNER',
       permissions: Array.from(permissions),
     };
   }

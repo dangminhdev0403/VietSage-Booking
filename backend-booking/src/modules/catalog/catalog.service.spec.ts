@@ -79,12 +79,12 @@ describe('CatalogService', () => {
     permissions: [],
   };
 
-  const travelerUser: AuthenticatedUser = {
-    id: 'user-traveler',
-    username: 'traveler',
-    displayName: 'Traveler One',
-    email: 'traveler@example.com',
-    role: 'TRAVELER',
+  const unauthorizedUser: AuthenticatedUser = {
+    id: 'user-unauthorized',
+    username: 'unauthorized',
+    displayName: 'Unauthorized User',
+    email: 'unauthorized@example.com',
+    role: 'UNKNOWN_ROLE' as any,
     permissions: [],
   };
 
@@ -129,13 +129,13 @@ describe('CatalogService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('rejects unauthorized roles (e.g. TRAVELER) with ForbiddenException', async () => {
+    it('rejects unauthorized roles with ForbiddenException', async () => {
       prisma.roomType.findUnique.mockResolvedValue(mockPropertyA.roomTypes[0]);
 
       await expect(
         service.updateAllotment(
           { room_type_id: 'rt-1', date: '2026-10-20', total_rooms: 15 },
-          travelerUser,
+          unauthorizedUser,
         ),
       ).rejects.toThrow(ForbiddenException);
     });

@@ -47,49 +47,6 @@
         "security": []
       }
     },
-    "/api/v1/auth/register": {
-      "post": {
-        "summary": "Register a new traveler account",
-        "operationId": "register",
-        "x-implementation-status": "implemented",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "username",
-                  "password",
-                  "display_name",
-                  "email"
-                ],
-                "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  },
-                  "display_name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Registration successful"
-          }
-        },
-        "security": []
-      }
-    },
     "/api/v1/auth/refresh": {
       "post": {
         "summary": "Refresh access token using refresh token",
@@ -324,7 +281,7 @@
     },
     "/api/v1/bookings": {
       "get": {
-        "summary": "List bookings for traveler, partner, or admin",
+        "summary": "List bookings for partner or admin",
         "operationId": "listBookings",
         "x-implementation-status": "implemented",
         "parameters": [
@@ -538,7 +495,7 @@
     },
     "/api/v1/auth/profile": {
       "put": {
-        "summary": "Update traveler or partner profile",
+        "summary": "Update staff or partner profile",
         "operationId": "updateProfile",
         "x-implementation-status": "implemented",
         "requestBody": {
@@ -889,6 +846,16 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "accountRoleSchema": {
+        "type": "string",
+        "enum": [
+          "SUPER_ADMIN",
+          "ADMIN",
+          "HOTEL_PARTNER"
+        ]
       }
     }
   }

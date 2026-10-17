@@ -66,12 +66,6 @@ export class AuthService {
       );
     }
 
-    if (account.role === 'TRAVELER') {
-      throw new UnauthorizedException(
-        'Tài khoản khách du lịch không còn được hỗ trợ đăng nhập',
-      );
-    }
-
     const isMatch = await bcrypt.compare(password, account.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException(
@@ -96,10 +90,6 @@ export class AuthService {
       return null;
     }
 
-    if (account.role === 'TRAVELER') {
-      return null;
-    }
-
     const isMatch = await bcrypt.compare(pass, account.passwordHash);
     if (!isMatch) {
       return null;
@@ -109,11 +99,6 @@ export class AuthService {
   }
 
   async loginWithValidatedUser(account: Account) {
-    if (account.role === 'TRAVELER') {
-      throw new UnauthorizedException(
-        'Tài khoản khách du lịch không còn được hỗ trợ đăng nhập',
-      );
-    }
     return this.generateTokenPair(account.id, account.username, account.role);
   }
 
@@ -135,12 +120,6 @@ export class AuthService {
 
     if (!session || session.revokedAt || session.expiresAt < new Date()) {
       throw new UnauthorizedException('Phiên đăng nhập đã hết hạn');
-    }
-
-    if (session.account.role === 'TRAVELER') {
-      throw new UnauthorizedException(
-        'Tài khoản khách du lịch không còn được hỗ trợ phiên đăng nhập',
-      );
     }
 
     // Revoke used refresh session

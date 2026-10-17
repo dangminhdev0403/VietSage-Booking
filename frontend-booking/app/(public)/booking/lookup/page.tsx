@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   Search,
   CheckCircle2,
@@ -9,12 +8,20 @@ import {
   Check,
   AlertCircle,
   MapPin,
+  CreditCard,
+  ExternalLink,
+  ShieldCheck,
 } from 'lucide-react';
-import { lookupBooking, createPaymentIntent } from '@/features/bookings/service/bookings.client';
+import {
+  lookupBooking,
+  createPaymentIntent,
+  createDepositCheckout,
+} from '@/features/bookings/service/bookings.client';
 
 type BookingLookupResult = {
   id: string;
   booking_code: string;
+  lookup_token?: string;
   property_id: string;
   property_name: string;
   property_address?: string | null;
@@ -26,8 +33,11 @@ type BookingLookupResult = {
   check_out: string;
   nights: number;
   total_price: number;
+  deposit_amount?: number;
+  balance_due?: number;
+  currency?: string;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | string;
-  payment_status: 'UNPAID' | 'PAID' | string;
+  payment_status: 'UNPAID' | 'PAID' | 'DEPOSIT_PAID' | string;
   special_requests?: string | null;
   addons?: { service_name: string; price: number }[];
   created_at: string;
@@ -55,6 +65,7 @@ export default function GuestBookingLookupPage() {
   const [bookingCode, setBookingCode] = useState('');
   const [contact, setContact] = useState('');
   const [loading, setLoading] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
   const [booking, setBooking] = useState<BookingLookupResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +108,24 @@ export default function GuestBookingLookupPage() {
     }
   };
 
+  const handleStripeCheckout = async () => {
+    if (!booking) return;
+    setStripeLoading(true);
+    try {
+      const res = await createDepositCheckout({
+        booking_code: booking.booking_code,
+        lookup_token: contact.trim(),
+      });
+      if (res?.checkout_url) {
+        window.location.href = res.checkout_url;
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Không thể khởi tạo cổng thanh toán Stripe lúc này');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   const handleCheckStatus = async () => {
     if (!booking) return;
     setPaymentLoading(true);
@@ -104,15 +133,15 @@ export default function GuestBookingLookupPage() {
     try {
       const refreshed = (await lookupBooking(bookingCode.trim(), contact.trim())) as BookingLookupResult;
       setBooking(refreshed);
-      if (refreshed.payment_status === 'PAID' || refreshed.status === 'CONFIRMED') {
+      if (refreshed.payment_status === 'PAID' || refreshed.payment_status === 'DEPOSIT_PAID' || refreshed.status === 'CONFIRMED') {
         setRefreshNotice({
           type: 'success',
-          message: 'Thanh toán đã được ghi nhận thành công! Đơn đặt phòng đã được chuyển sang trạng thái ĐÃ XÁC NHẬN.',
+          message: 'Thanh toán đã được ghi nhận thành công! Đơn đặt phòng đã được xác nhận giữ chỗ.',
         });
       } else {
         setRefreshNotice({
           type: 'info',
-          message: 'Hệ thống đang chờ đối soát giao dịch chuyển khoản từ ngân hàng. Đơn phòng sẽ tự động xác nhận ngay khi khách sạn ghi nhận thanh toán.',
+          message: 'Hệ thống đang chờ đối soát giao dịch từ ngân hàng hoặc cổng Stripe. Đơn phòng sẽ tự động xác nhận ngay khi ghi nhận thanh toán.',
         });
       }
     } catch (err: unknown) {
@@ -136,7 +165,7 @@ export default function GuestBookingLookupPage() {
             Tra Cứu Đơn Đặt Phòng
           </h1>
           <p className="text-base text-outline leading-relaxed">
-            Dành cho khách hàng vãng lai hoặc chưa đăng nhập. Nhập mã đặt phòng và số điện thoại / email để xem chi tiết lịch trình và thanh toán tức thì.
+            Dành cho khách hàng đặt phòng trực tuyến. Nhập mã đặt phòng kèm Mã tra cứu bảo mật (Lookup Token), email hoặc số điện thoại để xem chi tiết lịch trình và thanh toán tức thì.
           </p>
         </div>
 
@@ -159,11 +188,11 @@ export default function GuestBookingLookupPage() {
 
             <div>
               <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-2">
-                Email hoặc Số Điện Thoại
+                Mã Tra Cứu (Lookup Token), Email hoặc Số Điện Thoại
               </label>
               <input
                 type="text"
-                placeholder="Nhập email hoặc số điện thoại dùng khi đặt"
+                placeholder="Nhập mã tra cứu bảo mật, email hoặc số điện thoại"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
                 className="w-full h-12 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden text-base text-on-surface bg-surface-container-low"
@@ -263,20 +292,84 @@ export default function GuestBookingLookupPage() {
               </div>
             </div>
 
-            {/* VietQR Payment Card (if unpaid) */}
-            {(booking.status === 'PENDING' || booking.payment_status === 'UNPAID') && paymentIntent && (
-              <div className="bg-surface-container-lowest rounded-3xl border border-primary/40 p-8 shadow-xl space-y-6">
-                <div className="text-center space-y-2">
-                  <span className="text-xs uppercase font-extrabold tracking-widest text-primary">
-                    Thanh Toán An Toàn Qua VietQR Napas 247
-                  </span>
-                  <h3 className="text-2xl font-sans font-bold text-on-surface">
-                    Chuyển Khoản Ngân Hàng Tức Thì
-                  </h3>
-                  <p className="text-xs text-outline max-w-md mx-auto">
-                    Vui lòng quét mã QR hoặc chuyển khoản đúng cú pháp bên dưới để hệ thống tự động đối soát và xác nhận đơn phòng.
-                  </p>
+            {/* Payment Options (if unpaid) */}
+            {(booking.status === 'PENDING' || booking.payment_status === 'UNPAID') && (
+              <div className="space-y-6">
+                {/* 30% Deposit Stripe Card */}
+                <div className="bg-surface-container-lowest rounded-3xl border-2 border-primary-container p-7 shadow-lg space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/30 pb-4">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                        <CreditCard className="w-4 h-4 text-primary" />
+                        Thanh Toán Đặt Cọc 30% Trực Tuyến
+                      </span>
+                      <h3 className="text-xl font-bold text-on-surface mt-1">
+                        Cổng Thanh Toán Quốc Tế Stripe
+                      </h3>
+                      <p className="text-xs text-outline mt-0.5">
+                        Thanh toán bảo mật chuẩn quốc tế qua Visa, MasterCard, JCB hoặc Apple Pay.
+                      </p>
+                    </div>
+
+                    <div className="text-left sm:text-right bg-amber-50 p-3 rounded-xl border border-amber-200">
+                      <span className="text-[11px] text-amber-800 font-bold uppercase block">
+                        Số tiền cọc 30%
+                      </span>
+                      <span className="text-xl font-black text-amber-950">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                          booking.deposit_amount ?? Math.round(booking.total_price * 0.3)
+                        )}
+                      </span>
+                      <span className="text-[10px] text-amber-800 block">
+                        70% còn lại ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                          booking.balance_due ?? (booking.total_price - Math.round(booking.total_price * 0.3))
+                        )}) thanh toán tại quầy
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs text-outline">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Bảo mật SSL 256-Bit • Tự động kích hoạt phòng sau thanh toán</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleStripeCheckout}
+                      disabled={stripeLoading}
+                      className="w-full sm:w-auto px-6 py-3 rounded-lg bg-primary hover:bg-[#584323] text-on-primary font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+                    >
+                      {stripeLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Đang chuyển hướng Stripe...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4" />
+                          <span>Thanh Toán Cọc 30% Qua Stripe Ngay</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
+
+                {/* VietQR Payment Card (Alternative) */}
+                {paymentIntent && (
+                  <div className="bg-surface-container-lowest rounded-3xl border border-primary/40 p-8 shadow-xl space-y-6">
+                    <div className="text-center space-y-2">
+                      <span className="text-xs uppercase font-extrabold tracking-widest text-primary">
+                        Thanh Toán An Toàn Qua VietQR Napas 247
+                      </span>
+                      <h3 className="text-2xl font-sans font-bold text-on-surface">
+                        Chuyển Khoản Ngân Hàng Tức Thì
+                      </h3>
+                      <p className="text-xs text-outline max-w-md mx-auto">
+                        Vui lòng quét mã QR hoặc chuyển khoản đúng cú pháp bên dưới để hệ thống tự động đối soát và xác nhận đơn phòng.
+                      </p>
+                    </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
                   <div className="md:col-span-5 text-center">
@@ -374,6 +467,9 @@ export default function GuestBookingLookupPage() {
             )}
           </div>
         )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }
+

@@ -89,6 +89,10 @@ export class PaymentsService {
     const actor = this.normalizeActor(user);
 
     if (actor) {
+      if (booking.accountId && booking.accountId === actor.id) {
+        return;
+      }
+
       if (actor.role === 'SUPER_ADMIN' || actor.role === 'ADMIN') {
         return;
       }
@@ -105,21 +109,6 @@ export class PaymentsService {
         }
         throw new ForbiddenException(
           'Tài khoản đối tác không có quyền truy cập đơn của cơ sở khác',
-        );
-      }
-
-      if (actor.role === 'TRAVELER') {
-        const isOwnerAccount =
-          booking.accountId && booking.accountId === actor.id;
-        const isOwnerEmail =
-          booking.guestEmail &&
-          actor.email &&
-          booking.guestEmail.toLowerCase() === actor.email.toLowerCase();
-        if (isOwnerAccount || isOwnerEmail) {
-          return;
-        }
-        throw new ForbiddenException(
-          'Bạn không có quyền truy cập thông tin thanh toán của đơn đặt phòng này',
         );
       }
 

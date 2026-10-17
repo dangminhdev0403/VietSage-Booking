@@ -16,13 +16,13 @@ describe('AuthService', () => {
   let jwtService: any;
   let auditService: any;
 
-  const mockTravelerAccount = {
-    id: 'u0000000-0000-0000-0000-000000000001',
-    username: 'traveler_test',
+  const mockHotelPartnerAccount = {
+    id: 'u0000000-0000-0000-0000-000000000003',
+    username: 'partner_test',
     passwordHash: '$2b$10$hashedtestpasswordhash',
-    displayName: 'Traveler Tester',
-    email: 'traveler@example.com',
-    role: 'TRAVELER',
+    displayName: 'Partner Tester',
+    email: 'partner@example.com',
+    role: 'HOTEL_PARTNER',
     isActive: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -81,58 +81,53 @@ describe('AuthService', () => {
     it('should reject registration with GoneException (HTTP 410) as traveler role is retired', async () => {
       await expect(
         service.register({
-          username: 'new_traveler',
+          username: 'new_user',
           password: 'securePassword123',
-          display_name: 'New Traveler',
-          email: 'new_traveler@example.com',
+          display_name: 'New User',
+          email: 'new_user@example.com',
         }),
       ).rejects.toThrow(GoneException);
     });
   });
 
   describe('validateUser & login', () => {
-    it('should reject login for accounts with role TRAVELER', async () => {
-      const passwordHash = await bcrypt.hash('validPassword123', 10);
-      prisma.account.findFirst.mockResolvedValue({
-        ...mockTravelerAccount,
-        passwordHash,
-      });
+    it('should return token pair on loginWithValidatedUser for active staff account', async () => {
+      prisma.account.findUnique.mockResolvedValue(mockAdminAccount);
+      prisma.refreshSession.create.mockResolvedValue({ id: 'ref-1' });
 
-      await expect(
-        service.login({
-          username: 'traveler_test',
-          password: 'validPassword123',
-        }),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('should return null in validateUser for accounts with role TRAVELER', async () => {
-      const passwordHash = await bcrypt.hash('validPassword123', 10);
-      prisma.account.findFirst.mockResolvedValue({
-        ...mockTravelerAccount,
-        passwordHash,
-      });
-
-      const user = await service.validateUser(
-        'traveler_test',
-        'validPassword123',
+      const tokens = await service.loginWithValidatedUser(
+        mockAdminAccount as any,
       );
-      expect(user).toBeNull();
+      expect(tokens.access_token).toBe('mock-jwt-token');
+      expect(tokens.account.role).toBe('ADMIN');
     });
 
-    it('should reject loginWithValidatedUser for accounts with role TRAVELER', async () => {
-      await expect(
-        service.loginWithValidatedUser(mockTravelerAccount as any),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('should reject refresh for sessions of TRAVELER accounts', async () => {
+    it('should refresh session successfully for active staff account', async () => {
       prisma.refreshSession.findUnique.mockResolvedValue({
         id: 'session-1',
         tokenHash: 'some-hash',
         expiresAt: new Date(Date.now() + 100000),
         revokedAt: null,
-        account: mockTravelerAccount,
+        account: mockAdminAccount,
+      });
+      prisma.refreshSession.update.mockResolvedValue({ id: 'session-1' });
+      prisma.account.findUnique.mockResolvedValue(mockAdminAccount);
+      prisma.refreshSession.create.mockResolvedValue({ id: 'session-2' });
+
+      const result = await service.refresh({
+        refresh_token: 'valid-refresh-token',
+      });
+      expect(result.access_token).toBe('mock-jwt-token');
+      expect(result.account.role).toBe('ADMIN');
+    });
+
+    it('should reject refresh when session is expired', async () => {
+      prisma.refreshSession.findUnique.mockResolvedValue({
+        id: 'session-1',
+        tokenHash: 'some-hash',
+        expiresAt: new Date(Date.now() - 100000),
+        revokedAt: null,
+        account: mockAdminAccount,
       });
 
       await expect(

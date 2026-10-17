@@ -1,11 +1,22 @@
 import {
   bookingItemSchema,
   bookingListResponseSchema,
+  bookingQuoteSchema,
+  depositCheckoutResponseSchema,
   parseApiResponse,
   paymentIntentSchema,
   successSchema,
 } from '@/lib/api/schemas';
 import { z } from 'zod';
+
+export type QuoteBookingPayload = {
+  property_id: string;
+  room_type_id: string;
+  check_in: string;
+  check_out: string;
+  guests?: number;
+  service_ids?: string[];
+};
 
 export type CreateBookingPayload = {
   property_id: string;
@@ -15,16 +26,35 @@ export type CreateBookingPayload = {
   guest_phone: string;
   check_in: string;
   check_out: string;
+  guests?: number;
   total_price?: number; // Estimated locally for display, authoritative price is server-derived
   special_requests?: string;
   service_ids?: string[];
 };
 
+export type DepositCheckoutPayload = {
+  booking_code: string;
+  lookup_token?: string;
+};
+
+export async function getBookingQuote(payload: QuoteBookingPayload) {
+  const res = await fetch('/api/bookings/quote', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseApiResponse(res, successSchema(bookingQuoteSchema));
+  return data.data;
+}
+
 export async function createBooking(payload: CreateBookingPayload) {
   // Strip client-estimated total_price to prevent tampering; server calculates authoritative total
   const submitBody: Partial<CreateBookingPayload> = { ...payload };
   delete submitBody.total_price;
-  // Route through Next.js BFF to attach session bearer token
+  // Route through Next.js BFF
   const res = await fetch('/api/bookings', {
     method: 'POST',
     headers: {
@@ -34,6 +64,23 @@ export async function createBooking(payload: CreateBookingPayload) {
     body: JSON.stringify(submitBody),
   });
   const data = await parseApiResponse(res, successSchema(bookingItemSchema));
+  return data.data;
+}
+
+export async function createDepositCheckout(payload: DepositCheckoutPayload) {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  if (payload.lookup_token) {
+    headers['x-lookup-token'] = payload.lookup_token;
+  }
+  const res = await fetch('/api/payments/checkout', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  const data = await parseApiResponse(res, successSchema(depositCheckoutResponseSchema));
   return data.data;
 }
 
@@ -86,14 +133,21 @@ export async function updateBookingStatus(id: string, status: string, reason?: s
   return data.data;
 }
 
-export async function lookupBooking(bookingCode: string, contact: string) {
+export async function lookupBooking(bookingCode: string, tokenOrContact: string) {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  headers['x-lookup-token'] = tokenOrContact;
+
   const res = await fetch('/api/bookings/lookup', {
     method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ booking_code: bookingCode, contact }),
+    headers,
+    body: JSON.stringify({
+      booking_code: bookingCode,
+      lookup_token: tokenOrContact,
+      contact: tokenOrContact,
+    }),
   });
   const data = await parseApiResponse(res, successSchema(bookingItemSchema));
   return data.data;

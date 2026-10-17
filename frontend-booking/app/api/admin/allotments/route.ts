@@ -5,7 +5,7 @@ import { backendFetch } from '@/lib/api/backend';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    let token =
+    const token =
       (session as unknown as { accessToken?: string })?.accessToken ||
       (session?.user as unknown as { accessToken?: string })?.accessToken;
     const sessionError = (session as unknown as { error?: string })?.error;
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     }
 
     const query = month ? `?month=${encodeURIComponent(month)}` : '';
-    let res = await backendFetch(`api/v1/properties/${propertyId}/allotments${query}`, {
+    const res = await backendFetch(`api/v1/properties/${propertyId}/allotments${query}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    let token =
+    const token =
       (session as unknown as { accessToken?: string })?.accessToken ||
       (session?.user as unknown as { accessToken?: string })?.accessToken;
     const sessionError = (session as unknown as { error?: string })?.error;
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    let res = await backendFetch('api/v1/allotments/update', {
+    const res = await backendFetch('api/v1/allotments/update', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

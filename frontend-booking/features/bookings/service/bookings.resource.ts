@@ -5,9 +5,13 @@ import {
 } from '@dangminhdev04032005/query-resource';
 import {
   createBooking,
+  createDepositCheckout,
+  getBookingQuote,
   listBookings,
   updateBookingStatus,
   type CreateBookingPayload,
+  type DepositCheckoutPayload,
+  type QuoteBookingPayload,
 } from './bookings.client';
 
 export const bookingsResource = createResource<void>()({
@@ -23,12 +27,27 @@ export const bookingsResource = createResource<void>()({
       ],
       queryFn: ({ input }) => listBookings(input),
     }),
+    quote: defineQuery({
+      inputKey: (params: QuoteBookingPayload) => [
+        params.property_id,
+        params.room_type_id,
+        params.check_in,
+        params.check_out,
+        String(params.guests ?? 1),
+        ...(params.service_ids ?? []),
+      ],
+      queryFn: ({ input }) => getBookingQuote(input),
+    }),
   },
   mutations: {
     create: defineMutation({
       mutationFn: ({ variables }: { variables: CreateBookingPayload }) =>
         createBooking(variables),
       invalidates: [{ type: 'query', operation: 'list' }],
+    }),
+    checkout: defineMutation({
+      mutationFn: ({ variables }: { variables: DepositCheckoutPayload }) =>
+        createDepositCheckout(variables),
     }),
     updateStatus: defineMutation({
       mutationFn: ({
@@ -40,3 +59,4 @@ export const bookingsResource = createResource<void>()({
     }),
   },
 });
+

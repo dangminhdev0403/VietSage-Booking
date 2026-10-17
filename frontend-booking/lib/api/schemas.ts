@@ -138,11 +138,34 @@ export const paymentRecordSchema = z.object({
   created_at: z.string().optional(),
 });
 
+export const bookingQuoteSchema = z.object({
+  property_id: z.string(),
+  property_name: z.string(),
+  room_type_id: z.string(),
+  room_type_name: z.string(),
+  check_in: z.string(),
+  check_out: z.string(),
+  nights: z.number(),
+  daily_prices: z.array(z.object({
+    date: z.string(),
+    price: z.number(),
+  })).default([]),
+  room_subtotal: z.number(),
+  addon_subtotal: z.number().default(0),
+  total_price: z.number(),
+  deposit_rate_bps: z.number().default(3000),
+  deposit_amount: z.number(),
+  balance_due: z.number(),
+  currency: z.string().default('VND'),
+  expires_at: z.string(),
+});
+
 export const bookingItemSchema = z.object({
   id: z.string(),
   booking_code: z.string(),
+  lookup_token: z.string().optional(),
   property_id: z.string(),
-  property_name: z.string(),
+  property_name: z.string().optional(),
   property_address: z.string().optional(),
   room_type_name: z.string().nullable().optional(),
   guest_name: z.string(),
@@ -151,15 +174,22 @@ export const bookingItemSchema = z.object({
   check_in: z.string(),
   check_out: z.string(),
   nights: z.number(),
+  room_subtotal: z.number().optional(),
+  addon_subtotal: z.number().optional(),
   total_price: z.number(),
-  status: z.enum(['PENDING', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED']),
-  payment_status: z.enum(['UNPAID', 'PAID', 'REFUNDED']).default('UNPAID'),
+  deposit_rate_bps: z.number().optional(),
+  deposit_amount: z.number().optional(),
+  balance_due: z.number().optional(),
+  currency: z.string().default('VND'),
+  status: z.string(),
+  payment_status: z.string().default('UNPAID'),
   special_requests: z.string().nullable().optional(),
   addons: z.array(z.object({
     service_name: z.string(),
     price: z.number(),
   })).default([]),
   payments: z.array(paymentRecordSchema).default([]),
+  hold_expires_at: z.string().optional(),
   created_at: z.string(),
 });
 
@@ -188,3 +218,12 @@ export const paymentIntentSchema = z.object({
   qr_code_url: z.string(),
   created_at: z.string(),
 });
+
+export const depositCheckoutResponseSchema = z.object({
+  checkout_url: z.string(),
+  session_id: z.string(),
+  amount: z.number(),
+  currency: z.string().default('VND'),
+  expires_at: z.string().optional(),
+});
+

@@ -50,18 +50,20 @@ function PublicHeaderContent() {
       }
     };
 
-    checkActiveSection();
-
-    if (window.location.hash === '#destinations') {
-      setActiveSection('destinations');
-    } else if (window.location.hash === '#catalog-stream') {
-      setActiveSection('catalog-stream');
-    }
+    const initTimer = setTimeout(() => {
+      checkActiveSection();
+      if (window.location.hash === '#destinations') {
+        setActiveSection('destinations');
+      } else if (window.location.hash === '#catalog-stream') {
+        setActiveSection('catalog-stream');
+      }
+    }, 0);
 
     window.addEventListener('scroll', checkActiveSection, { passive: true });
     window.addEventListener('hashchange', checkActiveSection);
 
     return () => {
+      clearTimeout(initTimer);
       window.removeEventListener('scroll', checkActiveSection);
       window.removeEventListener('hashchange', checkActiveSection);
       if (scrollTimeoutRef.current) {
@@ -161,6 +163,16 @@ function PublicHeaderContent() {
             >
               Bộ sưu tập Phòng
             </Link>
+            <Link
+              href="/booking/lookup"
+              className={`px-4 py-2 text-base rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+                pathname === '/booking/lookup'
+                  ? 'font-bold bg-primary-container/25 text-on-primary-container shadow-xs'
+                  : 'font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              Tra cứu đơn
+            </Link>
           </nav>
 
           {/* Right Public Actions (User Menu + Primary CTA) */}
@@ -217,6 +229,12 @@ function PublicHeaderFallback() {
               className="px-4 py-2 text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
             >
               Bộ sưu tập Phòng
+            </Link>
+            <Link
+              href="/booking/lookup"
+              className="px-4 py-2 text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
+            >
+              Tra cứu đơn
             </Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">

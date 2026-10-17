@@ -580,10 +580,6 @@ export class BookingsService {
         );
       }
       where.propertyId = partnerAccount.managedPropertyId;
-    } else if (user.role === 'TRAVELER') {
-      throw new ForbiddenException(
-        'Tài khoản khách du lịch không có quyền truy cập danh sách đặt phòng',
-      );
     } else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
       if (filter?.accountId) {
         where.accountId = filter.accountId;
@@ -682,9 +678,9 @@ export class BookingsService {
           'Tài khoản đối tác khách sạn chưa được hỗ trợ tra cứu booking do chưa có ánh xạ khách sạn quản lý',
         );
       }
-    } else if (user.role === 'TRAVELER') {
+    } else if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
       throw new ForbiddenException(
-        'Tài khoản khách du lịch không có quyền truy cập thông tin đặt phòng',
+        'Vai trò người dùng không có quyền truy cập thông tin đặt phòng',
       );
     }
 
@@ -733,9 +729,9 @@ export class BookingsService {
       );
     }
 
-    if (user.role === 'TRAVELER') {
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.role !== 'HOTEL_PARTNER') {
       throw new ForbiddenException(
-        'Tài khoản khách du lịch không có quyền cập nhật trạng thái đặt phòng',
+        'Vai trò người dùng không có quyền cập nhật trạng thái đặt phòng',
       );
     }
 
@@ -769,6 +765,10 @@ export class BookingsService {
           'Tài khoản đối tác khách sạn chưa được hỗ trợ thay đổi trạng thái booking',
         );
       }
+    } else if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException(
+        'Vai trò người dùng không có quyền cập nhật trạng thái đặt phòng',
+      );
     }
 
     // Only allow transition PENDING -> CANCELLED locally

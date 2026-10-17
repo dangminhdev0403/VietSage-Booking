@@ -32,14 +32,9 @@ export default auth((req) => {
     }
   }
 
-  // 2. Traveler Self-Service Private Routes Guard
+  // 2. Dead routes redirect to guest self-service lookup
   if (pathname.startsWith('/my-bookings') || pathname.startsWith('/profile')) {
-    if (!isLoggedIn) {
-      const cleanCallback = sanitizeInternalCallbackUrl(pathname + search, pathname);
-      const loginUrl = new URL('/login', req.nextUrl.origin);
-      loginUrl.searchParams.set('callbackUrl', cleanCallback);
-      return NextResponse.redirect(loginUrl);
-    }
+    return NextResponse.redirect(new URL('/booking/lookup', req.nextUrl.origin));
   }
 
   // 3. Login Page Guard (Redirect already authenticated users to their role destination)

@@ -1,4 +1,4 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HOTEL_PARTNER' | 'TRAVELER';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HOTEL_PARTNER';
 
 export type RoleDefaultPathMap = Record<UserRole, string>;
 
@@ -6,7 +6,6 @@ export const roleDefaultPaths: RoleDefaultPathMap = {
   SUPER_ADMIN: '/admin',
   ADMIN: '/admin',
   HOTEL_PARTNER: '/admin',
-  TRAVELER: '/my-bookings',
 };
 
 export const adminRoles: readonly UserRole[] = ['SUPER_ADMIN', 'ADMIN', 'HOTEL_PARTNER'];
@@ -15,8 +14,7 @@ export function isUserRole(role: unknown): role is UserRole {
   return (
     role === 'SUPER_ADMIN' ||
     role === 'ADMIN' ||
-    role === 'HOTEL_PARTNER' ||
-    role === 'TRAVELER'
+    role === 'HOTEL_PARTNER'
   );
 }
 
@@ -65,8 +63,6 @@ export function isKnownRedirectPath(pathname: string): boolean {
 
   const allowedPrefixes = [
     '/admin',
-    '/my-bookings',
-    '/profile',
     '/booking',
     '/properties',
     '/alerts',
@@ -87,11 +83,6 @@ export function canAccessPathByRole(
   // /admin routes require elevated admin / partner roles
   if (matchesPrefix(pathname, '/admin')) {
     return isAdminRole(role);
-  }
-
-  // Traveler self-service private routes require authentication
-  if (matchesPrefix(pathname, '/my-bookings') || matchesPrefix(pathname, '/profile')) {
-    return !!role;
   }
 
   // Public catalog, lookup, and alerts routes are open to all

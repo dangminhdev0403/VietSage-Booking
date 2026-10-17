@@ -14,7 +14,6 @@ async function main() {
     { code: 'SUPER_ADMIN', name: 'Super Administrator', isSystem: true },
     { code: 'ADMIN', name: 'Platform Administrator', isSystem: true },
     { code: 'HOTEL_PARTNER', name: 'Hotel & Property Partner', isSystem: true },
-    { code: 'TRAVELER', name: 'Registered Traveler', isSystem: true },
   ];
 
   for (const r of roles) {
@@ -304,7 +303,7 @@ async function main() {
     }
   }
 
-  // 4. Accounts: SuperAdmin, Admin, Hotel Partner, Traveler
+  // 4. Accounts: SuperAdmin, Admin, Hotel Partner
   await prisma.account.upsert({
     where: { username: 'superadmin' },
     update: {},
@@ -341,18 +340,6 @@ async function main() {
       passwordHash: defaultPassword,
       role: 'HOTEL_PARTNER',
       managedPropertyId: createdProperties[0].id,
-    },
-  });
-
-  await prisma.account.upsert({
-    where: { username: 'traveler_elite' },
-    update: {},
-    create: {
-      username: 'traveler_elite',
-      displayName: 'Doanh Nhân Đặng Minh',
-      email: 'dangminh.vip@gmail.com',
-      passwordHash: defaultPassword,
-      role: 'TRAVELER',
     },
   });
 
