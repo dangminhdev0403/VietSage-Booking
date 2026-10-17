@@ -5,11 +5,12 @@ import { backendFetch } from '@/lib/api/backend';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    const token =
+    let token =
       (session as unknown as { accessToken?: string })?.accessToken ||
       (session?.user as unknown as { accessToken?: string })?.accessToken;
+    const sessionError = (session as unknown as { error?: string })?.error;
 
-    if (!session || !token) {
+    if (!session || !token || sessionError === 'RefreshAccessTokenError') {
       return NextResponse.json(
         {
           success: false,
@@ -40,12 +41,25 @@ export async function GET(req: NextRequest) {
     }
 
     const query = month ? `?month=${encodeURIComponent(month)}` : '';
-    const res = await backendFetch(`api/v1/properties/${propertyId}/allotments${query}`, {
+    let res = await backendFetch(`api/v1/properties/${propertyId}/allotments${query}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (res.status === 401) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Phiên đăng nhập quản trị đã hết hạn. Vui lòng đăng nhập lại.',
+          },
+        },
+        { status: 401 },
+      );
+    }
 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
@@ -67,11 +81,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const token =
+    let token =
       (session as unknown as { accessToken?: string })?.accessToken ||
       (session?.user as unknown as { accessToken?: string })?.accessToken;
+    const sessionError = (session as unknown as { error?: string })?.error;
 
-    if (!session || !token) {
+    if (!session || !token || sessionError === 'RefreshAccessTokenError') {
       return NextResponse.json(
         {
           success: false,
@@ -86,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    const res = await backendFetch('api/v1/allotments/update', {
+    let res = await backendFetch('api/v1/allotments/update', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -94,6 +109,19 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify(body),
     });
+
+    if (res.status === 401) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Phiên đăng nhập quản trị đã hết hạn. Vui lòng đăng nhập lại.',
+          },
+        },
+        { status: 401 },
+      );
+    }
 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });

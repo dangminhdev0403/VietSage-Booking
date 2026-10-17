@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { X, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useCreateBookingMutation } from '../hooks/use-bookings';
 import { useServicesQuery } from '@/features/catalog/hooks/use-catalog';
@@ -19,8 +20,16 @@ export function BookingModal({
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
-  const [checkIn, setCheckIn] = useState('2026-11-01');
-  const [checkOut, setCheckOut] = useState('2026-11-03');
+  const [checkIn, setCheckIn] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [checkOut, setCheckOut] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 3);
+    return d.toISOString().split('T')[0];
+  });
   const [selectedRoomId, setSelectedRoomId] = useState(roomTypes[0]?.id || '');
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [specialRequests] = useState('');
@@ -161,14 +170,14 @@ export function BookingModal({
               </h3>
             </div>
             
-            <p className="text-on-surface-variant text-sm max-w-md mx-auto leading-relaxed">
+            <p className="text-on-surface-variant text-base max-w-md mx-auto leading-relaxed">
               Mã hồ sơ đặt phòng của quý khách (Trạng thái: <strong>{confirmedBooking.status}</strong>):
             </p>
             <div className="p-4 px-6 rounded-2xl bg-surface-container-low border border-outline-variant/40 text-primary font-mono text-2xl font-black tracking-wider inline-block shadow-sm">
               {confirmedBooking.booking_code}
             </div>
 
-            <div className="p-5 rounded-2xl bg-surface-container text-left text-sm space-y-2.5 border border-outline-variant/20">
+            <div className="p-5 rounded-2xl bg-surface-container text-left text-base space-y-2.5 border border-outline-variant/20">
               <div className="flex justify-between">
                 <span className="text-outline">Khu nghỉ dưỡng:</span>
                 <span className="font-bold text-on-surface">{property.name}</span>
@@ -193,12 +202,22 @@ export function BookingModal({
               Thông tin yêu cầu đã được gửi tới <strong>{guestEmail}</strong>. Khách sạn sẽ kiểm tra quỹ phòng và sớm liên hệ để hoàn tất xác nhận đơn lưu trú của quý khách.
             </p>
 
-            <button
-              onClick={onClose}
-              className="mt-4 w-full py-4 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-bold text-sm uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-            >
-              Hoàn tất & Tiếp tục Khám phá
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 pt-3">
+              <Link
+                href="/booking/lookup"
+                onClick={onClose}
+                className="flex-1 py-3.5 px-4 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-bold text-xs uppercase tracking-wider text-center transition-all shadow-sm"
+              >
+                Tra Cứu &amp; Thanh Toán Ngay
+              </Link>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3.5 px-4 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Tiếp Tục Khám Phá
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleBookingSubmit} className="space-y-6">
@@ -210,7 +229,7 @@ export function BookingModal({
               <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface leading-snug">
                 {property.name}
               </h2>
-              <p className="text-sm text-outline mt-1">{property.address}, {property.city}</p>
+              <p className="text-base text-outline mt-1">{property.address}, {property.city}</p>
             </div>
 
             {errorMessage && (
@@ -250,12 +269,12 @@ export function BookingModal({
                           className="w-4 h-4 text-primary accent-primary"
                         />
                         <div>
-                          <div className="text-sm font-bold text-on-surface">{room.name}</div>
-                          <div className="text-xs text-outline">Tối đa {room.max_guests} khách • Quản gia 24/7</div>
+                          <div className="text-base font-bold text-on-surface">{room.name}</div>
+                          <div className="text-xs text-outline">Tối đa {room.max_guests} khách • Xác nhận tức thì</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-black text-primary">
+                        <span className="text-base font-black text-primary">
                           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(room.base_price)}
                         </span>
                         <span className="text-xs text-outline block font-medium">/ đêm</span>
@@ -277,7 +296,7 @@ export function BookingModal({
                   value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 text-sm font-bold rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                  className="w-full px-4 py-2.5 text-base font-bold rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                 />
               </div>
               <div className="space-y-1.5">
@@ -289,7 +308,7 @@ export function BookingModal({
                   value={checkOut}
                   onChange={(e) => setCheckOut(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 text-sm font-bold rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                  className="w-full px-4 py-2.5 text-base font-bold rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
@@ -298,7 +317,7 @@ export function BookingModal({
             <div className="space-y-3.5">
               <div className="space-y-1.5">
                 <label className="text-xs uppercase tracking-wider font-bold text-primary block">
-                  Họ & Tên Quý khách
+                  Họ &amp; Tên Quý khách
                 </label>
                 <input
                   type="text"
@@ -306,7 +325,7 @@ export function BookingModal({
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 text-sm rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                  className="w-full px-4 py-2.5 text-base rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                 />
               </div>
 
@@ -321,7 +340,7 @@ export function BookingModal({
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 text-sm rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                    className="w-full px-4 py-2.5 text-base rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -334,7 +353,7 @@ export function BookingModal({
                     value={guestPhone}
                     onChange={(e) => setGuestPhone(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 text-sm rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
+                    className="w-full px-4 py-2.5 text-base rounded-2xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:outline-none"
                   />
                 </div>
               </div>
@@ -386,7 +405,7 @@ export function BookingModal({
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="h-14 px-8 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm font-extrabold uppercase tracking-wider shadow-[0_8px_24px_rgba(114,91,56,0.25)] disabled:opacity-50 cursor-pointer"
+                className="h-14 px-8 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-base font-extrabold uppercase tracking-wider shadow-[0_8px_24px_rgba(114,91,56,0.25)] disabled:opacity-50 cursor-pointer"
               >
                 {createMutation.isPending ? 'Đang xác nhận...' : 'Xác Nhận Đặt Chỗ'}
               </button>

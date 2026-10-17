@@ -83,7 +83,7 @@ export function PropertyCard({
             {Array.from({ length: Math.min(5, Math.floor(property.star_rating || 5)) }).map((_, idx) => (
               <Star key={idx} className="w-4 h-4 fill-primary text-primary" />
             ))}
-            <span className="text-sm font-bold text-on-surface ml-1">
+            <span className="text-base font-bold text-on-surface ml-1">
               {property.star_rating >= 5 ? '5 Sao Luxury' : `${property.star_rating} Sao`}
             </span>
           </div>
@@ -97,21 +97,18 @@ export function PropertyCard({
 
 
           {/* Location */}
-          <p className="text-sm text-outline flex items-center gap-1.5">
+          <p className="text-base text-outline flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-primary shrink-0" />
             <span className="truncate">{property.address}, {property.city}</span>
           </p>
 
-          {/* Amenities chips */}
+          {/* Amenities & Highlights chips */}
           <div className="flex flex-wrap gap-2 pt-1">
             <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold">
-              Bãi biển riêng
+              Xác nhận tức thì
             </span>
             <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold">
-              Hồ bơi riêng
-            </span>
-            <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold">
-              Quản gia 24/7
+              Cam kết giá tốt
             </span>
             {roomTypes.length > 0 && (
               <span className="text-xs px-3 py-1.5 rounded-lg bg-primary-container/20 text-primary font-bold flex items-center gap-1">
@@ -133,7 +130,7 @@ export function PropertyCard({
 
           <button
             onClick={() => onBookNow(property)}
-            className="h-12 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm font-bold shadow-sm whitespace-nowrap cursor-pointer"
+            className="h-12 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-base font-bold shadow-sm whitespace-nowrap cursor-pointer"
             type="button"
           >
             Đặt Phòng Ngay

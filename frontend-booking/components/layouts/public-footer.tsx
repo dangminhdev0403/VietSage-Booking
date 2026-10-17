@@ -4,7 +4,7 @@ import Link from 'next/link';
 export function PublicFooter() {
   return (
     <footer className="bg-surface-container-low border-t border-outline-variant/30 mt-20 py-14">
-      <div className="max-w-[1360px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-on-surface-variant">
+      <div className="max-w-[1360px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row items-center justify-between gap-6 text-base text-on-surface-variant">
         <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
           <span className="text-lg font-black text-on-surface">
             VietSage<span className="text-primary">Booking</span>

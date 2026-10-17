@@ -53,7 +53,7 @@ export function LuxuryAlertBanner({
             </div>
           )}
           {(description || children) && (
-            <div className={`text-xs sm:text-sm text-slate-300 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
+            <div className={`text-xs sm:text-base text-slate-300 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
               {description || children}
             </div>
           )}
@@ -102,7 +102,7 @@ export function LuxuryAlertBanner({
         <div className="flex-1 space-y-1 min-w-0">
           {title && (
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-sm sm:text-base font-bold text-emerald-900 tracking-tight">
+              <h4 className="text-base font-bold text-emerald-900 tracking-tight">
                 {title}
               </h4>
               {badgeText && (
@@ -113,7 +113,7 @@ export function LuxuryAlertBanner({
             </div>
           )}
           {(description || children) && (
-            <div className={`text-xs sm:text-sm text-emerald-800/90 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
+            <div className={`text-xs sm:text-base text-emerald-800/90 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
               {description || children}
             </div>
           )}
@@ -162,7 +162,7 @@ export function LuxuryAlertBanner({
         <div className="flex-1 space-y-1 min-w-0">
           {title && (
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-sm sm:text-base font-bold text-amber-900 tracking-tight">
+              <h4 className="text-base font-bold text-amber-900 tracking-tight">
                 {title}
               </h4>
               {badgeText && (
@@ -173,7 +173,7 @@ export function LuxuryAlertBanner({
             </div>
           )}
           {(description || children) && (
-            <div className={`text-xs sm:text-sm text-amber-900/85 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
+            <div className={`text-xs sm:text-base text-amber-900/85 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
               {description || children}
             </div>
           )}
@@ -215,7 +215,7 @@ export function LuxuryAlertBanner({
         <div className="flex-1 space-y-1 min-w-0">
           {title && (
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-sm sm:text-base font-bold text-rose-900 tracking-tight">
+              <h4 className="text-base font-bold text-rose-900 tracking-tight">
                 {title}
               </h4>
               {badgeText && (
@@ -226,7 +226,7 @@ export function LuxuryAlertBanner({
             </div>
           )}
           {(description || children) && (
-            <div className={`text-xs sm:text-sm text-rose-800 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
+            <div className={`text-xs sm:text-base text-rose-800 ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
               {description || children}
             </div>
           )}
@@ -268,7 +268,7 @@ export function LuxuryAlertBanner({
       <div className="flex-1 space-y-1 min-w-0">
         {title && (
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-sm sm:text-base font-bold text-on-surface tracking-tight">
+            <h4 className="text-base font-bold text-on-surface tracking-tight">
               {title}
             </h4>
             {badgeText && (
@@ -279,7 +279,7 @@ export function LuxuryAlertBanner({
           </div>
         )}
         {(description || children) && (
-          <div className={`text-xs sm:text-sm text-on-surface-variant ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
+          <div className={`text-xs sm:text-base text-on-surface-variant ${title ? 'leading-relaxed font-normal' : 'font-medium leading-normal'}`}>
             {description || children}
           </div>
         )}

@@ -135,7 +135,7 @@ export default function GuestBookingLookupPage() {
           <h1 className="text-3xl sm:text-4xl font-sans font-extrabold text-on-surface tracking-tight">
             Tra Cứu Đơn Đặt Phòng
           </h1>
-          <p className="text-sm text-outline leading-relaxed">
+          <p className="text-base text-outline leading-relaxed">
             Dành cho khách hàng vãng lai hoặc chưa đăng nhập. Nhập mã đặt phòng và số điện thoại / email để xem chi tiết lịch trình và thanh toán tức thì.
           </p>
         </div>
@@ -152,7 +152,7 @@ export default function GuestBookingLookupPage() {
                 placeholder="Ví dụ: OTA-202610-A1B2C3"
                 value={bookingCode}
                 onChange={(e) => setBookingCode(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden font-mono text-sm tracking-wider uppercase text-on-surface bg-surface-container-low"
+                className="w-full h-12 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden font-mono text-base tracking-wider uppercase text-on-surface bg-surface-container-low"
                 required
               />
             </div>
@@ -166,7 +166,7 @@ export default function GuestBookingLookupPage() {
                 placeholder="Nhập email hoặc số điện thoại dùng khi đặt"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden text-sm text-on-surface bg-surface-container-low"
+                className="w-full h-12 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden text-base text-on-surface bg-surface-container-low"
                 required
               />
             </div>
@@ -181,7 +181,7 @@ export default function GuestBookingLookupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-full bg-primary text-on-primary font-bold text-sm hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full h-12 rounded-full bg-primary text-on-primary font-bold text-base hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading ? (
                 <>
@@ -245,19 +245,19 @@ export default function GuestBookingLookupPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-on-surface">
                 <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
                   <span className="text-outline font-semibold">Hạng phòng</span>
-                  <div className="font-bold text-sm text-on-surface">{booking.room_type_name || 'Phòng nghỉ dưỡng'}</div>
+                  <div className="font-bold text-base text-on-surface">{booking.room_type_name || 'Phòng nghỉ dưỡng'}</div>
                   <div className="text-outline text-[11px]">{booking.nights} đêm lưu trú</div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
                   <span className="text-outline font-semibold">Ngày nhận / trả phòng</span>
-                  <div className="font-bold text-sm text-on-surface">{booking.check_in} → {booking.check_out}</div>
+                  <div className="font-bold text-base text-on-surface">{booking.check_in} → {booking.check_out}</div>
                   <div className="text-outline text-[11px]">Check-in 14:00 • Check-out 12:00</div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
                   <span className="text-outline font-semibold">Khách đại diện</span>
-                  <div className="font-bold text-sm text-on-surface">{booking.guest_name}</div>
+                  <div className="font-bold text-base text-on-surface">{booking.guest_name}</div>
                   <div className="text-outline text-[11px]">{booking.guest_phone}</div>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export default function GuestBookingLookupPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-outline">Số tài khoản:</span>
-                        <span className="font-bold font-mono text-sm text-on-surface">{paymentIntent.account_number}</span>
+                        <span className="font-bold font-mono text-base text-on-surface">{paymentIntent.account_number}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-outline">Chủ tài khoản:</span>
@@ -312,7 +312,7 @@ export default function GuestBookingLookupPage() {
                       </div>
                       <div className="flex justify-between border-t border-outline-variant/30 pt-2 items-center">
                         <span className="text-outline font-semibold">Cú pháp chuyển khoản:</span>
-                        <div className="flex items-center gap-1 font-mono font-bold text-primary text-sm bg-primary-container/20 px-2 py-0.5 rounded">
+                        <div className="flex items-center gap-1 font-mono font-bold text-primary text-base bg-primary-container/20 px-2 py-0.5 rounded">
                           <span>{paymentIntent.transfer_content}</span>
                           <button
                             type="button"
@@ -353,7 +353,7 @@ export default function GuestBookingLookupPage() {
                         type="button"
                         onClick={handleCheckStatus}
                         disabled={paymentLoading}
-                        className="w-full h-12 rounded-full bg-primary text-on-primary font-bold text-sm hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full h-12 rounded-full bg-primary text-on-primary font-bold text-base hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {paymentLoading ? (
                           <>

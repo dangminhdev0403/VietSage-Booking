@@ -31,7 +31,14 @@ export default function HomePage() {
   const handleDestinationSelect = (city: string) => {
     setCityFilter(city);
     const el = document.getElementById('catalog-stream');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (el) {
+      const headerOffset = 100;
+      const elPosition = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: Math.max(0, elPosition - headerOffset),
+        behavior: 'smooth',
+      });
+    }
   };
 
   return (
@@ -52,7 +59,7 @@ export default function HomePage() {
           <FadeIn direction="down" duration={0.7}>
             <div className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-surface-container-lowest/85 backdrop-blur-md border border-outline-variant/40 shadow-sm mb-5 sm:mb-6">
               <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-              <span className="text-[11px] sm:text-sm uppercase tracking-wider text-primary font-extrabold">
+              <span className="text-xs sm:text-base uppercase tracking-wider text-primary font-extrabold">
                 Kênh Đặt Phòng Trực Tuyến VietSageBooking 2026
               </span>
             </div>
@@ -88,17 +95,17 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-slate-200">
               <div className="flex items-center gap-2 whitespace-nowrap">
                 <Award className="w-4 h-4 text-primary-fixed-dim" />
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Michelin Key Selected</span>
+                <span className="text-xs sm:text-base font-bold uppercase tracking-wider">Michelin Key Selected</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
               <div className="flex items-center gap-2 whitespace-nowrap">
                 <ShieldCheck className="w-4 h-4 text-primary-fixed-dim" />
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Forbes Travel Guide 5-Star</span>
+                <span className="text-xs sm:text-base font-bold uppercase tracking-wider">Forbes Travel Guide 5-Star</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
               <div className="flex items-center gap-2 whitespace-nowrap">
                 <CheckCircle2 className="w-4 h-4 text-primary-fixed-dim" />
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Xác Nhận Đặt Chỗ Tức Thì</span>
+                <span className="text-xs sm:text-base font-bold uppercase tracking-wider">Xác Nhận Đặt Chỗ Tức Thì</span>
               </div>
             </div>
           </FadeIn>
@@ -114,7 +121,14 @@ export default function HomePage() {
                 e.preventDefault();
                 refetch();
                 const el = document.getElementById('catalog-stream');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                if (el) {
+                  const headerOffset = 100;
+                  const elPosition = el.getBoundingClientRect().top + window.scrollY;
+                  window.scrollTo({
+                    top: Math.max(0, elPosition - headerOffset),
+                    behavior: 'smooth',
+                  });
+                }
               }}
               className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-0"
             >
@@ -131,7 +145,7 @@ export default function HomePage() {
                   placeholder="Hà Nội, Phú Quốc, Đà Lạt..."
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  className="bg-transparent text-sm sm:text-base text-on-surface font-bold focus:outline-none w-full placeholder:text-outline/50 placeholder:font-normal mt-0.5"
+                  className="bg-transparent text-base text-on-surface font-bold focus:outline-none w-full placeholder:text-outline/50 placeholder:font-normal mt-0.5"
                 />
               </div>
 
@@ -151,7 +165,7 @@ export default function HomePage() {
                   placeholder="Tìm resort, biệt thự nghỉ dưỡng..."
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="bg-transparent text-sm sm:text-base text-on-surface font-bold focus:outline-none w-full placeholder:text-outline/50 placeholder:font-normal mt-0.5"
+                  className="bg-transparent text-base text-on-surface font-bold focus:outline-none w-full placeholder:text-outline/50 placeholder:font-normal mt-0.5"
                 />
               </div>
 
@@ -166,7 +180,7 @@ export default function HomePage() {
                     Khách & Phòng
                   </span>
                 </div>
-                <div className="text-sm sm:text-base text-on-surface font-bold mt-0.5 truncate">
+                <div className="text-base text-on-surface font-bold mt-0.5 truncate">
                   02 Khách • 1 Villa
                 </div>
               </div>
@@ -177,7 +191,7 @@ export default function HomePage() {
                   type="submit"
                   className="w-full lg:w-auto h-12 lg:h-13 px-6 lg:px-8 rounded-xl lg:rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm flex items-center justify-center gap-2 group cursor-pointer active:scale-95"
                 >
-                  <span className="text-xs sm:text-sm tracking-wider uppercase font-extrabold whitespace-nowrap">
+                  <span className="text-xs sm:text-base tracking-wider uppercase font-extrabold whitespace-nowrap">
                     Tìm Kỳ Nghỉ
                   </span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -189,19 +203,19 @@ export default function HomePage() {
       </section>
 
       {/* 4. CURATED DESTINATIONS BENTO GRID */}
-      <section id="destinations" className="w-full max-w-[1360px] mx-auto px-6 lg:px-10">
+      <section id="destinations" className="w-full max-w-[1360px] mx-auto px-6 lg:px-10 scroll-mt-24 sm:scroll-mt-28">
         <FadeIn delay={0.1}>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
               <div className="flex items-center gap-2 text-primary mb-2">
                 <Compass className="w-5 h-5" />
-                <span className="text-xs sm:text-sm uppercase tracking-wider font-bold">Tọa độ nghỉ dưỡng biểu tượng</span>
+                <span className="text-xs sm:text-base uppercase tracking-wider font-bold">Tọa độ nghỉ dưỡng biểu tượng</span>
               </div>
               <h2 className="text-3xl sm:text-5xl font-extrabold text-on-surface tracking-tight">
                 Điểm Đến Tinh Hoa <span className="whitespace-nowrap">Được Tuyển Chọn</span>
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-on-surface-variant max-w-md leading-relaxed">
+            <p className="text-base text-on-surface-variant max-w-md leading-relaxed">
               Mỗi điểm đến của VietSageBooking là một tuyệt tác được lựa chọn khắt khe về cảnh quan thiên nhiên và dịch vụ cao cấp.
             </p>
           </div>
@@ -230,7 +244,7 @@ export default function HomePage() {
                   </span>
                 </div>
                 <h3 className="text-2xl sm:text-3xl text-white font-extrabold">Phú Quốc • Serene Haven Reserve</h3>
-                <p className="text-sm text-surface-container-high line-clamp-2 leading-relaxed font-normal">
+                <p className="text-base text-surface-container-high line-clamp-2 leading-relaxed font-normal">
                   Vùng vịnh hoàng gia tách biệt với thế giới bên ngoài, nơi mặt trời lặn dát vàng lên hồ bơi nước mặn riêng biệt.
                 </p>
                 <div className="flex items-center justify-between pt-2">
@@ -240,7 +254,7 @@ export default function HomePage() {
                       14.500.000₫ <span className="text-xs font-normal text-surface-container">/ đêm</span>
                     </span>
                   </div>
-                  <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-lowest text-on-surface text-sm font-bold group-hover:bg-primary group-hover:text-on-primary transition-colors whitespace-nowrap">
+                  <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-lowest text-on-surface text-base font-bold group-hover:bg-primary group-hover:text-on-primary transition-colors whitespace-nowrap">
                     Khám phá biệt thự <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>
@@ -266,7 +280,7 @@ export default function HomePage() {
                     Thủ Đô Ngàn Năm
                   </span>
                   <h3 className="text-xl sm:text-2xl text-white font-bold">Hà Nội • Heritage French Mansion</h3>
-                  <span className="text-sm text-primary-fixed-dim font-extrabold">Từ 3.500.000₫ / đêm</span>
+                  <span className="text-base text-primary-fixed-dim font-extrabold">Từ 3.500.000₫ / đêm</span>
                 </div>
               </div>
             </FadeIn>
@@ -287,7 +301,7 @@ export default function HomePage() {
                     Rừng Thông Sương Mờ
                   </span>
                   <h3 className="text-xl sm:text-2xl text-white font-bold">Đà Lạt • Pine Forest Valley Sanctuary</h3>
-                  <span className="text-sm text-primary-fixed-dim font-extrabold">Từ 2.800.000₫ / đêm</span>
+                  <span className="text-base text-primary-fixed-dim font-extrabold">Từ 2.800.000₫ / đêm</span>
                 </div>
               </div>
             </FadeIn>
@@ -296,7 +310,7 @@ export default function HomePage() {
       </section>
 
       {/* 5. HOTEL RESULTS & CATALOG STREAM */}
-      <section id="catalog-stream" className="w-full max-w-[1360px] mx-auto px-6 lg:px-10 pt-6">
+      <section id="catalog-stream" className="w-full max-w-[1360px] mx-auto px-6 lg:px-10 pt-6 scroll-mt-24 sm:scroll-mt-28">
         <FadeIn delay={0.1}>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-outline-variant/30 pb-5 mb-8">
             <div>
@@ -308,7 +322,7 @@ export default function HomePage() {
                 Khu Nghỉ Dưỡng Sẵn Sàng Đón Tiếp
               </h2>
             </div>
-            <div className="text-sm text-outline font-medium">
+            <div className="text-base text-outline font-medium">
               Hiển thị <span className="font-extrabold text-primary">{propertiesData?.items.length || 0}</span> điểm đến được chứng thực
             </div>
           </div>
@@ -325,7 +339,7 @@ export default function HomePage() {
             <p className="text-on-surface-variant text-base">Không thể kết nối đến máy chủ VietSageBooking.</p>
             <button
               onClick={() => refetch()}
-              className="mt-4 px-6 py-3 bg-primary text-on-primary rounded-full text-sm font-bold"
+              className="mt-4 px-6 py-3 bg-primary text-on-primary rounded-full text-base font-bold"
             >
               Thử lại
             </button>
@@ -334,7 +348,7 @@ export default function HomePage() {
           <div className="text-center py-16 bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-8">
             <Compass className="w-12 h-12 text-outline mx-auto mb-2 opacity-50" />
             <p className="text-on-surface text-lg font-bold">Chưa tìm thấy khu nghỉ dưỡng phù hợp.</p>
-            <p className="text-outline text-sm mt-1">Quý khách vui lòng thử tìm kiếm với điểm đến hoặc từ khóa khác.</p>
+            <p className="text-outline text-base mt-1">Quý khách vui lòng thử tìm kiếm với điểm đến hoặc từ khóa khác.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

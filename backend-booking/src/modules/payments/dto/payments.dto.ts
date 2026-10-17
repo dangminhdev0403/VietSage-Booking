@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createPaymentIntentSchema = z.object({
   booking_id: z.string().uuid(),
   payment_method: z
-    .enum(['VIETQR', 'BANK_TRANSFER', 'PAY_AT_HOTEL'])
+    .enum(['VIETQR', 'BANK_TRANSFER', 'PAY_AT_HOTEL', 'STRIPE_LOCALMATE'])
     .default('VIETQR'),
   contact: z.string().optional(),
 });
@@ -23,3 +23,12 @@ export const confirmPaymentSchema = z
   );
 
 export type ConfirmPaymentDto = z.infer<typeof confirmPaymentSchema>;
+
+export const createDepositCheckoutSchema = z.object({
+  booking_code: z.string().min(1, 'Mã đặt phòng không được để trống'),
+  lookup_token: z.string().optional(),
+});
+
+export type CreateDepositCheckoutDto = z.infer<
+  typeof createDepositCheckoutSchema
+>;

@@ -85,49 +85,49 @@ export default function AlertsShowcasePage() {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/20 border border-primary/20 text-primary text-xs uppercase tracking-widest font-extrabold">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Aurum Haven Luxury UI Kit</span>
+                <span>VietSage Booking UI Standard</span>
               </div>
               <h1 className="font-sans text-3xl sm:text-4xl font-extrabold tracking-tight text-on-surface">
-                Hệ Thống Alert & Notification
+                Hệ Thống Alert &amp; Notification
               </h1>
-              <p className="text-sm text-outline max-w-xl leading-relaxed">
-                Thiết kế thông báo Quiet Luxury thay thế toàn bộ native browser alert mặc định bằng SweetAlert2 tùy biến và Inline Banners chuẩn phong cách nghỉ dưỡng 5 sao.
+              <p className="text-base text-outline max-w-xl leading-relaxed">
+                Hệ thống thông báo và cảnh báo chuẩn mực, giao diện thanh lịch và thân thiện chuẩn trải nghiệm nghỉ dưỡng.
               </p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-                Chuẩn Đồng Bộ Stitch
+                Tiêu Chuẩn Đồng Bộ UI
               </span>
             </div>
           </div>
         </div>
 
-        {/* SECTION 1: SweetAlert2 Modals (Replaces Screenshot) */}
+        {/* SECTION 1: Modals & Dialogs */}
         <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-3xl border border-outline-variant/30 shadow-sm space-y-6">
           <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
               <Bell className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-on-surface">1. Hộp Thoại Modal Alert (SweetAlert2 Redesign)</h2>
+              <h2 className="text-lg font-bold text-on-surface">1. Hộp Thoại Modal Thông Báo &amp; Cảnh Báo</h2>
               <p className="text-xs text-outline">
-                Thay thế hộp thoại cảnh báo mặc định của trình duyệt (`window.alert` & `window.confirm`)
+                Hộp thoại cảnh báo và xác nhận thao tác quan trọng dành cho khách hàng và quản trị viên
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Screenshot Error Replacement */}
+            {/* Booking Error Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-rose-200/60 space-y-3 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-rose-700 bg-rose-100/80 px-2.5 py-0.5 rounded-full">
-                  Khắc phục lỗi Screenshot
+                  Cảnh Báo Thông Tin
                 </span>
-                <h3 className="font-bold text-sm text-on-surface mt-2">Cảnh Báo Lỗi Đặt Phòng</h3>
+                <h3 className="font-bold text-base text-on-surface mt-2">Cảnh Báo Lỗi Đặt Phòng</h3>
                 <p className="text-xs text-outline mt-1 leading-relaxed">
-                  Thay thế thông báo thô &ldquo;Dữ liệu đặt phòng không hợp lệ&rdquo; bằng modal Quiet Luxury có chi tiết hướng dẫn lịch thiệp.
+                  Thông báo chi tiết và hướng dẫn khách hàng điều chỉnh thông tin ngày lưu trú và số liên hệ hợp lệ.
                 </p>
               </div>
               <button
@@ -143,9 +143,9 @@ export default function AlertsShowcasePage() {
             <div className="p-5 rounded-2xl bg-surface-container-low border border-amber-200/60 space-y-3 flex flex-col justify-between">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
-                  Thay thế window.confirm
+                  Xác Nhận Thao Tác
                 </span>
-                <h3 className="font-bold text-sm text-on-surface mt-2">Hộp Thoại Xác Nhận Hủy Phòng</h3>
+                <h3 className="font-bold text-base text-on-surface mt-2">Hộp Thoại Xác Nhận Hủy Phòng</h3>
                 <p className="text-xs text-outline mt-1 leading-relaxed">
                   Hỏi ý kiến khách hàng hoặc quản trị viên với nút bấm xác nhận/hủy bỏ sang trọng.
                 </p>
@@ -155,7 +155,7 @@ export default function AlertsShowcasePage() {
                 onClick={handleTestConfirmDialog}
                 className="w-full py-3 px-4 rounded-full bg-amber-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-amber-950 transition-all shadow-sm cursor-pointer"
               >
-                Kích Hoạt Confirm Dialog
+                Kích Hoạt Xác Nhận Hủy
               </button>
             </div>
 
@@ -165,7 +165,7 @@ export default function AlertsShowcasePage() {
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
                   Thành Công
                 </span>
-                <h3 className="font-bold text-sm text-on-surface mt-2">Xác Nhận Giữ Chỗ 5 Sao</h3>
+                <h3 className="font-bold text-base text-on-surface mt-2">Xác Nhận Giữ Chỗ 5 Sao</h3>
                 <p className="text-xs text-outline mt-1 leading-relaxed">
                   Hiển thị mã hồ sơ đặt phòng, thời gian giữ chỗ 30 phút và thông tin thanh toán.
                 </p>
@@ -185,7 +185,7 @@ export default function AlertsShowcasePage() {
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#725b38] bg-[#fedeb2] px-2.5 py-0.5 rounded-full">
                   VIP Privilege
                 </span>
-                <h3 className="font-bold text-sm text-on-surface mt-2">Thông Báo Đặc Quyền Gold</h3>
+                <h3 className="font-bold text-base text-on-surface mt-2">Thông Báo Đặc Quyền Gold</h3>
                 <p className="text-xs text-outline mt-1 leading-relaxed">
                   Hộp thoại vinh danh hội viên cao cấp tặng Champagne và miễn phí trả phòng muộn.
                 </p>
@@ -218,7 +218,7 @@ export default function AlertsShowcasePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <button
               type="button"
-              onClick={() => luxuryAlert.toast('Đã thêm Aurum Sunset Villa vào danh sách yêu thích!', 'luxury')}
+              onClick={() => luxuryAlert.toast('Đã thêm phòng nghỉ vào danh sách yêu thích!', 'luxury')}
               className="py-3 px-3 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all text-center border border-slate-700 cursor-pointer"
             >
               Toast Luxury

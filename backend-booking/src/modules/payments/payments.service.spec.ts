@@ -5,15 +5,20 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../identity-access/audit.service';
+import { StripeSignatureVerifier } from './stripe-signature.verifier';
+import { StripeLocalMateClient } from './stripe-localmate.client';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
   let prisma: any;
   let audit: any;
+  let signatureVerifier: StripeSignatureVerifier;
+  let stripeClient: StripeLocalMateClient;
 
   const validBookingId = 'a0000000-0000-0000-0000-000000000001';
   const nonExistentBookingId = 'f0000000-0000-0000-0000-000000000000';
@@ -29,6 +34,8 @@ describe('PaymentsService', () => {
     guestEmail: 'dukhach@aurumhaven.vn',
     guestPhone: '0901234567',
     totalPrice: 4500000,
+    depositAmount: 1350000,
+    depositRateBps: 3000,
     status: 'PENDING',
     paymentStatus: 'UNPAID',
     property: {
@@ -69,6 +76,9 @@ describe('PaymentsService', () => {
   };
 
   beforeEach(async () => {
+    signatureVerifier = new StripeSignatureVerifier();
+    stripeClient = new StripeLocalMateClient();
+
     prisma = {
       booking: {
         findUnique: jest.fn(),
@@ -79,8 +89,18 @@ describe('PaymentsService', () => {
       payment: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         findMany: jest.fn(),
-        updateMany: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      paymentWebhookEvent: {
+        findUnique: jest.fn(),
+        create: jest.fn(),
+      },
+      roomAllotment: {
+        findUnique: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       account: {
         findUnique: jest.fn(),
@@ -97,6 +117,8 @@ describe('PaymentsService', () => {
         PaymentsService,
         { provide: PrismaService, useValue: prisma },
         { provide: AuditService, useValue: audit },
+        { provide: StripeSignatureVerifier, useValue: signatureVerifier },
+        { provide: StripeLocalMateClient, useValue: stripeClient },
       ],
     }).compile();
 
@@ -459,6 +481,383 @@ describe('PaymentsService', () => {
       await expect(
         service.getPaymentByBookingId('non-existent', adminUser),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('createDepositCheckout', () => {
+    it('should create 30% deposit checkout for PENDING unexpired booking and generate localmate idempotency key', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        depositAmount: 1350000,
+        holdExpiresAt: new Date(Date.now() + 3600 * 1000),
+      });
+      prisma.payment.findFirst.mockResolvedValue(null);
+      prisma.payment.create.mockImplementation(({ data }: any) =>
+        Promise.resolve({ ...data, createdAt: new Date() }),
+      );
+
+      const result = await service.createDepositCheckout(
+        mockBooking.bookingCode,
+        undefined,
+        'client-idemp-123',
+      );
+
+      expect(result.booking_code).toBe(mockBooking.bookingCode);
+      expect(result.amount).toBe(1350000);
+      expect(result.is_reused).toBe(false);
+      expect(result.session_id).toMatch(/^cs_test_/);
+      expect(prisma.payment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            amount: 1350000,
+            paymentMethod: 'STRIPE_LOCALMATE',
+            rawMetadata: expect.objectContaining({
+              idempotencyKey: expect.stringMatching(
+                /^localmate:[a-f0-9-]+:checkout:v1$/,
+              ),
+              callerIdempotencyKey: 'client-idemp-123',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should reuse existing open session if within expiry (1800s)', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        depositAmount: 1350000,
+      });
+
+      const futureExpiry = new Date(Date.now() + 1200 * 1000);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-open-001',
+        bookingId: mockBooking.id,
+        purpose: 'DEPOSIT',
+        status: 'OPEN',
+        providerSessionId: 'cs_test_existing_session_456',
+        amount: 1350000,
+        currency: 'VND',
+        expiresAt: futureExpiry,
+        rawMetadata: {
+          checkoutUrl:
+            'https://checkout.stripe.com/c/pay/cs_test_existing_session_456',
+        },
+      });
+
+      const result = await service.createDepositCheckout(
+        mockBooking.bookingCode,
+      );
+
+      expect(result.is_reused).toBe(true);
+      expect(result.session_id).toBe('cs_test_existing_session_456');
+      expect(result.amount).toBe(1350000);
+      expect(prisma.payment.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject payment if booking is CANCELLED', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        status: 'CANCELLED',
+      });
+
+      await expect(
+        service.createDepositCheckout(mockBooking.bookingCode),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject payment if booking is already CONFIRMED or PAID', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        status: 'CONFIRMED',
+        paymentStatus: 'DEPOSIT_PAID',
+      });
+
+      await expect(
+        service.createDepositCheckout(mockBooking.bookingCode),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should reject payment if booking hold has expired', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        status: 'PENDING',
+        holdExpiresAt: new Date(Date.now() - 5000),
+      });
+
+      await expect(
+        service.createDepositCheckout(mockBooking.bookingCode),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should validate lookupToken against lookupTokenHash with constant-time check', async () => {
+      const lookupToken = 'secret-lookup-token-123';
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(lookupToken)
+        .digest('hex');
+
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        lookupTokenHash: tokenHash,
+      });
+      prisma.payment.findFirst.mockResolvedValue(null);
+      prisma.payment.create.mockImplementation(({ data }: any) =>
+        Promise.resolve({ ...data, createdAt: new Date() }),
+      );
+
+      // 1. Missing lookup token
+      await expect(
+        service.createDepositCheckout(mockBooking.bookingCode, ''),
+      ).rejects.toThrow(UnauthorizedException);
+
+      // 2. Wrong lookup token
+      await expect(
+        service.createDepositCheckout(mockBooking.bookingCode, 'wrong-token'),
+      ).rejects.toThrow(ForbiddenException);
+
+      // 3. Valid lookup token
+      const result = await service.createDepositCheckout(
+        mockBooking.bookingCode,
+        lookupToken,
+      );
+      expect(result.booking_code).toBe(mockBooking.bookingCode);
+    });
+  });
+
+  describe('handleWebhook', () => {
+    const webhookSecret = 'whsec_test_localmate_secret';
+
+    const generateSignatureHeader = (
+      timestamp: number,
+      payload: string,
+      secret = webhookSecret,
+    ): string => {
+      const signed = `${timestamp}.${payload}`;
+      const sig = crypto
+        .createHmac('sha256', secret)
+        .update(signed, 'utf8')
+        .digest('hex');
+      return `t=${timestamp},v1=${sig}`;
+    };
+
+    it('should reject webhook with invalid signature', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const payload = JSON.stringify({ id: 'evt_bad', type: 'test' });
+      const badHeader = `t=${now},v1=invalidsignature`;
+
+      await expect(service.handleWebhook(payload, badHeader)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should deduplicate already recorded webhook event', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const payload = JSON.stringify({
+        id: 'evt_dup_001',
+        type: 'checkout.session.completed',
+        data: { object: { id: 'cs_dup' } },
+      });
+      const header = generateSignatureHeader(now, payload);
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: 'evt-rec-1',
+        providerEventId: 'evt_dup_001',
+        status: 'PROCESSED',
+      });
+
+      const result = await service.handleWebhook(payload, header);
+
+      expect(result.duplicate).toBe(true);
+      expect(result.status).toBe('PROCESSED');
+      expect(prisma.payment.update).not.toHaveBeenCalled();
+    });
+
+    it('should handle checkout.session.completed with compare-and-set transition PENDING -> CONFIRMING -> CONFIRMED, payment SUCCESS, DEPOSIT_PAID', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const sessionId = 'cs_test_completed_123';
+      const paymentIntentId = 'pi_test_completed_123';
+      const eventPayload = {
+        id: 'evt_completed_001',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            client_reference_id: mockBooking.bookingCode,
+            payment_status: 'paid',
+            amount_total: 1350000,
+            currency: 'vnd',
+            payment_intent: paymentIntentId,
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      const mockPaymentRecord = {
+        id: 'pay-001',
+        bookingId: mockBooking.id,
+        amount: 1350000,
+        currency: 'VND',
+        status: 'OPEN',
+        providerSessionId: sessionId,
+        booking: mockBooking,
+      };
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue(mockPaymentRecord);
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+      });
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.received).toBe(true);
+      expect(result.status).toBe('PROCESSED');
+
+      // Check CAS: first updateMany PENDING -> CONFIRMING
+      expect(prisma.booking.updateMany).toHaveBeenCalledWith({
+        where: { id: mockBooking.id, status: 'PENDING' },
+        data: { status: 'CONFIRMING' },
+      });
+
+      // Then update CONFIRMING -> CONFIRMED with DEPOSIT_PAID
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: mockBooking.id },
+        data: { status: 'CONFIRMED', paymentStatus: 'DEPOSIT_PAID' },
+      });
+
+      // Payment updated to SUCCESS with paidAt and providerPaymentId
+      expect(prisma.payment.update).toHaveBeenCalledWith({
+        where: { id: mockPaymentRecord.id },
+        data: expect.objectContaining({
+          status: 'SUCCESS',
+          providerPaymentId: paymentIntentId,
+        }),
+      });
+
+      // Webhook event recorded
+      expect(prisma.paymentWebhookEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            providerEventId: 'evt_completed_001',
+            status: 'PROCESSED',
+          }),
+        }),
+      );
+    });
+
+    it('should transition payment to REFUND_PENDING if booking was CANCELLED before payment captured', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const sessionId = 'cs_test_late_pay';
+      const eventPayload = {
+        id: 'evt_late_pay_001',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            payment_status: 'paid',
+            amount_total: 1350000,
+            currency: 'vnd',
+            payment_intent: 'pi_late',
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-002',
+        bookingId: mockBooking.id,
+        amount: 1350000,
+        currency: 'VND',
+        status: 'OPEN',
+      });
+      prisma.booking.findUnique.mockResolvedValue({
+        ...mockBooking,
+        status: 'CANCELLED',
+      });
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.status).toBe('PROCESSED');
+      expect(prisma.payment.update).toHaveBeenCalledWith({
+        where: { id: 'pay-002' },
+        data: expect.objectContaining({
+          status: 'REFUND_PENDING',
+        }),
+      });
+    });
+
+    it('should handle checkout.session.expired by transitioning payment to EXPIRED', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const sessionId = 'cs_test_exp_123';
+      const eventPayload = {
+        id: 'evt_exp_001',
+        type: 'checkout.session.expired',
+        data: {
+          object: {
+            id: sessionId,
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-exp-001',
+        bookingId: mockBooking.id,
+        status: 'OPEN',
+      });
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.status).toBe('PROCESSED');
+      expect(prisma.payment.update).toHaveBeenCalledWith({
+        where: { id: 'pay-exp-001' },
+        data: { status: 'EXPIRED' },
+      });
+    });
+
+    it('should handle charge.refunded by transitioning payment and booking to REFUNDED', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const paymentIntentId = 'pi_test_refund_123';
+      const eventPayload = {
+        id: 'evt_ref_001',
+        type: 'charge.refunded',
+        data: {
+          object: {
+            payment_intent: paymentIntentId,
+            amount_refunded: 1350000,
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-ref-001',
+        bookingId: mockBooking.id,
+        amount: 1350000,
+        currency: 'VND',
+        status: 'SUCCESS',
+      });
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.status).toBe('PROCESSED');
+      expect(prisma.payment.update).toHaveBeenCalledWith({
+        where: { id: 'pay-ref-001' },
+        data: { status: 'REFUNDED', refundedAmount: 1350000 },
+      });
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: mockBooking.id },
+        data: { paymentStatus: 'REFUNDED' },
+      });
     });
   });
 });

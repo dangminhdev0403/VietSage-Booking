@@ -260,6 +260,8 @@ export default function MyBookingsPage() {
   const heroBooking = bookings.find((b) => b.status === 'CONFIRMED' || b.status === 'CHECKED_IN') || bookings[0];
   const otherBookings = heroBooking ? bookings.filter((b) => b.id !== heroBooking.id) : [];
   const pendingCount = bookings.filter((b) => b.status === 'PENDING').length;
+  const confirmedCount = bookings.filter((b) => b.status === 'CONFIRMED' || b.status === 'CHECKED_IN').length;
+  const totalSpent = bookings.filter((b) => b.status === 'CONFIRMED' || b.status === 'COMPLETED').reduce((sum, b) => sum + (b.total_price || 0), 0);
 
   return (
     <div className="w-full flex-1 bg-background py-8 lg:py-12 px-4 sm:px-6 lg:px-10">
@@ -269,24 +271,14 @@ export default function MyBookingsPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/20 text-primary text-xs font-extrabold uppercase tracking-widest mb-2">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Hội Viên Hoàng Kim • Gold Elite</span>
+              <span>Hội Viên Thân Thiết • VietSage Member</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-sans font-black text-on-surface tracking-tight">
-              Kỳ Nghỉ Của Quý Khách, {session.user?.name || 'Hoàng Kim'}
+              Kỳ Nghỉ Của Quý Khách, {session.user?.name || 'Quý khách'}
             </h1>
-            <p className="text-xs sm:text-sm text-outline mt-1 max-w-2xl font-light">
-              Theo dõi lịch trình nghỉ dưỡng, xuất vé điện tử E-Voucher nhận phòng sớm và yêu cầu dịch vụ quản gia may đo 24/7.
+            <p className="text-xs sm:text-base text-outline mt-1 max-w-2xl font-light">
+              Theo dõi lịch trình nghỉ dưỡng, xuất vé điện tử E-Voucher nhận phòng và tra cứu thông tin đặt phòng trực tuyến.
             </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/register"
-              className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border border-outline-variant/30"
-            >
-              <Award className="w-4 h-4 text-primary" />
-              <span>Đặc Quyền Hội Viên</span>
-            </Link>
           </div>
         </div>
 
@@ -309,7 +301,7 @@ export default function MyBookingsPage() {
           {/* KPI 2 */}
           <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-outline">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Chờ hoàn tất</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Chờ thanh toán</span>
               <Timer className="w-4 h-4 text-amber-600" />
             </div>
             <div className="mt-3">
@@ -317,7 +309,7 @@ export default function MyBookingsPage() {
                 {String(pendingCount).padStart(2, '0')} Đơn đặt
               </span>
               <p className="text-xs text-amber-700 font-semibold mt-0.5">
-                {pendingCount > 0 ? 'Cần hoàn tất chuyển khoản' : 'Không có khoản nợ'}
+                {pendingCount > 0 ? 'Cần hoàn tất chuyển khoản' : 'Không có khoản chờ'}
               </p>
             </div>
           </div>
@@ -325,24 +317,28 @@ export default function MyBookingsPage() {
           {/* KPI 3 */}
           <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-outline">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Dặm thưởng Elite</span>
-              <Award className="w-4 h-4 text-primary" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Đã xác nhận</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="mt-3">
-              <span className="text-2xl font-black text-on-surface">14.850</span>
-              <p className="text-xs text-outline mt-0.5">Hạng Gold Elite (+15% tích lũy)</p>
+              <span className="text-2xl font-black text-on-surface">
+                {String(confirmedCount).padStart(2, '0')} Đơn đặt
+              </span>
+              <p className="text-xs text-emerald-700 font-semibold mt-0.5">Đã giữ chỗ thành công</p>
             </div>
           </div>
 
           {/* KPI 4 */}
           <div className="p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-outline">
-              <span className="text-[11px] font-bold uppercase tracking-wider">E-Voucher độc quyền</span>
-              <Ticket className="w-4 h-4 text-primary" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Tổng giá trị lưu trú</span>
+              <Award className="w-4 h-4 text-primary" />
             </div>
             <div className="mt-3">
-              <span className="text-2xl font-black text-on-surface">02 Phiếu</span>
-              <p className="text-xs text-emerald-700 font-semibold mt-0.5">Spa &amp; Nâng cấp hạng phòng</p>
+              <span className="text-2xl font-black text-primary">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalSpent)}
+              </span>
+              <p className="text-xs text-outline mt-0.5">Giao dịch đã xác nhận</p>
             </div>
           </div>
         </div>
@@ -390,7 +386,7 @@ export default function MyBookingsPage() {
         ) : error ? (
           <div className="p-8 rounded-3xl bg-rose-50 border border-rose-200 text-rose-800 text-center space-y-3">
             <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
-            <p className="text-sm font-bold">{error}</p>
+            <p className="text-base font-bold">{error}</p>
             <button
               type="button"
               onClick={reloadBookings}
@@ -480,25 +476,24 @@ export default function MyBookingsPage() {
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 pb-3">
                         <div className="flex items-center gap-2">
                           <span className="px-2.5 py-1 rounded-lg bg-surface-container text-outline text-[11px] font-bold uppercase">
-                            Villa Biển Độc Lập
-                          </span>
-                          <span className="px-2.5 py-1 rounded-lg bg-primary-container/20 text-primary text-[11px] font-extrabold uppercase">
-                            2 Khách Lớn
+                            {heroBooking.property_address || heroBooking.property_name}
                           </span>
                         </div>
                         <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Miễn phí hủy trước 48h</span>
+                          <span>Chính sách hủy linh hoạt</span>
                         </span>
                       </div>
 
                       {/* Title & Description */}
                       <div>
                         <h2 className="text-2xl font-sans font-bold text-on-surface">
-                          {heroBooking.room_type_name || 'Biệt Thự Hướng Biển Kèm Bể Bơi Riêng'}
+                          {heroBooking.room_type_name || 'Phòng Nghỉ Dưỡng Cao Cấp'}
                         </h2>
                         <p className="text-xs text-outline mt-1 leading-relaxed">
-                          Tầm nhìn trực diện hoàng hôn vịnh biển riêng tư • Quản gia riêng phục vụ 24/7 • Bữa sáng Champagne mỗi ngày.
+                          {heroBooking.special_requests
+                            ? `Yêu cầu lưu trú: ${heroBooking.special_requests}`
+                            : 'Đơn đặt phòng đã được ghi nhận trên hệ sinh thái VietSageBooking. Quý khách vui lòng xuất trình mã đơn hoặc E-Voucher khi nhận phòng.'}
                         </p>
                       </div>
 
@@ -509,7 +504,7 @@ export default function MyBookingsPage() {
                             Nhận phòng
                           </span>
                           <p className="font-bold text-on-surface mt-0.5">{heroBooking.check_in}</p>
-                          <span className="text-[11px] text-primary font-semibold">Từ 14:00 (VIP 10:30)</span>
+                          <span className="text-[11px] text-outline">Từ 14:00 chiều</span>
                         </div>
                         <div>
                           <span className="text-outline uppercase tracking-wider text-[10px] font-bold block">
@@ -523,42 +518,28 @@ export default function MyBookingsPage() {
                             Thời lượng
                           </span>
                           <p className="font-bold text-on-surface mt-0.5">{heroBooking.nights} Đêm lưu trú</p>
-                          <span className="text-[11px] text-emerald-700 font-semibold">Gồm buffet sáng</span>
+                          <span className="text-[11px] text-emerald-700 font-semibold">Bảo đảm giữ chỗ</span>
                         </div>
                       </div>
 
-                      {/* Pre-booked Schedule & Itinerary Timeline */}
+                      {/* Booking Contact & Details Summary */}
                       <div className="space-y-2">
                         <span className="text-[11px] font-extrabold uppercase tracking-wider text-outline block">
-                          Lịch trình đặc quyền gắn liền kỳ nghỉ:
+                          Thông tin người đại diện:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                           <div className="p-2.5 rounded-xl bg-surface-container flex items-center gap-2.5">
-                            <Car className="w-4 h-4 text-primary shrink-0" />
+                            <Compass className="w-4 h-4 text-primary shrink-0" />
                             <div>
-                              <p className="font-bold text-on-surface">09:15 - Đón xe riêng Cam Ranh</p>
-                              <p className="text-[11px] text-outline">Maybach sang trọng đón tại sảnh A</p>
+                              <p className="font-bold text-on-surface">Khách đại diện</p>
+                              <p className="text-[11px] text-outline">{heroBooking.guest_name}</p>
                             </div>
                           </div>
                           <div className="p-2.5 rounded-xl bg-surface-container flex items-center gap-2.5">
                             <Clock className="w-4 h-4 text-primary shrink-0" />
                             <div>
-                              <p className="font-bold text-on-surface">10:30 - Early Check-in đặc quyền</p>
-                              <p className="text-[11px] text-outline">Welcome drink &amp; Tinh dầu hoa cúc</p>
-                            </div>
-                          </div>
-                          <div className="p-2.5 rounded-xl bg-surface-container flex items-center gap-2.5">
-                            <Coffee className="w-4 h-4 text-primary shrink-0" />
-                            <div>
-                              <p className="font-bold text-on-surface">16:30 - Trà chiều bên mỏm đá</p>
-                              <p className="text-[11px] text-outline">Bàn trà vọng hải Sunset Lounge riêng biệt</p>
-                            </div>
-                          </div>
-                          <div className="p-2.5 rounded-xl bg-surface-container flex items-center gap-2.5">
-                            <UtensilsCrossed className="w-4 h-4 text-primary shrink-0" />
-                            <div>
-                              <p className="font-bold text-on-surface">19:30 - Michelin Tasting Menu</p>
-                              <p className="text-[11px] text-outline">Bữa tối 6 món tại nhà hàng The Rocks</p>
+                              <p className="font-bold text-on-surface">Số điện thoại liên hệ</p>
+                              <p className="text-[11px] text-outline">{heroBooking.guest_phone}</p>
                             </div>
                           </div>
                         </div>
@@ -678,7 +659,7 @@ export default function MyBookingsPage() {
                             <div>
                               {b.check_in} → {b.check_out} ({b.nights} đêm)
                             </div>
-                            <div className="font-bold text-primary text-sm pt-1">
+                            <div className="font-bold text-primary text-base pt-1">
                               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
                                 b.total_price
                               )}
@@ -731,7 +712,7 @@ export default function MyBookingsPage() {
               <Headphones className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-extrabold uppercase tracking-wider text-on-surface">
+              <h4 className="text-base font-extrabold uppercase tracking-wider text-on-surface">
                 Dịch Vụ Quản Gia &amp; Hỗ Trợ Lưu Trú 24/7
               </h4>
               <p className="text-xs text-outline mt-0.5">
@@ -741,11 +722,11 @@ export default function MyBookingsPage() {
           </div>
 
           <a
-            href="tel:+84288888LUXE"
+            href="tel:19006868"
             className="px-6 py-2.5 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high font-bold text-xs transition-colors shrink-0 flex items-center gap-2 border border-outline-variant/30"
           >
             <Phone className="w-3.5 h-3.5 text-primary" />
-            <span>Gọi Concierge: +84 28 8888 LUXE</span>
+            <span>Hỗ Trợ Khách Hàng: 1900 6868</span>
           </a>
         </div>
       </div>
@@ -767,7 +748,7 @@ export default function MyBookingsPage() {
                 Vé Điện Tử Nghỉ Dưỡng
               </span>
               <h3 className="text-2xl font-sans font-bold text-on-surface">
-                E-Voucher VIP Fast Check-in
+                E-Voucher Nhận Phòng Trực Tuyến
               </h3>
 
               {/* QR Code Canvas */}
@@ -775,7 +756,7 @@ export default function MyBookingsPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                    `AURUM-VOUCHER:${selectedVoucherBooking.booking_code}:${selectedVoucherBooking.guest_name}`
+                    `VIETSAGE-VOUCHER:${selectedVoucherBooking.booking_code}:${selectedVoucherBooking.guest_name}`
                   )}`}
                   alt="Voucher QR Code"
                   className="w-44 h-44 rounded-xl mx-auto shadow-sm"
@@ -784,7 +765,7 @@ export default function MyBookingsPage() {
                   {selectedVoucherBooking.booking_code}
                 </div>
                 <div className="text-[11px] text-outline font-medium mt-0.5">
-                  Mã PIN xác thực: 8899
+                  Mã xác thực phòng trực tuyến
                 </div>
               </div>
 
@@ -853,9 +834,9 @@ export default function MyBookingsPage() {
               <div className="w-12 h-12 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center mx-auto mb-2">
                 <Headphones className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-on-surface">Yêu Cầu Quản Gia Riêng 24/7</h3>
+              <h3 className="text-xl font-bold text-on-surface">Yêu Cầu Hỗ Trợ 24/7</h3>
               <p className="text-xs text-outline">
-                {butlerBookingTarget?.property_name || 'Aurum Haven Resort'} • #{butlerBookingTarget?.booking_code}
+                {butlerBookingTarget?.property_name || 'Khu nghỉ dưỡng'} • #{butlerBookingTarget?.booking_code}
               </p>
             </div>
 
@@ -947,7 +928,7 @@ export default function MyBookingsPage() {
               </div>
               <div className="flex justify-between border-t border-outline-variant/30 pt-2 items-center">
                 <span className="text-outline">Nội dung chuyển khoản:</span>
-                <div className="flex items-center gap-1 font-mono font-bold text-primary text-sm bg-primary-container/20 px-2 py-0.5 rounded">
+                <div className="flex items-center gap-1 font-mono font-bold text-primary text-base bg-primary-container/20 px-2 py-0.5 rounded">
                   <span>{paymentIntent.transfer_content}</span>
                   <button
                     type="button"
@@ -989,7 +970,7 @@ export default function MyBookingsPage() {
                 type="button"
                 disabled={actionLoading}
                 onClick={handleCheckPaymentStatus}
-                className="w-full h-12 rounded-full bg-primary text-on-primary font-bold text-sm hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-full bg-primary text-on-primary font-bold text-base hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {actionLoading ? (
                   <>

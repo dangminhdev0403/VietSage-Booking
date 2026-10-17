@@ -16,15 +16,19 @@ enum AccountRole {
 
 enum BookingStatus {
   PENDING
+  CONFIRMING
   CONFIRMED
   CHECKED_IN
   COMPLETED
   CANCELLED
+  EXPIRED
 }
 
 enum PaymentStatus {
   UNPAID
+  DEPOSIT_PAID
   PAID
+  PARTIALLY_REFUNDED
   REFUNDED
 }
 
@@ -32,12 +36,18 @@ enum PaymentMethod {
   VIETQR
   BANK_TRANSFER
   PAY_AT_HOTEL
+  STRIPE_LOCALMATE
+  CARD
 }
 
 enum PaymentTransactionStatus {
+  OPEN
   PENDING
   SUCCESS
   FAILED
+  EXPIRED
+  REFUND_PENDING
+  REFUNDED
 }
 
 enum SyncStatus {
@@ -170,6 +180,7 @@ model Property {
   starRating   Float       @default(4.0) @map("star_rating")
   thumbnailUrl String?     @map("thumbnail_url")
   images       Json?
+  vietSageHotelId String?  @unique @map("vietsage_hotel_id")
   isActive     Boolean     @default(true) @map("is_active")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
@@ -190,6 +201,13 @@ model RoomType {
   maxGuests   Int             @default(2) @map("max_guests")
   basePrice   Int             @map("base_price") // minor unit / VND
   amenities   Json?
+  vietSageRoomTypeId String?  @map("vietsage_room_type_id")
+  areaSqm     Float?          @map("area_sqm")
+  bedCount    Int?            @map("bed_count")
+  bedType     String?         @map("bed_type")
+  hasSeaView  Boolean         @default(false) @map("has_sea_view")
+  roomImages  Json?           @map("room_images")
+  bookingConditions Json?     @map("booking_conditions")
   isActive    Boolean         @default(true) @map("is_active")
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
@@ -257,6 +275,18 @@ model Booking {
   status          BookingStatus @default(PENDING)
   paymentStatus   PaymentStatus @default(UNPAID) @map("payment_status")
   specialRequests String?       @map("special_requests")
+  idempotencyKey  String?       @unique @map("idempotency_key")
+  requestFingerprint String?    @map("request_fingerprint")
+  lookupTokenHash String?       @map("lookup_token_hash")
+  currency        String        @default("VND")
+  roomSubtotal    Int?          @map("room_subtotal")
+  addonSubtotal   Int?          @map("addon_subtotal")
+  depositRateBps  Int           @default(3000) @map("deposit_rate_bps")
+  depositAmount   Int?          @map("deposit_amount")
+  balanceDue      Int?          @map("balance_due")
+  holdId          String?       @map("hold_id")
+  holdExpiresAt   DateTime?     @map("hold_expires_at")
+  vietSageReservationId String? @map("vietsage_reservation_id")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
@@ -269,6 +299,7 @@ model Booking {
   @@index([bookingCode])
   @@index([guestEmail])
   @@index([propertyId])
+  @@index([lookupTokenHash])
   @@map("bookings")
 }
 
@@ -287,23 +318,45 @@ model BookingAddon {
 }
 
 model Payment {
-  id             String                   @id @default(uuid())
-  bookingId      String                   @map("booking_id")
-  paymentMethod  PaymentMethod            @default(VIETQR) @map("payment_method")
-  amount         Int
-  currency       String                   @default("VND")
-  status         PaymentTransactionStatus @default(PENDING)
-  transactionRef String                   @unique @map("transaction_ref")
-  qrCodeUrl      String?                  @map("qr_code_url")
-  paidAt         DateTime?                @map("paid_at")
-  createdAt      DateTime                 @default(now()) @map("created_at")
-  updatedAt      DateTime                 @updatedAt @map("updated_at")
+  id                 String                   @id @default(uuid())
+  bookingId          String                   @map("booking_id")
+  paymentMethod      PaymentMethod            @default(STRIPE_LOCALMATE) @map("payment_method")
+  amount             Int
+  currency           String                   @default("VND")
+  purpose            String                   @default("DEPOSIT")
+  status             PaymentTransactionStatus @default(PENDING)
+  providerName       String                   @default("STRIPE_LOCALMATE") @map("provider_name")
+  providerSessionId  String?                  @unique @map("provider_session_id")
+  providerPaymentId  String?                  @map("provider_payment_id")
+  transactionRef     String                   @unique @map("transaction_ref")
+  qrCodeUrl          String?                  @map("qr_code_url")
+  expiresAt          DateTime?                @map("expires_at")
+  refundedAmount     Int?                     @map("refunded_amount")
+  rawMetadata        Json?                    @map("raw_metadata")
+  paidAt             DateTime?                @map("paid_at")
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
 
-  booking        Booking                  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking            Booking                  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
   @@index([transactionRef])
+  @@index([providerSessionId])
   @@map("payments")
+}
+
+model PaymentWebhookEvent {
+  id              String    @id @default(uuid())
+  providerEventId String    @unique @map("provider_event_id")
+  eventType       String    @map("event_type")
+  payloadHash     String    @map("payload_hash")
+  receivedAt      DateTime  @default(now()) @map("received_at")
+  processedAt     DateTime? @map("processed_at")
+  status          String    @default("PROCESSED") // PROCESSED, FAILED, IGNORED
+  error           String?
+
+  @@index([eventType])
+  @@map("payment_webhook_events")
 }
 
 // -------------------------------------------------------------
@@ -311,15 +364,20 @@ model Payment {
 // -------------------------------------------------------------
 
 model VietSageSyncLog {
-  id         String     @id @default(uuid())
-  syncType   String     @map("sync_type") // inventory, property, booking_push
-  direction  String     // INBOUND, OUTBOUND
-  status     SyncStatus @default(PENDING)
-  payload    Json?
-  response   Json?
-  error      String?
-  createdAt  DateTime   @default(now()) @map("created_at")
+  id             String     @id @default(uuid())
+  syncType       String     @map("sync_type") // inventory, property, booking_push, hold_confirm
+  direction      String     // INBOUND, OUTBOUND
+  status         SyncStatus @default(PENDING)
+  bookingId      String?    @map("booking_id")
+  idempotencyKey String?    @map("idempotency_key")
+  operationKey   String?    @unique @map("operation_key")
+  attemptCount   Int        @default(1) @map("attempt_count")
+  payload        Json?
+  response       Json?
+  error          String?
+  createdAt      DateTime   @default(now()) @map("created_at")
 
   @@index([syncType, status])
+  @@index([bookingId])
   @@map("vietsage_sync_logs")
 }

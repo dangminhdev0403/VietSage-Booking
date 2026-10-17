@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  GoneException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -18,7 +19,6 @@ import {
   RefreshDto,
   refreshSchema,
   RegisterDto,
-  registerSchema,
   UpdateProfileDto,
   updateProfileSchema,
 } from './dto/auth.dto';
@@ -34,52 +34,13 @@ export class AuthService {
     private readonly auditService: AuditService,
   ) {}
 
-  async register(rawDto: RegisterDto) {
-    const parsed = registerSchema.safeParse(rawDto);
-    if (!parsed.success) {
-      throw new BadRequestException({
-        message: 'Dữ liệu đăng ký không hợp lệ',
-        details: parsed.error.issues,
-      });
-    }
-
-    const { username, password, display_name, email } = parsed.data;
-
-    const existing = await this.prisma.account.findFirst({
-      where: { OR: [{ username }, { email }] },
-    });
-
-    if (existing) {
-      throw new ConflictException('Tên đăng nhập hoặc email đã được sử dụng');
-    }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const account = await this.prisma.account.create({
-      data: {
-        username,
-        passwordHash,
-        displayName: display_name,
-        email,
-        role: 'TRAVELER',
-      },
-    });
-
-    await this.auditService.logEvent({
-      actorId: account.id,
-      action: 'ACCOUNT_REGISTER',
-      boundedContext: 'identity-access',
-      resourceType: 'Account',
-      resourceId: account.id,
-    });
-
-    return {
-      id: account.id,
-      username: account.username,
-      display_name: account.displayName,
-      email: account.email,
-      role: account.role,
-    };
+  register(_rawDto?: RegisterDto): Promise<never> {
+    void _rawDto;
+    return Promise.reject(
+      new GoneException(
+        'Đăng ký tài khoản khách công khai đã ngừng hoạt động (TRAVELER role retired)',
+      ),
+    );
   }
 
   async login(rawDto: LoginDto) {
@@ -102,6 +63,12 @@ export class AuthService {
     if (!account || !account.isActive) {
       throw new UnauthorizedException(
         'Tên đăng nhập hoặc mật khẩu không chính xác',
+      );
+    }
+
+    if (account.role === 'TRAVELER') {
+      throw new UnauthorizedException(
+        'Tài khoản khách du lịch không còn được hỗ trợ đăng nhập',
       );
     }
 
@@ -129,6 +96,10 @@ export class AuthService {
       return null;
     }
 
+    if (account.role === 'TRAVELER') {
+      return null;
+    }
+
     const isMatch = await bcrypt.compare(pass, account.passwordHash);
     if (!isMatch) {
       return null;
@@ -138,6 +109,11 @@ export class AuthService {
   }
 
   async loginWithValidatedUser(account: Account) {
+    if (account.role === 'TRAVELER') {
+      throw new UnauthorizedException(
+        'Tài khoản khách du lịch không còn được hỗ trợ đăng nhập',
+      );
+    }
     return this.generateTokenPair(account.id, account.username, account.role);
   }
 
@@ -159,6 +135,12 @@ export class AuthService {
 
     if (!session || session.revokedAt || session.expiresAt < new Date()) {
       throw new UnauthorizedException('Phiên đăng nhập đã hết hạn');
+    }
+
+    if (session.account.role === 'TRAVELER') {
+      throw new UnauthorizedException(
+        'Tài khoản khách du lịch không còn được hỗ trợ phiên đăng nhập',
+      );
     }
 
     // Revoke used refresh session

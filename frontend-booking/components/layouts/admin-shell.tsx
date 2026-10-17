@@ -45,7 +45,6 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [selectedResort, setSelectedResort] = useState('all');
   const currentDateFormatted = getFormattedVietnamDate();
 
   const navItems = [
@@ -58,14 +57,14 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
     },
     {
       label: 'Lịch Giá & Tồn Kho',
-      sublabel: 'Allotments & Yield',
+      sublabel: 'Allotments & Rates',
       href: '/admin/allotments',
       icon: CalendarDays,
       active: pathname === '/admin/allotments',
     },
     {
-      label: 'Quản lý Buồng phòng & Khách sạn',
-      sublabel: 'Housekeeping & Villas',
+      label: 'Danh Sách Khách Sạn & Resort',
+      sublabel: 'Properties & Catalog',
       href: '/admin/properties',
       icon: Building2,
       active: pathname === '/admin/properties',
@@ -78,8 +77,8 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
 
   const handleNotificationClick = () => {
     luxuryAlert.info({
-      title: 'Thông Báo Điều Hành',
-      message: 'Hiện có 3 lượt khách VIP dự kiến nhận phòng trong 2 giờ tới và 1 yêu cầu phục vụ trà chiều tại Sunset Villa 01.',
+      title: 'Thông Báo Điều Hành OTA',
+      message: 'Hệ thống vận hành trực tuyến đang hoạt động ổn định. Vui lòng kiểm tra danh sách đơn đặt phòng mới và đối soát thanh toán chuyển khoản kịp thời.',
     });
   };
 
@@ -91,20 +90,20 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
           {/* Brand Header */}
           <div className="flex flex-col gap-1.5 px-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl border border-primary/40 bg-primary/10 flex items-center justify-center text-primary font-serif font-black text-sm tracking-wider shadow-xs">
-                AH
+              <div className="w-9 h-9 rounded-xl border border-primary/40 bg-primary/10 flex items-center justify-center text-primary font-serif font-black text-base tracking-wider shadow-xs">
+                VB
               </div>
               <div>
                 <span className="text-[11px] font-extrabold uppercase tracking-widest text-primary block leading-none">
-                  AURUM HAVEN
+                  VIETSAGE BOOKING
                 </span>
-                <span className="text-sm font-bold text-on-surface tracking-tight block mt-0.5">
+                <span className="text-base font-bold text-on-surface tracking-tight block mt-0.5">
                   Management Portal
                 </span>
               </div>
             </div>
             <p className="text-[11px] text-outline mt-1 font-medium leading-tight">
-              Hệ thống Quản trị Nghỉ dưỡng Cao cấp
+              Hệ thống Quản trị &amp; Điều hành OTA
             </p>
           </div>
 
@@ -115,7 +114,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
               <span className="text-xs text-on-surface font-semibold">Hệ thống phân phối LIVE</span>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-container/30 text-on-primary-container font-extrabold uppercase">
-              v3.4
+              v1.0
             </span>
           </div>
 
@@ -146,7 +145,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
           </nav>
         </div>
 
-        {/* Bottom Privilege Support Card & Back to OTA */}
+        {/* Bottom Support Card & Back to OTA */}
         <div className="space-y-3">
           <Link
             href="/"
@@ -157,8 +156,8 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
 
           <div className="p-3.5 bg-surface-container rounded-2xl border border-outline-variant/30 flex items-center justify-between shadow-2xs">
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-outline tracking-wider">Hỗ trợ đặc quyền</span>
-              <span className="text-xs font-bold text-on-surface mt-0.5">Hotline GM: (+84) 901 888</span>
+              <span className="text-[10px] uppercase font-bold text-outline tracking-wider">Hỗ trợ vận hành</span>
+              <span className="text-xs font-bold text-on-surface mt-0.5">Hotline: 1900 6868</span>
             </div>
             <div className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center">
               <Headphones className="w-4 h-4" />
@@ -179,9 +178,9 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
-                    AH
+                    VB
                   </div>
-                  <span className="font-bold text-sm text-on-surface">Aurum Haven</span>
+                  <span className="font-bold text-base text-on-surface">VietSage Booking</span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
@@ -241,7 +240,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
             <Search className="w-4 h-4 text-outline mr-2 shrink-0" />
             <input
               type="text"
-              placeholder="Tìm đặt phòng, khách hàng, mã suite..."
+              placeholder="Tìm mã đơn đặt, khách hàng, số điện thoại..."
               className="bg-transparent text-xs text-on-surface placeholder:text-outline/70 focus:outline-hidden w-full font-medium"
             />
           </div>
@@ -253,21 +252,12 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
           </div>
         </div>
 
-        {/* Right Section: Resort Selector, Notifications, User Profile */}
+        {/* Right Section: System Indicator, Notifications, User Profile */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Resort Switcher */}
-          <div className="hidden sm:flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-xl border border-outline-variant/30 text-on-surface">
+          {/* OTA Status Indicator */}
+          <div className="hidden sm:flex items-center gap-2 bg-surface-container-low px-3.5 py-1.5 rounded-xl border border-outline-variant/30 text-on-surface">
             <Building2 className="w-4 h-4 text-primary shrink-0" />
-            <select
-              value={selectedResort}
-              onChange={(e) => setSelectedResort(e.target.value)}
-              className="bg-transparent text-xs font-bold text-on-surface focus:outline-hidden cursor-pointer pr-1"
-            >
-              <option value="all">Toàn hệ thống Aurum</option>
-              <option value="phu-quoc">Aurum Sunset Phú Quốc</option>
-              <option value="mui-ne">Resort Mũi Né Haven</option>
-              <option value="son-tra">Villa Sơn Trà Heritage</option>
-            </select>
+            <span className="text-xs font-bold text-on-surface">Kênh Phân Phối OTA Trực Tuyến</span>
           </div>
 
           {/* Notifications Button */}
@@ -278,7 +268,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
             title="Xem thông báo điều hành"
           >
             <Bell className="w-4.5 h-4.5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
           </button>
 
           {/* User Profile Pill */}
@@ -305,7 +295,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
             {userDropdownOpen && (
               <div className="absolute right-0 mt-2 w-64 rounded-3xl bg-surface-container-lowest border border-outline-variant/30 shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="p-3 border-b border-outline-variant/20 mb-2">
-                  <div className="font-bold text-sm text-on-surface">{displayName}</div>
+                  <div className="font-bold text-base text-on-surface">{displayName}</div>
                   <div className="text-xs text-outline truncate mt-0.5">{displayEmail}</div>
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] font-extrabold uppercase tracking-wider">
                     <ShieldCheck className="w-3 h-3" />
@@ -328,7 +318,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <CalendarDays className="w-4 h-4 text-emerald-600" />
-                    <span>Lịch Tồn Kho & Giá Phòng</span>
+                    <span>Lịch Tồn Kho &amp; Giá Phòng</span>
                   </Link>
                   <Link
                     href="/admin/properties"
@@ -336,7 +326,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <Building2 className="w-4 h-4 text-primary" />
-                    <span>Quản lý Buồng phòng & Khách sạn</span>
+                    <span>Danh Sách Khách Sạn &amp; Resort</span>
                   </Link>
 
                   <div className="h-px bg-outline-variant/20 my-1" />
@@ -366,9 +356,9 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
         <footer className="mt-auto border-t border-outline-variant/20 py-4 px-6 lg:px-10 text-xs text-outline flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-container-low/50">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-on-surface">Aurum Haven Management Portal</span>
+            <span className="font-semibold text-on-surface">VietSage Booking Management Portal</span>
             <span className="text-outline-variant">•</span>
-            <span>Hệ thống điều hành OTA v3.4</span>
+            <span>Hệ thống điều hành OTA v1.0</span>
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <span>Múi giờ chuẩn: Asia/Ho_Chi_Minh (UTC+7)</span>

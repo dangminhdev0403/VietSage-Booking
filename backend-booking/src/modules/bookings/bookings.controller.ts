@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -13,8 +14,10 @@ import { Public } from '../../common/auth/public.decorator';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import type {
+  CancelBookingDto,
   CreateBookingDto,
   LookupBookingDto,
+  QuoteBookingDto,
   UpdateBookingStatusDto,
 } from './dto/bookings.dto';
 
@@ -23,19 +26,50 @@ export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Public()
+  @Post('quote')
+  async getQuote(@Body() body: QuoteBookingDto) {
+    const data = await this.bookingsService.getQuote(body);
+    return ok(data);
+  }
+
+  @Public()
   @Post()
   async createBooking(
     @Body() body: CreateBookingDto,
-    @CurrentUser() user: AuthenticatedUser | null,
+    @Headers('idempotency-key') idempotencyKey?: string,
+    @Headers('x-idempotency-key') xIdempotencyKey?: string,
   ) {
-    const data = await this.bookingsService.createBooking(body, user?.id);
+    const key = idempotencyKey || xIdempotencyKey;
+    const data = await this.bookingsService.createBooking(body, undefined, key);
     return ok(data);
   }
 
   @Public()
   @Post('lookup')
-  async lookupBooking(@Body() body: LookupBookingDto) {
-    const data = await this.bookingsService.lookupBooking(body);
+  async lookupBooking(
+    @Body() body: LookupBookingDto,
+    @Headers('x-lookup-token') headerToken?: string,
+  ) {
+    const data = await this.bookingsService.lookupBooking({
+      ...body,
+      lookup_token: body.lookup_token || body.token || headerToken,
+    });
+    return ok(data);
+  }
+
+  @Public()
+  @Post(':code/cancel')
+  async cancelBooking(
+    @Param('code') code: string,
+    @Body() body: CancelBookingDto,
+    @Headers('x-lookup-token') headerToken?: string,
+  ) {
+    const token = body.lookup_token || body.token || headerToken || '';
+    const data = await this.bookingsService.cancelBooking(
+      code,
+      token,
+      body.reason,
+    );
     return ok(data);
   }
 

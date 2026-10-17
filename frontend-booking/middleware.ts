@@ -8,7 +8,12 @@ import {
 
 export default auth((req) => {
   const session = req.auth;
-  const isLoggedIn = !!session?.user;
+  const hasAuthError = (session as unknown as { error?: string })?.error === 'RefreshAccessTokenError';
+  const hasToken = !!(
+    (session as unknown as { accessToken?: string })?.accessToken ||
+    (session?.user as unknown as { accessToken?: string })?.accessToken
+  );
+  const isLoggedIn = !!session?.user && !hasAuthError && hasToken;
   const role = (session?.user as { role?: string } | undefined)?.role;
   const { pathname, search } = req.nextUrl;
 

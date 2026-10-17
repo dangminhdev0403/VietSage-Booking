@@ -6,6 +6,119 @@ interface AuthUserPayload {
   role?: string;
   accessToken?: string;
   refreshToken?: string;
+  accessTokenExpires?: number;
+  error?: string;
+}
+
+// Deduplicate concurrent refreshes for the same refresh token across parallel server requests
+const refreshPromises = new Map<string, Promise<Record<string, unknown>>>();
+
+// Cache recently rotated tokens for a 4-second grace window to handle concurrent requests
+const rotatedTokensCache = new Map<
+  string,
+  {
+    token: Record<string, unknown>;
+    expiresAt: number;
+  }
+>();
+
+async function refreshAccessToken(token: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const backendUrl =
+    process.env.INTERNAL_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:8080';
+
+  const rawRefreshToken = token.refreshToken;
+  if (!rawRefreshToken || typeof rawRefreshToken !== 'string') {
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+      accessToken: undefined,
+      refreshToken: undefined,
+      accessTokenExpires: 0,
+    };
+  }
+
+  // 1. Check if this token was already rotated recently (grace period for in-flight requests)
+  const cachedRotation = rotatedTokensCache.get(rawRefreshToken);
+  if (cachedRotation && Date.now() < cachedRotation.expiresAt) {
+    return cachedRotation.token;
+  }
+
+  // 2. Deduplicate in-flight refresh requests for the same token
+  const existingPromise = refreshPromises.get(rawRefreshToken);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const refreshPromise = (async (): Promise<Record<string, unknown>> => {
+    try {
+      const res = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          refresh_token: rawRefreshToken,
+        }),
+      });
+
+      if (!res.ok) {
+        console.warn(`[Auth.js] Refresh failed with status ${res.status}. Invalidating session.`);
+        return {
+          ...token,
+          error: 'RefreshAccessTokenError',
+          accessToken: undefined,
+          refreshToken: undefined,
+          accessTokenExpires: 0,
+        };
+      }
+
+      const envelope = await res.json();
+      if (!envelope.success || !envelope.data) {
+        console.warn('[Auth.js] Refresh response unsuccessful:', envelope.error?.message);
+        return {
+          ...token,
+          error: 'RefreshAccessTokenError',
+          accessToken: undefined,
+          refreshToken: undefined,
+          accessTokenExpires: 0,
+        };
+      }
+
+      const { access_token, refresh_token, expires_in, account } = envelope.data;
+
+      const updatedToken: Record<string, unknown> = {
+        ...token,
+        accessToken: access_token,
+        refreshToken: refresh_token ?? rawRefreshToken,
+        accessTokenExpires: Date.now() + (expires_in ?? 3600) * 1000,
+        role: account?.role ?? token.role,
+        error: undefined,
+      };
+
+      // Store in rotated cache for a 4-second grace period
+      rotatedTokensCache.set(rawRefreshToken, {
+        token: updatedToken,
+        expiresAt: Date.now() + 4000,
+      });
+
+      return updatedToken;
+    } catch (err) {
+      console.warn('[Auth.js] Refresh network error:', err instanceof Error ? err.message : err);
+      return {
+        ...token,
+        error: 'RefreshAccessTokenError',
+        accessToken: undefined,
+        refreshToken: undefined,
+        accessTokenExpires: 0,
+      };
+    } finally {
+      refreshPromises.delete(rawRefreshToken);
+    }
+  })();
+
+  refreshPromises.set(rawRefreshToken, refreshPromise);
+  return refreshPromise;
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -46,7 +159,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return null;
           }
 
-          const { account, access_token, refresh_token } = envelope.data;
+          const { account, access_token, refresh_token, expires_in } = envelope.data;
 
           return {
             id: account.id,
@@ -55,6 +168,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: account.role,
             accessToken: access_token,
             refreshToken: refresh_token,
+            accessTokenExpires: Date.now() + (expires_in ?? 3600) * 1000,
           };
         } catch (err) {
           console.error('[Auth.js] authorize error:', err);
@@ -64,18 +178,64 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
+      // Initial sign-in
       if (user) {
         const u = user as unknown as AuthUserPayload;
-        token.id = u.id;
-        token.role = u.role;
-        token.accessToken = u.accessToken;
-        token.refreshToken = u.refreshToken;
+        return {
+          ...token,
+          id: u.id,
+          role: u.role,
+          accessToken: u.accessToken,
+          refreshToken: u.refreshToken,
+          accessTokenExpires: u.accessTokenExpires ?? Date.now() + 3600 * 1000,
+          error: undefined,
+        };
       }
-      return token;
+
+      // If token is already in error state, stop attempting refresh immediately
+      if (token.error === 'RefreshAccessTokenError') {
+        return {
+          ...token,
+          accessToken: undefined,
+          refreshToken: undefined,
+          accessTokenExpires: 0,
+        };
+      }
+
+      // Return previous token if the access token has not expired yet (buffer 60 seconds)
+      if (
+        typeof token.accessTokenExpires === 'number' &&
+        Date.now() < token.accessTokenExpires - 60 * 1000
+      ) {
+        return token;
+      }
+
+      // Access token has expired or is missing expiry timestamp: rotate via backend refresh token
+      if (token.refreshToken) {
+        return await refreshAccessToken(token as Record<string, unknown>);
+      }
+
+      return {
+        ...token,
+        error: 'RefreshAccessTokenError',
+        accessToken: undefined,
+        refreshToken: undefined,
+        accessTokenExpires: 0,
+      };
     },
     session({ session, token }) {
       if (token) {
+        if (token.error === 'RefreshAccessTokenError' || !token.accessToken) {
+          return {
+            ...session,
+            user: undefined as unknown as typeof session.user,
+            error: 'RefreshAccessTokenError',
+            accessToken: undefined,
+            refreshToken: undefined,
+          };
+        }
+
         if (!session.user) {
           (session as unknown as Record<string, unknown>).user = {};
         }
@@ -83,8 +243,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const sUser = session.user as unknown as AuthUserPayload;
         sUser.role = token.role as string | undefined;
         sUser.accessToken = token.accessToken as string | undefined;
-        const s = session as unknown as AuthUserPayload;
+        sUser.refreshToken = token.refreshToken as string | undefined;
+
+        const s = session as unknown as AuthUserPayload & { error?: string };
         s.accessToken = token.accessToken as string | undefined;
+        s.refreshToken = token.refreshToken as string | undefined;
+        s.error = undefined;
       }
       return session;
     },

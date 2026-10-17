@@ -4,9 +4,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../identity-access/audit.service';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 
 describe('BookingsService', () => {
@@ -310,16 +312,9 @@ describe('BookingsService', () => {
       );
     });
 
-    it('enforces accountId scope strictly for TRAVELER', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
-      prisma.booking.count.mockResolvedValue(0);
-
-      await service.listBookings({}, travelerUser);
-
-      expect(prisma.booking.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ accountId: travelerUser.id }),
-        }),
+    it('rejects TRAVELER role with ForbiddenException', async () => {
+      await expect(service.listBookings({}, travelerUser)).rejects.toThrow(
+        ForbiddenException,
       );
     });
 
@@ -342,38 +337,40 @@ describe('BookingsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    it('rejects TRAVELER role with ForbiddenException', async () => {
+      const dto = { status: 'CANCELLED', reason: 'Change of plans' };
+      await expect(
+        service.updateBookingStatus('b1', dto as any, travelerUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
     it('rejects cancelling a booking that is not in PENDING status', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         id: 'b1',
         status: 'CONFIRMED',
-        accountId: travelerUser.id,
+        accountId: null,
       });
 
       const dto = { status: 'CANCELLED', reason: 'Change of plans' };
       await expect(
-        service.updateBookingStatus('b1', dto as any, travelerUser),
+        service.updateBookingStatus('b1', dto as any, adminUser),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('allows cancelling a PENDING booking when requested by owner', async () => {
+    it('allows cancelling a PENDING booking when requested by staff', async () => {
       prisma.booking.findUnique.mockResolvedValue({
         id: 'b1',
         bookingCode: 'OTA-202611-ABC',
         status: 'PENDING',
-        accountId: travelerUser.id,
+        accountId: null,
       });
-      prisma.booking.update.mockResolvedValue({
-        id: 'b1',
-        bookingCode: 'OTA-202611-ABC',
-        status: 'CANCELLED',
-        updatedAt: new Date(),
-      });
+      prisma.booking.updateMany.mockResolvedValue({ count: 1 });
 
       const dto = { status: 'CANCELLED', reason: 'Change of plans' };
       const result = await service.updateBookingStatus(
         'b1',
         dto as any,
-        travelerUser,
+        adminUser,
       );
 
       expect(result.status).toBe('CANCELLED');
@@ -387,7 +384,7 @@ describe('BookingsService', () => {
         id: 'b1',
         bookingCode: 'OTA-202611-ABC',
         status: 'PENDING',
-        accountId: travelerUser.id,
+        accountId: null,
         roomTypeId: mockRoomType.id,
         checkIn: new Date('2026-11-05T00:00:00.000Z'),
         checkOut: new Date('2026-11-06T00:00:00.000Z'),
@@ -395,11 +392,7 @@ describe('BookingsService', () => {
       prisma.booking.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
-        service.updateBookingStatus(
-          'b1',
-          { status: 'CANCELLED' },
-          travelerUser,
-        ),
+        service.updateBookingStatus('b1', { status: 'CANCELLED' }, adminUser),
       ).rejects.toThrow(BadRequestException);
 
       expect(prisma.roomAllotment.updateMany).not.toHaveBeenCalled();
@@ -563,7 +556,276 @@ describe('BookingsService', () => {
     });
   });
 
-  describe('lookupBooking - Exact normalized contact lookup', () => {
+  describe('createBooking - Deposit calculation & Idempotency', () => {
+    it('returns raw lookup token once, calculates 30% deposit and 70% balance due deterministically', async () => {
+      prisma.property.findUnique.mockResolvedValue(mockProperty);
+      prisma.roomType.findUnique.mockResolvedValue(mockRoomType); // basePrice = 5,000,000
+      prisma.addonService.findMany.mockResolvedValue([mockAddon]); // 800,000
+
+      // 2 nights: 10,000,000 + 800,000 = 10,800,000 VND
+      // 30% deposit = 3,240,000 VND, balance due = 7,560,000 VND
+      prisma.booking.create.mockImplementation(({ data }: any) => {
+        return Promise.resolve({
+          id: 'booking-deposit-test',
+          ...data,
+          property: mockProperty,
+          roomType: mockRoomType,
+          createdAt: new Date(),
+        });
+      });
+
+      const dto = {
+        property_id: mockProperty.id,
+        room_type_id: mockRoomType.id,
+        guest_name: 'Nguyen Van A',
+        guest_email: 'guest@example.com',
+        guest_phone: '0912345678',
+        check_in: '2026-11-05',
+        check_out: '2026-11-07',
+        service_ids: [mockAddon.id],
+      };
+
+      const result = await service.createBooking(dto);
+
+      expect(result.total_price).toBe(10800000);
+      expect(result.deposit_rate_bps).toBe(3000);
+      expect(result.deposit_amount).toBe(3240000);
+      expect(result.balance_due).toBe(7560000);
+      expect(result.currency).toBe('VND');
+      expect(result.status).toBe('PENDING');
+      expect(result.payment_status).toBe('UNPAID');
+
+      // High-entropy random lookup token (32 bytes = 64 hex characters)
+      expect(result.lookup_token).toBeDefined();
+      expect(result.lookup_token).toHaveLength(64);
+
+      // Verify DB creation saved hash, not raw token, and set accountId to null
+      expect(prisma.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            accountId: null,
+            depositRateBps: 3000,
+            depositAmount: 3240000,
+            balanceDue: 7560000,
+            lookupTokenHash: expect.any(String),
+          }),
+        }),
+      );
+    });
+
+    it('idempotency: same key + same payload returns existing booking without re-running transaction', async () => {
+      const idempotencyKey = 'idem-key-12345';
+      const existingBooking = {
+        id: 'existing-b1',
+        bookingCode: 'OTA-202611-EXIST',
+        propertyId: mockProperty.id,
+        roomTypeId: mockRoomType.id,
+        guestName: 'Nguyen Van A',
+        guestEmail: 'guest@example.com',
+        guestPhone: '0912345678',
+        checkIn: new Date('2026-11-05T00:00:00.000Z'),
+        checkOut: new Date('2026-11-07T00:00:00.000Z'),
+        nights: 2,
+        totalPrice: 10000000,
+        roomSubtotal: 10000000,
+        addonSubtotal: 0,
+        depositRateBps: 3000,
+        depositAmount: 3000000,
+        balanceDue: 7000000,
+        currency: 'VND',
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+        idempotencyKey,
+        requestFingerprint: null,
+        property: mockProperty,
+        roomType: mockRoomType,
+        addons: [],
+        payments: [],
+        createdAt: new Date(),
+      };
+
+      const sortedServices: string[] = [];
+      const fingerprintPayload = JSON.stringify({
+        property_id: mockProperty.id,
+        room_type_id: mockRoomType.id,
+        guest_name: 'Nguyen Van A',
+        guest_email: 'guest@example.com',
+        guest_phone: '0912345678',
+        check_in: '2026-11-05',
+        check_out: '2026-11-07',
+        service_ids: sortedServices,
+      });
+      const expectedFingerprint = crypto
+        .createHash('sha256')
+        .update(fingerprintPayload)
+        .digest('hex');
+
+      existingBooking.requestFingerprint = expectedFingerprint as any;
+
+      prisma.booking.findFirst.mockResolvedValue(existingBooking);
+
+      const dto = {
+        property_id: mockProperty.id,
+        room_type_id: mockRoomType.id,
+        guest_name: 'Nguyen Van A',
+        guest_email: 'guest@example.com',
+        guest_phone: '0912345678',
+        check_in: '2026-11-05',
+        check_out: '2026-11-07',
+        idempotency_key: idempotencyKey,
+      };
+
+      const result = await service.createBooking(dto);
+      expect(result.id).toBe('existing-b1');
+      expect(result.booking_code).toBe('OTA-202611-EXIST');
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('idempotency conflict: same key + different payload throws ConflictException (409)', async () => {
+      const idempotencyKey = 'idem-key-conflict';
+      prisma.booking.findFirst.mockResolvedValue({
+        id: 'existing-b2',
+        idempotencyKey,
+        requestFingerprint: 'different-fingerprint-hash',
+        property: mockProperty,
+        roomType: mockRoomType,
+        addons: [],
+        payments: [],
+      });
+
+      const dto = {
+        property_id: mockProperty.id,
+        room_type_id: mockRoomType.id,
+        guest_name: 'Nguyen Van A',
+        guest_email: 'guest@example.com',
+        guest_phone: '0912345678',
+        check_in: '2026-11-05',
+        check_out: '2026-11-07',
+        idempotency_key: idempotencyKey,
+      };
+
+      await expect(service.createBooking(dto)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+  });
+
+  describe('getQuote - Authoritative quote calculation', () => {
+    it('calculates quote with daily allotment prices, base-price fallback, addons, 30% deposit and 15-minute expiry', async () => {
+      prisma.property.findUnique.mockResolvedValue(mockProperty);
+      prisma.roomType.findUnique.mockResolvedValue(mockRoomType); // basePrice = 5,000,000
+      prisma.addonService.findMany.mockResolvedValue([mockAddon]); // 800,000
+
+      // Stay: 2 nights
+      // Day 1: 6,000,000 allotment
+      // Day 2: base price fallback (5,000,000)
+      prisma.roomAllotment.findMany.mockResolvedValue([
+        {
+          id: 'allot-quote-1',
+          roomTypeId: mockRoomType.id,
+          date: new Date('2026-11-05T00:00:00.000Z'),
+          totalRooms: 10,
+          bookedRooms: 2,
+          price: 6000000,
+          isBlocked: false,
+        },
+      ]);
+
+      const quoteDto = {
+        property_id: mockProperty.id,
+        room_type_id: mockRoomType.id,
+        check_in: '2026-11-05',
+        check_out: '2026-11-07',
+        guests: 2,
+        service_ids: [mockAddon.id],
+      };
+
+      const quote = await service.getQuote(quoteDto);
+
+      expect(quote.property_id).toBe(mockProperty.id);
+      expect(quote.room_type_id).toBe(mockRoomType.id);
+      expect(quote.nights).toBe(2);
+      expect(quote.daily_prices).toEqual([
+        { date: '2026-11-05', price: 6000000 },
+        { date: '2026-11-06', price: 5000000 },
+      ]);
+      expect(quote.room_subtotal).toBe(11000000);
+      expect(quote.addon_subtotal).toBe(800000);
+      expect(quote.total_price).toBe(11800000);
+      expect(quote.deposit_rate_bps).toBe(3000);
+      expect(quote.deposit_amount).toBe(3540000); // 11,800,000 * 0.3
+      expect(quote.balance_due).toBe(8260000); // 11,800,000 - 3,540,000
+      expect(quote.currency).toBe('VND');
+      expect(quote.is_available).toBe(true);
+      expect(quote.expires_at).toBeDefined();
+
+      const expiryDiff = new Date(quote.expires_at).getTime() - Date.now();
+      expect(expiryDiff).toBeGreaterThan(14 * 60 * 1000);
+      expect(expiryDiff).toBeLessThanOrEqual(15 * 60 * 1000 + 5000);
+    });
+
+    it('rejects quote when check_out <= check_in', async () => {
+      await expect(
+        service.getQuote({
+          property_id: mockProperty.id,
+          room_type_id: mockRoomType.id,
+          check_in: '2026-11-07',
+          check_out: '2026-11-05',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects quote when guest count exceeds room capacity', async () => {
+      prisma.property.findUnique.mockResolvedValue(mockProperty);
+      prisma.roomType.findUnique.mockResolvedValue({
+        ...mockRoomType,
+        maxGuests: 2,
+      });
+
+      await expect(
+        service.getQuote({
+          property_id: mockProperty.id,
+          room_type_id: mockRoomType.id,
+          check_in: '2026-11-05',
+          check_out: '2026-11-07',
+          guests: 5,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects quote when allotment is blocked or fully booked', async () => {
+      prisma.property.findUnique.mockResolvedValue(mockProperty);
+      prisma.roomType.findUnique.mockResolvedValue(mockRoomType);
+      prisma.roomAllotment.findMany.mockResolvedValue([
+        {
+          id: 'allot-q-full',
+          roomTypeId: mockRoomType.id,
+          date: new Date('2026-11-05T00:00:00.000Z'),
+          totalRooms: 10,
+          bookedRooms: 10,
+          price: 5000000,
+          isBlocked: false,
+        },
+      ]);
+
+      await expect(
+        service.getQuote({
+          property_id: mockProperty.id,
+          room_type_id: mockRoomType.id,
+          check_in: '2026-11-05',
+          check_out: '2026-11-06',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('lookupBooking - Secure constant-time token lookup', () => {
+    const rawSecretToken = 'a'.repeat(64);
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawSecretToken)
+      .digest('hex');
+
     const bookingInDb = {
       id: 'b-lookup-test-1',
       bookingCode: 'OTA-202611-TEST',
@@ -575,10 +837,17 @@ describe('BookingsService', () => {
       checkIn: new Date('2026-11-05T00:00:00.000Z'),
       checkOut: new Date('2026-11-07T00:00:00.000Z'),
       nights: 2,
+      roomSubtotal: 10000000,
+      addonSubtotal: 0,
       totalPrice: 10000000,
+      depositRateBps: 3000,
+      depositAmount: 3000000,
+      balanceDue: 7000000,
+      currency: 'VND',
       status: 'PENDING',
       paymentStatus: 'UNPAID',
       specialRequests: null,
+      lookupTokenHash: tokenHash,
       property: mockProperty,
       roomType: mockRoomType,
       addons: [],
@@ -586,74 +855,129 @@ describe('BookingsService', () => {
       createdAt: new Date(),
     };
 
-    it('rejects guest phone lookup using substring matching', async () => {
-      // Prisma query must not use substring contains
-      prisma.booking.findFirst.mockImplementation(({ where }: any) => {
-        if (where?.OR) {
-          for (const cond of where.OR) {
-            if (cond.guestPhone && cond.guestPhone.contains) {
-              throw new Error(
-                'Forbidden: contains substring search used for phone',
-              );
-            }
-          }
-        }
-        return Promise.resolve(null);
-      });
-
+    it('rejects lookup when token is missing with NotFoundException', async () => {
       await expect(
         service.lookupBooking({
           booking_code: 'OTA-202611-TEST',
-          contact: '1234', // Substring of 0912345678
         }),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('rejects in-memory verification if contact is only a substring of phone', async () => {
+    it('rejects lookup when token does not match hash with generic NotFoundException', async () => {
       prisma.booking.findFirst.mockResolvedValue(bookingInDb);
 
+      const wrongToken = 'b'.repeat(64);
       await expect(
         service.lookupBooking({
           booking_code: 'OTA-202611-TEST',
-          contact: '09123', // Substring prefix, not exact normalized match
+          lookup_token: wrongToken,
         }),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('succeeds when contact matches exact normalized phone across common formatting (+84, spaces, dashes)', async () => {
+    it('succeeds and returns redacted booking when token matches SHA-256 hash in constant time', async () => {
       prisma.booking.findFirst.mockResolvedValue(bookingInDb);
 
-      // Matches +84 912 345 678
-      const res1 = await service.lookupBooking({
+      const result = await service.lookupBooking({
         booking_code: 'OTA-202611-TEST',
-        contact: '+84 912 345 678',
+        lookup_token: rawSecretToken,
       });
-      expect(res1.booking_code).toBe('OTA-202611-TEST');
 
-      // Matches 0912-345-678
-      const res2 = await service.lookupBooking({
-        booking_code: 'OTA-202611-TEST',
-        contact: '0912-345-678',
-      });
-      expect(res2.booking_code).toBe('OTA-202611-TEST');
-
-      // Matches standard 0912345678
-      const res3 = await service.lookupBooking({
-        booking_code: 'OTA-202611-TEST',
-        contact: '0912345678',
-      });
-      expect(res3.booking_code).toBe('OTA-202611-TEST');
+      expect(result.booking_code).toBe('OTA-202611-TEST');
+      expect(result.total_price).toBe(10000000);
+      expect(result.deposit_amount).toBe(3000000);
+      expect(result.balance_due).toBe(7000000);
+      // Redaction check: internal hashes must not be leaked
+      expect((result as any).lookupTokenHash).toBeUndefined();
+      expect((result as any).requestFingerprint).toBeUndefined();
     });
 
-    it('succeeds with case-insensitive exact email match', async () => {
+    it('supports (bookingCode, lookupToken) method signature directly', async () => {
       prisma.booking.findFirst.mockResolvedValue(bookingInDb);
 
-      const res = await service.lookupBooking({
-        booking_code: 'OTA-202611-TEST',
-        contact: 'GUEST.A@EXAMPLE.COM',
+      const result = await service.lookupBooking(
+        'OTA-202611-TEST',
+        rawSecretToken,
+      );
+      expect(result.booking_code).toBe('OTA-202611-TEST');
+    });
+  });
+
+  describe('cancelBooking - Pre-payment cancellation and allotment release', () => {
+    const rawSecretToken = 'c'.repeat(64);
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawSecretToken)
+      .digest('hex');
+
+    const pendingBooking = {
+      id: 'b-cancel-test-1',
+      bookingCode: 'OTA-202611-CANCEL',
+      propertyId: mockProperty.id,
+      roomTypeId: mockRoomType.id,
+      checkIn: new Date('2026-11-05T00:00:00.000Z'),
+      checkOut: new Date('2026-11-06T00:00:00.000Z'),
+      status: 'PENDING',
+      paymentStatus: 'UNPAID',
+      lookupTokenHash: tokenHash,
+    };
+
+    it('rejects cancellation when token is invalid or missing with NotFoundException', async () => {
+      prisma.booking.findFirst.mockResolvedValue(pendingBooking);
+
+      await expect(
+        service.cancelBooking('OTA-202611-CANCEL', 'wrong-token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('rejects cancellation when booking status is not PENDING with BadRequestException', async () => {
+      prisma.booking.findFirst.mockResolvedValue({
+        ...pendingBooking,
+        status: 'CONFIRMED',
       });
-      expect(res.booking_code).toBe('OTA-202611-TEST');
-      expect(res.guest_email).toBe('guest.a@example.com');
+
+      await expect(
+        service.cancelBooking('OTA-202611-CANCEL', rawSecretToken),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects cancellation when booking paymentStatus is not UNPAID with BadRequestException', async () => {
+      prisma.booking.findFirst.mockResolvedValue({
+        ...pendingBooking,
+        paymentStatus: 'DEPOSIT_PAID',
+      });
+
+      await expect(
+        service.cancelBooking('OTA-202611-CANCEL', rawSecretToken),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('succeeds for PENDING unpaid booking: transitions to CANCELLED and releases allotment', async () => {
+      prisma.booking.findFirst.mockResolvedValue(pendingBooking);
+      prisma.booking.updateMany.mockResolvedValue({ count: 1 });
+      prisma.roomAllotment.findUnique.mockResolvedValue({
+        id: 'allot-cancel-release',
+        bookedRooms: 2,
+      });
+
+      const result = await service.cancelBooking(
+        'OTA-202611-CANCEL',
+        rawSecretToken,
+        'Guest changed itinerary',
+      );
+
+      expect(result.status).toBe('CANCELLED');
+      expect(result.booking_code).toBe('OTA-202611-CANCEL');
+      expect(prisma.roomAllotment.updateMany).toHaveBeenCalledWith({
+        where: { id: 'allot-cancel-release', bookedRooms: { gt: 0 } },
+        data: { bookedRooms: { decrement: 1 } },
+      });
+      expect(audit.logEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'BOOKING_CANCEL',
+          actorId: 'ANONYMOUS_GUEST',
+        }),
+      );
     });
   });
 });

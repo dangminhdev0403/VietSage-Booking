@@ -39,7 +39,6 @@ function LoginContent() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
 
   // Register form state
   const [regDisplayName, setRegDisplayName] = useState('');
@@ -304,7 +303,7 @@ function LoginContent() {
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface">
                   {mode === 'login' ? 'Đăng Nhập Tài Khoản' : 'Đăng Ký Hội Viên Mới'}
                 </h1>
-                <p className="text-xs sm:text-sm text-outline mt-0.5">
+                <p className="text-xs sm:text-base text-outline mt-0.5">
                   {mode === 'login'
                     ? 'Chào mừng quý khách trở lại với không gian nghỉ dưỡng tinh tế VietSageBooking.'
                     : 'Gia nhập mạng lưới hội viên thượng lưu để nhận chuỗi đặc quyền và giá ưu đãi độc quyền.'}
@@ -320,7 +319,7 @@ function LoginContent() {
                     setErrorMessage(null);
                     setSuccessMessage(null);
                   }}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-base transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
                     mode === 'login'
                       ? 'bg-surface-container-lowest text-on-surface shadow-sm font-extrabold border border-outline-variant/30'
                       : 'text-outline hover:text-on-surface'
@@ -337,7 +336,7 @@ function LoginContent() {
                     setErrorMessage(null);
                     setSuccessMessage(null);
                   }}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-base transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
                     mode === 'register'
                       ? 'bg-surface-container-lowest text-on-surface shadow-sm font-extrabold border border-outline-variant/30'
                       : 'text-outline hover:text-on-surface'
@@ -383,7 +382,7 @@ function LoginContent() {
                         value={loginUsername}
                         onChange={(e) => setLoginUsername(e.target.value)}
                         placeholder="Nhập tên đăng nhập hoặc email..."
-                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -398,7 +397,7 @@ function LoginContent() {
                         onClick={() =>
                           luxuryAlert.info({
                             title: 'Hỗ Trợ Khôi Phục Mật Khẩu',
-                            message: 'Quý khách vui lòng liên hệ tổng đài hỗ trợ 1900 8888 hoặc hòm thư hỗ trợ để được hướng dẫn cấp lại mật khẩu.',
+                            message: 'Quý khách vui lòng liên hệ tổng đài hỗ trợ 1900 6868 hoặc hòm thư hỗ trợ để được hướng dẫn cấp lại mật khẩu.',
                             confirmText: 'Đã Tiếp Nhận',
                           })
                         }
@@ -415,7 +414,7 @@ function LoginContent() {
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full pl-11 pr-12 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                        className="w-full pl-11 pr-12 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                       />
                       <button
                         type="button"
@@ -431,22 +430,10 @@ function LoginContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-on-surface select-none">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-4 h-4 rounded text-primary focus:ring-primary accent-primary cursor-pointer"
-                      />
-                      <span>Ghi nhớ đăng nhập trên thiết bị tin cậy này</span>
-                    </label>
-                  </div>
-
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full mt-2 py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-sm tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full mt-2 py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-base tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isLoading ? (
                       <>
@@ -514,7 +501,7 @@ function LoginContent() {
                         value={regDisplayName}
                         onChange={(e) => setRegDisplayName(e.target.value)}
                         placeholder="Nguyễn Hoàng Nam"
-                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -531,7 +518,7 @@ function LoginContent() {
                         value={regUsername}
                         onChange={(e) => setRegUsername(e.target.value)}
                         placeholder="nam.nguyen"
-                        className="w-full px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                        className="w-full px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                       />
                     </div>
 
@@ -547,7 +534,7 @@ function LoginContent() {
                           value={regEmail}
                           onChange={(e) => setRegEmail(e.target.value)}
                           placeholder="nam@vietsage.vn"
-                          className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                          className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                         />
                       </div>
                     </div>
@@ -567,7 +554,7 @@ function LoginContent() {
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full pl-11 pr-11 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                          className="w-full pl-11 pr-11 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                         />
                         <button
                           type="button"
@@ -593,7 +580,7 @@ function LoginContent() {
                         value={regConfirmPassword}
                         onChange={(e) => setRegConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                        className="w-full px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/20 focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -622,7 +609,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full mt-2 py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-sm tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full mt-2 py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-base tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isLoading ? (
                       <>
@@ -640,26 +627,11 @@ function LoginContent() {
                       className="inline-flex items-center gap-1.5 text-xs text-primary font-bold hover:underline"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Trải nghiệm Đăng ký Hội Viên May Đo Sở Thích (Aurum Elite) →</span>
+                      <span>Trải nghiệm Đăng ký Hội Viên VIP Cá Nhân Hóa →</span>
                     </Link>
                   </div>
                 </form>
               )}
-
-              {/* Card Trust & Hotline Footer */}
-              <div className="mt-8 pt-6 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-4 text-xs text-outline">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-primary" />
-                  <span>Mã hóa 256-bit SSL bảo vệ dữ liệu</span>
-                </div>
-                <div className="flex items-center gap-1.5 font-semibold">
-                  <Headphones className="w-4 h-4 text-primary" />
-                  <span>Tổng đài 24/7:</span>
-                  <a href="tel:19008888" className="text-primary hover:underline font-bold">
-                    1900 8888
-                  </a>
-                </div>
-              </div>
             </div>
           </div>
         </div>

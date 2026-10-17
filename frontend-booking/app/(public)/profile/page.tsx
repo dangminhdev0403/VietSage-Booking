@@ -93,12 +93,12 @@ function ProfileContent({ session }: { session: SessionType }) {
       {/* Title & Introduction */}
         <div className="border-b border-outline-variant/30 pb-6">
           <span className="text-xs uppercase tracking-widest text-primary font-bold">
-            Aurum Privilege
+            VietSage Privilege
           </span>
           <h1 className="text-3xl sm:text-4xl font-sans font-extrabold text-on-surface mt-1 tracking-tight">
             Hồ Sơ Cá Nhân &amp; Thẻ Hội Viên Thượng Lưu
           </h1>
-          <p className="text-sm text-outline mt-1 font-light">
+          <p className="text-base text-outline mt-1 font-light">
             Quản lý thông tin định danh nhận phòng nhanh, mật khẩu bảo mật và đặc quyền hội viên VIP.
           </p>
         </div>
@@ -111,31 +111,31 @@ function ProfileContent({ session }: { session: SessionType }) {
             <div className="flex justify-between items-start mb-12">
               <div className="space-y-1">
                 <span className="font-sans text-xl font-black tracking-wider text-amber-300">
-                  AURUM HAVEN
+                  VIETSAGE BOOKING
                 </span>
                 <p className="text-[9px] uppercase tracking-[0.3em] text-amber-200/60 font-semibold">
-                  Elite Club Reserve
+                  Hội Viên Thân Thiết
                 </p>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold">
                 <Crown className="w-3.5 h-3.5" />
-                <span>GOLD ELITE</span>
+                <span>THÀNH VIÊN VIP</span>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="font-mono text-xl sm:text-2xl tracking-widest text-slate-200">
-                8849 •••• •••• 9928
+                VSB • MEMBER • 2026
               </div>
 
               <div className="flex justify-between items-end pt-4 border-t border-slate-700/60 text-xs">
                 <div>
                   <span className="text-slate-400 text-[10px] uppercase tracking-wider block">Chủ sở hữu thẻ</span>
-                  <span className="font-bold text-sm text-white">{session.user?.name || 'Doanh Nhân Thượng Lưu'}</span>
+                  <span className="font-bold text-base text-white">{session.user?.name || 'Quý khách'}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-slate-400 text-[10px] uppercase tracking-wider block">Điểm tích lũy</span>
-                  <span className="font-mono font-black text-amber-300 text-sm">14,850 PTS</span>
+                  <span className="text-slate-400 text-[10px] uppercase tracking-wider block">Trạng thái</span>
+                  <span className="font-sans font-bold text-amber-300 text-base">Đang Hoạt Động</span>
                 </div>
               </div>
             </div>
@@ -192,7 +192,7 @@ function ProfileContent({ session }: { session: SessionType }) {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-sm text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-base text-on-surface bg-surface-container-low"
                   required
                 />
               </div>
@@ -203,7 +203,7 @@ function ProfileContent({ session }: { session: SessionType }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-sm text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-base text-on-surface bg-surface-container-low"
                   required
                 />
               </div>
@@ -249,7 +249,7 @@ function ProfileContent({ session }: { session: SessionType }) {
                   type="password"
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-sm text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-base text-on-surface bg-surface-container-low"
                   required
                 />
               </div>
@@ -260,7 +260,7 @@ function ProfileContent({ session }: { session: SessionType }) {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-sm text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-base text-on-surface bg-surface-container-low"
                   required
                 />
               </div>
@@ -271,7 +271,7 @@ function ProfileContent({ session }: { session: SessionType }) {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-sm text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary text-base text-on-surface bg-surface-container-low"
                   required
                 />
               </div>
@@ -320,9 +320,9 @@ export default function ProfilePage() {
           <div className="w-16 h-16 rounded-full bg-primary-container/20 text-primary flex items-center justify-center mx-auto">
             <Crown className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-sans font-extrabold text-on-surface">Đặc Quyền Hội Viên Elite</h2>
-          <p className="text-sm text-outline">
-            Vui lòng đăng nhập để quản lý hồ sơ và chiêm ngưỡng thẻ hội viên Aurum Elite Club.
+          <h2 className="text-2xl font-sans font-extrabold text-on-surface">Đặc Quyền Hội Viên VIP</h2>
+          <p className="text-base text-outline">
+            Vui lòng đăng nhập để quản lý hồ sơ và xem thông tin thẻ hội viên VietSage Booking VIP.
           </p>
           <UserMenu />
         </div>

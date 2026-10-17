@@ -44,6 +44,11 @@
   --font-body-sm: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6.5rem;
+}
+
 :root {
   --background: #faf9f6;
   --foreground: #1a1c1a;

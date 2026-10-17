@@ -14,8 +14,14 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
 
-  // If not logged in, redirect directly to /login with callbackUrl
-  if (!session?.user) {
+  const hasAuthError = (session as unknown as { error?: string })?.error === 'RefreshAccessTokenError';
+  const hasToken = !!(
+    (session as unknown as { accessToken?: string })?.accessToken ||
+    (session?.user as unknown as { accessToken?: string })?.accessToken
+  );
+
+  // If not logged in or session expired, redirect directly to /login with callbackUrl
+  if (!session?.user || hasAuthError || !hasToken) {
     redirect('/login?callbackUrl=/admin');
   }
 

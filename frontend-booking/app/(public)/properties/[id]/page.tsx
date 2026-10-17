@@ -7,12 +7,10 @@ import {
   Star,
   MapPin,
   ChevronRight,
-  Shield,
   Wifi,
   Waves,
   Sparkles,
   UtensilsCrossed,
-  Clock,
   Car,
   CheckCircle2,
   UserCheck,
@@ -46,7 +44,7 @@ function PropertyDetailContent() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-semibold text-outline">Đang kết nối khu nghỉ dưỡng thượng lưu...</p>
+          <p className="text-base font-semibold text-outline">Đang kết nối khu nghỉ dưỡng thượng lưu...</p>
         </div>
       </div>
     );
@@ -57,10 +55,10 @@ function PropertyDetailContent() {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="text-center space-y-4 max-w-md">
           <h2 className="text-2xl font-bold text-on-surface">Không tìm thấy khách sạn</h2>
-          <p className="text-sm text-outline">{error || 'Cơ sở lưu trú không tồn tại hoặc đã ngừng hoạt động.'}</p>
+          <p className="text-base text-outline">{error || 'Cơ sở lưu trú không tồn tại hoặc đã ngừng hoạt động.'}</p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow hover:bg-primary-container hover:text-on-primary-container transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-bold text-base shadow hover:bg-primary-container hover:text-on-primary-container transition-all"
           >
             Về Trang Chủ
           </Link>
@@ -116,7 +114,7 @@ function PropertyDetailContent() {
                 {property.name}
               </h1>
 
-              <p className="text-sm text-outline flex items-center gap-1.5">
+              <p className="text-base text-outline flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary shrink-0" />
                 <span>{property.address}, {property.city}</span>
               </p>
@@ -125,7 +123,7 @@ function PropertyDetailContent() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsBookingModalOpen(true)}
-                className="h-12 px-8 rounded-full bg-primary text-on-primary font-bold text-sm hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer"
+                className="h-12 px-8 rounded-full bg-primary text-on-primary font-bold text-base hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer"
               >
                 Đặt Phòng Ngay • Từ {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(lowestPrice)}
               </button>
@@ -190,27 +188,27 @@ function PropertyDetailContent() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                 <Waves className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold">Hồ bơi vô cực</span>
+                <span className="text-base font-semibold">Hồ bơi vô cực</span>
               </div>
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                 <Sparkles className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold">Spa &amp; Trị liệu Hoàng gia</span>
+                <span className="text-base font-semibold">Spa &amp; Trị liệu Hoàng gia</span>
               </div>
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                 <UtensilsCrossed className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold">Ẩm thực Fusion cao cấp</span>
+                <span className="text-base font-semibold">Ẩm thực Fusion cao cấp</span>
               </div>
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                 <UserCheck className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold">Quản gia riêng 24/7</span>
+                <span className="text-base font-semibold">Quản gia riêng 24/7</span>
               </div>
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                 <Car className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold">Đưa đón sân bay VIP</span>
+                <span className="text-base font-semibold">Đưa đón sân bay VIP</span>
               </div>
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30">
                 <Wifi className="w-5 h-5 text-primary" />
-                <span className="text-sm font-semibold">Wifi 6 tốc độ cao</span>
+                <span className="text-base font-semibold">Wifi 6 tốc độ cao</span>
               </div>
             </div>
           </div>
@@ -220,7 +218,7 @@ function PropertyDetailContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-sans font-bold text-on-surface">Danh Mục Hạng Phòng</h2>
-                <p className="text-sm text-outline mt-1">Được thiết kế tỉ mỉ theo tiêu chuẩn Quiet Luxury</p>
+                <p className="text-base text-outline mt-1">Được thiết kế tỉ mỉ theo tiêu chuẩn Quiet Luxury</p>
               </div>
             </div>
 
@@ -241,7 +239,7 @@ function PropertyDetailContent() {
                     </div>
 
                     <h3 className="text-xl font-bold text-on-surface">{rt.name}</h3>
-                    <p className="text-sm text-on-surface-variant leading-relaxed">
+                    <p className="text-base text-on-surface-variant leading-relaxed">
                       {rt.description || 'Không gian nghỉ ngơi thư thái với ban công khoáng đạt, giường King êm ái và phòng tắm lát đá cẩm thạch.'}
                     </p>
 
@@ -267,7 +265,7 @@ function PropertyDetailContent() {
 
                     <button
                       onClick={() => setIsBookingModalOpen(true)}
-                      className="h-11 px-6 rounded-full bg-primary text-on-primary font-bold text-sm hover:bg-primary-container hover:text-on-primary-container transition-all cursor-pointer shadow-sm w-full md:w-auto"
+                      className="h-11 px-6 rounded-full bg-primary text-on-primary font-bold text-base hover:bg-primary-container hover:text-on-primary-container transition-all cursor-pointer shadow-sm w-full md:w-auto"
                     >
                       Đặt Hạng Phòng Này
                     </button>
@@ -277,26 +275,6 @@ function PropertyDetailContent() {
             </div>
           </div>
 
-          {/* Stay Policies */}
-          <div className="p-8 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-4">
-            <h2 className="text-xl font-sans font-bold text-on-surface">Chính Sách &amp; Quy Định Lưu Trú</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-on-surface-variant">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-on-surface">Nhận phòng: Từ 14:00</div>
-                  <div className="text-xs text-outline">Trả phòng: Trước 12:00 trưa</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-on-surface">Miễn phí hủy phòng</div>
-                  <div className="text-xs text-outline">Hủy trước 48h nhận phòng được hoàn 100%</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Right Column: Sticky Booking Box */}
@@ -306,7 +284,7 @@ function PropertyDetailContent() {
               <span className="text-xs uppercase font-extrabold tracking-wider text-outline">Bắt đầu kỳ nghỉ</span>
               <div className="text-3xl font-black text-primary mt-1">
                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(lowestPrice)}
-                <span className="text-sm font-normal text-outline"> / đêm</span>
+                <span className="text-base font-normal text-outline"> / đêm</span>
               </div>
             </div>
 
@@ -316,7 +294,7 @@ function PropertyDetailContent() {
                 <span>Cam kết giá tốt nhất độc quyền</span>
               </div>
               <p className="text-on-surface-variant leading-relaxed">
-                Tích lũy điểm hội viên Aurum Elite Club và nhận đặc quyền Fast Check-in tự động.
+                Tích lũy điểm hội viên VietSageBooking VIP Club và nhận quyền lợi ưu đãi trực tuyến.
               </p>
             </div>
 
@@ -349,7 +327,7 @@ export default function PropertyDetailPage() {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm font-semibold text-outline">Đang kết nối khu nghỉ dưỡng thượng lưu...</p>
+            <p className="text-base font-semibold text-outline">Đang kết nối khu nghỉ dưỡng thượng lưu...</p>
           </div>
         </div>
       }

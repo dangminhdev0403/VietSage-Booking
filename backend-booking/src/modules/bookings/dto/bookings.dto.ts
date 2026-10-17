@@ -15,6 +15,29 @@ export const isValidCalendarDate = (val: string): boolean => {
   );
 };
 
+export const quoteBookingSchema = z.object({
+  property_id: z.string().uuid(),
+  room_type_id: z.string().uuid(),
+  check_in: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Định dạng ngày check-in phải là YYYY-MM-DD')
+    .refine(isValidCalendarDate, {
+      message:
+        'Ngày nhận phòng không tồn tại trong lịch thực tế (rollover date)',
+    }),
+  check_out: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Định dạng ngày check-out phải là YYYY-MM-DD')
+    .refine(isValidCalendarDate, {
+      message:
+        'Ngày trả phòng không tồn tại trong lịch thực tế (rollover date)',
+    }),
+  guests: z.number().int().min(1).optional(),
+  guest_count: z.number().int().min(1).optional(),
+  service_ids: z.array(z.string().uuid()).optional(),
+});
+export type QuoteBookingDto = z.infer<typeof quoteBookingSchema>;
+
 export const createBookingSchema = z.object({
   property_id: z.string().uuid(),
   room_type_id: z.string().uuid(),
@@ -38,6 +61,7 @@ export const createBookingSchema = z.object({
   total_price: z.number().int().min(0).optional(), // Ignored by server, calculated authoritatively
   special_requests: z.string().optional(),
   service_ids: z.array(z.string().uuid()).optional(),
+  idempotency_key: z.string().min(1).optional(),
 });
 export type CreateBookingDto = z.infer<typeof createBookingSchema>;
 
@@ -49,6 +73,15 @@ export type UpdateBookingStatusDto = z.infer<typeof updateBookingStatusSchema>;
 
 export const lookupBookingSchema = z.object({
   booking_code: z.string().min(3),
-  contact: z.string().min(3),
+  lookup_token: z.string().min(1).optional(),
+  token: z.string().min(1).optional(),
+  contact: z.string().optional(),
 });
 export type LookupBookingDto = z.infer<typeof lookupBookingSchema>;
+
+export const cancelBookingSchema = z.object({
+  lookup_token: z.string().min(1).optional(),
+  token: z.string().min(1).optional(),
+  reason: z.string().optional(),
+});
+export type CancelBookingDto = z.infer<typeof cancelBookingSchema>;

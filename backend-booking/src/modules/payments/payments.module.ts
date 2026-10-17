@@ -3,11 +3,13 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { IdentityAccessModule } from '../identity-access/identity-access.module';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
+import { StripeSignatureVerifier } from './stripe-signature.verifier';
+import { StripeLocalMateClient } from './stripe-localmate.client';
 
 @Module({
   imports: [PrismaModule, IdentityAccessModule],
   controllers: [PaymentsController],
-  providers: [PaymentsService],
-  exports: [PaymentsService],
+  providers: [PaymentsService, StripeSignatureVerifier, StripeLocalMateClient],
+  exports: [PaymentsService, StripeSignatureVerifier, StripeLocalMateClient],
 })
 export class PaymentsModule {}

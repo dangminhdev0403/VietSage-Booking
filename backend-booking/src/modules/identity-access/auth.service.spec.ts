@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
-  ConflictException,
+  GoneException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -23,6 +23,19 @@ describe('AuthService', () => {
     displayName: 'Traveler Tester',
     email: 'traveler@example.com',
     role: 'TRAVELER',
+    isActive: true,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    roleAssignments: [],
+  };
+
+  const mockAdminAccount = {
+    id: 'u0000000-0000-0000-0000-000000000002',
+    username: 'admin_test',
+    passwordHash: '$2b$10$hashedtestpasswordhash',
+    displayName: 'Admin Tester',
+    email: 'admin@example.com',
+    role: 'ADMIN',
     isActive: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -64,200 +77,21 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
   });
 
-  describe('register', () => {
-    it('should create account with role TRAVELER when no role is specified', async () => {
-      prisma.account.findFirst.mockResolvedValue(null);
-      prisma.account.create.mockImplementation(({ data }: any) => ({
-        id: 'new-traveler-id',
-        ...data,
-      }));
-
-      const result = await service.register({
-        username: 'new_traveler',
-        password: 'securePassword123',
-        display_name: 'New Traveler',
-        email: 'new_traveler@example.com',
-      });
-
-      expect(prisma.account.findFirst).toHaveBeenCalledWith({
-        where: {
-          OR: [
-            { username: 'new_traveler' },
-            { email: 'new_traveler@example.com' },
-          ],
-        },
-      });
-      expect(prisma.account.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            username: 'new_traveler',
-            displayName: 'New Traveler',
-            email: 'new_traveler@example.com',
-            role: 'TRAVELER',
-          }),
-        }),
-      );
-      expect(result.role).toBe('TRAVELER');
-      expect(auditService.logEvent).toHaveBeenCalled();
-    });
-
-    it('should force role to TRAVELER when a privileged role (ADMIN) is submitted', async () => {
-      prisma.account.findFirst.mockResolvedValue(null);
-      prisma.account.create.mockImplementation(({ data }: any) => ({
-        id: 'new-traveler-id',
-        ...data,
-      }));
-
-      const result = await service.register({
-        username: 'sneaky_admin',
-        password: 'securePassword123',
-        display_name: 'Wants Admin',
-        email: 'sneaky@example.com',
-        role: 'ADMIN',
-      } as any);
-
-      expect(prisma.account.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            role: 'TRAVELER',
-          }),
-        }),
-      );
-      expect(result.role).toBe('TRAVELER');
-    });
-
-    it('should force role to TRAVELER when SUPER_ADMIN or HOTEL_PARTNER is submitted', async () => {
-      prisma.account.findFirst.mockResolvedValue(null);
-      prisma.account.create.mockImplementation(({ data }: any) => ({
-        id: 'new-traveler-id',
-        ...data,
-      }));
-
-      const resSuper = await service.register({
-        username: 'sneaky_super',
-        password: 'securePassword123',
-        display_name: 'Wants Super Admin',
-        email: 'super@example.com',
-        role: 'SUPER_ADMIN',
-      } as any);
-      expect(resSuper.role).toBe('TRAVELER');
-
-      const resPartner = await service.register({
-        username: 'sneaky_partner',
-        password: 'securePassword123',
-        display_name: 'Wants Partner',
-        email: 'partner@example.com',
-        role: 'HOTEL_PARTNER',
-      } as any);
-      expect(resPartner.role).toBe('TRAVELER');
-    });
-
-    it('should hash password with bcrypt and not store plain password', async () => {
-      prisma.account.findFirst.mockResolvedValue(null);
-      let savedData: any = null;
-      prisma.account.create.mockImplementation(({ data }: any) => {
-        savedData = data;
-        return { id: 'test-id', ...data };
-      });
-
-      await service.register({
-        username: 'hash_test_user',
-        password: 'plainTextPassword123',
-        display_name: 'Hash Tester',
-        email: 'hash@example.com',
-      });
-
-      expect(savedData.passwordHash).not.toBe('plainTextPassword123');
-      const isMatch = await bcrypt.compare(
-        'plainTextPassword123',
-        savedData.passwordHash,
-      );
-      expect(isMatch).toBe(true);
-    });
-
-    it('should throw ConflictException if username or email already exists', async () => {
-      prisma.account.findFirst.mockResolvedValue(mockTravelerAccount);
-
+  describe('register (retired)', () => {
+    it('should reject registration with GoneException (HTTP 410) as traveler role is retired', async () => {
       await expect(
         service.register({
-          username: 'traveler_test',
+          username: 'new_traveler',
           password: 'securePassword123',
-          display_name: 'Duplicate Traveler',
-          email: 'other@example.com',
+          display_name: 'New Traveler',
+          email: 'new_traveler@example.com',
         }),
-      ).rejects.toThrow(ConflictException);
-    });
-
-    it('should throw BadRequestException if registration payload is invalid', async () => {
-      await expect(
-        service.register({
-          username: 'ab', // min length 3
-          password: '123', // min length 6
-          display_name: 'A',
-          email: 'not-an-email',
-        }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(GoneException);
     });
   });
 
   describe('validateUser & login', () => {
-    it('should return account when credentials match in validateUser', async () => {
-      const passwordHash = await bcrypt.hash('validPassword123', 10);
-      prisma.account.findFirst.mockResolvedValue({
-        ...mockTravelerAccount,
-        passwordHash,
-      });
-
-      const user = await service.validateUser(
-        'traveler_test',
-        'validPassword123',
-      );
-      expect(user).toBeDefined();
-      expect(user?.username).toBe('traveler_test');
-    });
-
-    it('should return account when email matches in validateUser', async () => {
-      const passwordHash = await bcrypt.hash('validPassword123', 10);
-      prisma.account.findFirst.mockResolvedValue({
-        ...mockTravelerAccount,
-        passwordHash,
-      });
-
-      const user = await service.validateUser(
-        'traveler@example.com',
-        'validPassword123',
-      );
-      expect(user).toBeDefined();
-      expect(user?.username).toBe('traveler_test');
-    });
-
-    it('should return null when password is wrong in validateUser', async () => {
-      const passwordHash = await bcrypt.hash('validPassword123', 10);
-      prisma.account.findFirst.mockResolvedValue({
-        ...mockTravelerAccount,
-        passwordHash,
-      });
-
-      const user = await service.validateUser('traveler_test', 'wrongPassword');
-      expect(user).toBeNull();
-    });
-
-    it('should return null when account is inactive', async () => {
-      const passwordHash = await bcrypt.hash('validPassword123', 10);
-      prisma.account.findFirst.mockResolvedValue({
-        ...mockTravelerAccount,
-        isActive: false,
-        passwordHash,
-      });
-
-      const user = await service.validateUser(
-        'traveler_test',
-        'validPassword123',
-      );
-      expect(user).toBeNull();
-    });
-
-    it('should throw UnauthorizedException on login when password does not match', async () => {
+    it('should reject login for accounts with role TRAVELER', async () => {
       const passwordHash = await bcrypt.hash('validPassword123', 10);
       prisma.account.findFirst.mockResolvedValue({
         ...mockTravelerAccount,
@@ -267,6 +101,107 @@ describe('AuthService', () => {
       await expect(
         service.login({
           username: 'traveler_test',
+          password: 'validPassword123',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should return null in validateUser for accounts with role TRAVELER', async () => {
+      const passwordHash = await bcrypt.hash('validPassword123', 10);
+      prisma.account.findFirst.mockResolvedValue({
+        ...mockTravelerAccount,
+        passwordHash,
+      });
+
+      const user = await service.validateUser(
+        'traveler_test',
+        'validPassword123',
+      );
+      expect(user).toBeNull();
+    });
+
+    it('should reject loginWithValidatedUser for accounts with role TRAVELER', async () => {
+      await expect(
+        service.loginWithValidatedUser(mockTravelerAccount as any),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should reject refresh for sessions of TRAVELER accounts', async () => {
+      prisma.refreshSession.findUnique.mockResolvedValue({
+        id: 'session-1',
+        tokenHash: 'some-hash',
+        expiresAt: new Date(Date.now() + 100000),
+        revokedAt: null,
+        account: mockTravelerAccount,
+      });
+
+      await expect(
+        service.refresh({ refresh_token: 'valid-refresh-token' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should return account when credentials match in validateUser for staff (ADMIN)', async () => {
+      const passwordHash = await bcrypt.hash('validPassword123', 10);
+      prisma.account.findFirst.mockResolvedValue({
+        ...mockAdminAccount,
+        passwordHash,
+      });
+
+      const user = await service.validateUser('admin_test', 'validPassword123');
+      expect(user).toBeDefined();
+      expect(user?.username).toBe('admin_test');
+    });
+
+    it('should return token pair on successful staff login', async () => {
+      const passwordHash = await bcrypt.hash('validPassword123', 10);
+      prisma.account.findFirst.mockResolvedValue({
+        ...mockAdminAccount,
+        passwordHash,
+      });
+      prisma.account.findUnique.mockResolvedValue(mockAdminAccount);
+      prisma.refreshSession.create.mockResolvedValue({ id: 'ref-1' });
+
+      const tokens = await service.login({
+        username: 'admin_test',
+        password: 'validPassword123',
+      });
+      expect(tokens.access_token).toBe('mock-jwt-token');
+      expect(tokens.account.role).toBe('ADMIN');
+    });
+
+    it('should return null when password is wrong in validateUser', async () => {
+      const passwordHash = await bcrypt.hash('validPassword123', 10);
+      prisma.account.findFirst.mockResolvedValue({
+        ...mockAdminAccount,
+        passwordHash,
+      });
+
+      const user = await service.validateUser('admin_test', 'wrongPassword');
+      expect(user).toBeNull();
+    });
+
+    it('should return null when account is inactive', async () => {
+      const passwordHash = await bcrypt.hash('validPassword123', 10);
+      prisma.account.findFirst.mockResolvedValue({
+        ...mockAdminAccount,
+        isActive: false,
+        passwordHash,
+      });
+
+      const user = await service.validateUser('admin_test', 'validPassword123');
+      expect(user).toBeNull();
+    });
+
+    it('should throw UnauthorizedException on login when password does not match', async () => {
+      const passwordHash = await bcrypt.hash('validPassword123', 10);
+      prisma.account.findFirst.mockResolvedValue({
+        ...mockAdminAccount,
+        passwordHash,
+      });
+
+      await expect(
+        service.login({
+          username: 'admin_test',
           password: 'wrongPassword',
         }),
       ).rejects.toThrow(UnauthorizedException);
@@ -274,36 +209,36 @@ describe('AuthService', () => {
   });
 
   describe('profile and password modification', () => {
-    it('should update display_name and email without changing role', async () => {
-      prisma.account.findUnique.mockResolvedValue(mockTravelerAccount);
+    it('should update display_name and email for staff account', async () => {
+      prisma.account.findUnique.mockResolvedValue(mockAdminAccount);
       prisma.account.update.mockResolvedValue({
-        ...mockTravelerAccount,
-        displayName: 'Updated Name',
+        ...mockAdminAccount,
+        displayName: 'Updated Admin Name',
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       });
 
-      const result = await service.updateProfile(mockTravelerAccount.id, {
-        display_name: 'Updated Name',
+      const result = await service.updateProfile(mockAdminAccount.id, {
+        display_name: 'Updated Admin Name',
       });
 
       expect(prisma.account.update).toHaveBeenCalledWith({
-        where: { id: mockTravelerAccount.id },
-        data: { displayName: 'Updated Name' },
+        where: { id: mockAdminAccount.id },
+        data: { displayName: 'Updated Admin Name' },
       });
-      expect(result.role).toBe('TRAVELER');
+      expect(result.role).toBe('ADMIN');
     });
 
     it('should change password successfully when old password matches', async () => {
       const oldHash = await bcrypt.hash('oldPassword123', 10);
       prisma.account.findUnique.mockResolvedValue({
-        ...mockTravelerAccount,
+        ...mockAdminAccount,
         passwordHash: oldHash,
       });
       prisma.account.update.mockResolvedValue({
-        ...mockTravelerAccount,
+        ...mockAdminAccount,
       });
 
-      const result = await service.changePassword(mockTravelerAccount.id, {
+      const result = await service.changePassword(mockAdminAccount.id, {
         old_password: 'oldPassword123',
         new_password: 'newPassword123',
       });
@@ -315,12 +250,12 @@ describe('AuthService', () => {
     it('should reject change password when old password is incorrect', async () => {
       const oldHash = await bcrypt.hash('oldPassword123', 10);
       prisma.account.findUnique.mockResolvedValue({
-        ...mockTravelerAccount,
+        ...mockAdminAccount,
         passwordHash: oldHash,
       });
 
       await expect(
-        service.changePassword(mockTravelerAccount.id, {
+        service.changePassword(mockAdminAccount.id, {
           old_password: 'wrongOldPassword',
           new_password: 'newPassword123',
         }),

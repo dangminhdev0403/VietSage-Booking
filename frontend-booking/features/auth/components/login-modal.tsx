@@ -261,7 +261,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   placeholder="Nhập tên đăng nhập..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                 />
               </div>
             </div>
@@ -278,7 +278,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="Nhập mật khẩu..."
-                  className="w-full pl-10 pr-10 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                 />
                 <button
                   type="button"
@@ -293,7 +293,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-sm tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-2 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-base tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -351,7 +351,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 value={regDisplayName}
                 onChange={(e) => setRegDisplayName(e.target.value)}
                 placeholder="Nguyễn Hoàng Nam"
-                className="w-full px-3.5 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
               />
             </div>
 
@@ -366,7 +366,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
                   placeholder="nam.nguyen"
-                  className="w-full px-3 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                  className="w-full px-3 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                 />
               </div>
 
@@ -382,7 +382,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     placeholder="nam@vietsage.vn"
-                    className="w-full pl-9 pr-2 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                    className="w-full pl-9 pr-2 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -398,14 +398,14 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-sm font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-sm tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-2 py-3 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-base tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -424,7 +424,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Hoặc đăng ký gói Bespoke Aurum Elite đầy đủ →</span>
+                <span>Hoặc đăng ký gói Hội Viên VIP VietSage đầy đủ →</span>
               </Link>
             </div>
           </form>

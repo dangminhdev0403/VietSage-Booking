@@ -8,24 +8,25 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  Car,
-  UtensilsCrossed,
-  Sparkles,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Copy,
+  Check,
   Printer,
-  X,
-  Phone,
-  MessageSquare,
   QrCode,
-  Save,
-  Loader2,
-  ChevronRight,
-  Headphones,
+  ShieldAlert,
+  MapPin,
+  CreditCard,
+  User,
+  Phone,
+  Mail,
+  X,
 } from 'lucide-react';
-import { getBooking, updateBookingStatus } from '@/features/bookings/service/bookings.client';
+import {
+  getBooking,
+  updateBookingStatus,
+  createPaymentIntent,
+} from '@/features/bookings/service/bookings.client';
 import { LuxuryAlertBanner } from '@/components/shared/luxury-alert-banner';
 
 type BookingItem = {
@@ -42,13 +43,31 @@ type BookingItem = {
   check_out: string;
   nights: number;
   total_price: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED' | string;
+  payment_status?: 'UNPAID' | 'PAID' | 'REFUNDED' | string;
   special_requests?: string | null;
-  addons?: { service_name: string; price: number }[];
   created_at: string;
 };
 
-function BookingModifyContent() {
+type PaymentIntentData = {
+  id: string;
+  booking_id: string;
+  booking_code: string;
+  amount: number;
+  currency: string;
+  payment_method: string;
+  status: string;
+  transaction_ref: string;
+  bank_code: string;
+  bank_name: string;
+  account_number: string;
+  account_holder: string;
+  transfer_content: string;
+  qr_code_url: string;
+  created_at: string;
+};
+
+function BookingDetailContent() {
   const routeParams = useParams();
   const id = typeof routeParams?.id === 'string' ? routeParams.id : '';
   const router = useRouter();
@@ -57,32 +76,20 @@ function BookingModifyContent() {
   const [booking, setBooking] = useState<BookingItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<1 | 2 | 3>(1);
 
-  // Tab 1 state: Check-in & Fast-track preferences
-  const [arrivalTime, setArrivalTime] = useState('10:30 Sáng (Check-in sớm VIP miễn phí)');
-  const [flightNumber, setFlightNumber] = useState('VN-1382');
-  const [specialNote, setSpecialNote] = useState('');
-
-  // Tab 2 state: Bespoke Addons
-  const [addonMaybach, setAddonMaybach] = useState(true);
-  const [addonDinner, setAddonDinner] = useState(false);
-  const [addonSpa, setAddonSpa] = useState(true);
-  const [addonPresidential, setAddonPresidential] = useState(false);
-
-  // Tab 3 state: Reschedule dates
-  const [newCheckIn, setNewCheckIn] = useState('');
-  const [newCheckOut, setNewCheckOut] = useState('');
-
-  // Modals & notices
-  const [isButlerModalOpen, setIsButlerModalOpen] = useState(false);
-  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
-  const [butlerMessage, setButlerMessage] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error' | 'info';
+  // Payment intent state
+  const [paymentIntent, setPaymentIntent] = useState<PaymentIntentData | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState<{
+    type: 'success' | 'info' | 'error';
     message: string;
   } | null>(null);
+
+  // Modals state
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -94,12 +101,16 @@ function BookingModifyContent() {
         if (!isMounted) return;
         const b = data as BookingItem;
         setBooking(b);
-        setNewCheckIn(b.check_in);
-        setNewCheckOut(b.check_out);
-        if (b.special_requests) {
-          setSpecialNote(b.special_requests);
-        }
         setLoading(false);
+
+        // Fetch payment intent if pending or unpaid
+        if (b.status === 'PENDING' || b.payment_status === 'UNPAID') {
+          createPaymentIntent(b.id, 'VIETQR')
+            .then((intent) => {
+              if (isMounted) setPaymentIntent(intent as PaymentIntentData);
+            })
+            .catch(() => {});
+        }
       })
       .catch((err: unknown) => {
         if (!isMounted) return;
@@ -112,59 +123,43 @@ function BookingModifyContent() {
     };
   }, [id]);
 
-  // Pricing calculations
-  const basePrice = booking?.total_price || 28500000;
-  const maybachPrice = addonMaybach ? 500000 : 0;
-  const dinnerPrice = addonDinner ? 3200000 : 0;
-  const spaPrice = addonSpa ? 1800000 : 0;
-  const presidentialPrice = addonPresidential ? 18000000 : 0;
-  const addonsTotal = maybachPrice + dinnerPrice + spaPrice + presidentialPrice;
-  const grandTotal = basePrice + addonsTotal;
-  const difference = addonsTotal;
-
-  const handleSaveChanges = () => {
-    setActionLoading(true);
-    setTimeout(() => {
-      setActionLoading(false);
-      setNotification({
-        type: 'success',
-        message: 'Các điều chỉnh lịch trình và dịch vụ đã được đồng bộ với Quản gia trưởng!',
+  const handleCheckPaymentStatus = async () => {
+    if (!booking) return;
+    setPaymentLoading(true);
+    setPaymentNotice(null);
+    try {
+      const refreshed = (await getBooking(booking.id)) as BookingItem;
+      setBooking(refreshed);
+      if (refreshed.payment_status === 'PAID' || refreshed.status === 'CONFIRMED') {
+        setPaymentNotice({
+          type: 'success',
+          message: 'Thanh toán đã được ghi nhận thành công! Đơn đặt phòng đã được xác nhận.',
+        });
+      } else {
+        setPaymentNotice({
+          type: 'info',
+          message: 'Hệ thống đang chờ đối soát chuyển khoản ngân hàng. Đơn phòng sẽ tự động xác nhận ngay khi ghi nhận giao dịch.',
+        });
+      }
+    } catch (err: unknown) {
+      setPaymentNotice({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Không thể kiểm tra đối soát lúc này',
       });
-      setTimeout(() => {
-        router.push('/my-bookings');
-      }, 1500);
-    }, 800);
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
-  const handleSendButlerRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!butlerMessage.trim()) return;
-
-    setActionLoading(true);
-    setTimeout(() => {
-      setActionLoading(false);
-      setIsButlerModalOpen(false);
-      setButlerMessage('');
-      setNotification({
-        type: 'success',
-        message: 'Yêu cầu của quý khách đã được chuyển trực tiếp đến Quản gia phụ trách căn biệt thự.',
-      });
-    }, 600);
-  };
-
-  const handleCancelStay = async () => {
+  const handleCancelBooking = async () => {
     if (!booking) return;
     setActionLoading(true);
     try {
-      await updateBookingStatus(booking.id, 'CANCELLED', 'Khách điều chỉnh hủy qua trang quản lý');
+      await updateBookingStatus(booking.id, 'CANCELLED', 'Khách hàng hủy qua trang quản lý');
       setIsCancelConfirmOpen(false);
-      setNotification({
-        type: 'info',
-        message: 'Đơn đặt phòng đã được hủy thành công. Hệ thống hoàn tiền tự động đang xử lý.',
-      });
-      setTimeout(() => {
-        router.push('/my-bookings');
-      }, 1800);
+      const refreshed = (await getBooking(booking.id)) as BookingItem;
+      setBooking(refreshed);
+      alert('Đơn đặt phòng đã được hủy thành công.');
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Hủy đơn thất bại');
     } finally {
@@ -198,9 +193,13 @@ function BookingModifyContent() {
     );
   }
 
+  const isConfirmed = booking.status === 'CONFIRMED' || booking.status === 'CHECKED_IN';
+  const isPending = booking.status === 'PENDING';
+  const isCancelled = booking.status === 'CANCELLED';
+
   return (
     <div className="min-h-screen bg-background py-8 lg:py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1320px] mx-auto space-y-6">
+      <div className="max-w-[1140px] mx-auto space-y-6">
         {/* Top Breadcrumb & Quick Actions Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
           <div className="flex items-center gap-3">
@@ -220,614 +219,348 @@ function BookingModifyContent() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setIsButlerModalOpen(true)}
-              className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              onClick={() => setIsVoucherModalOpen(true)}
+              className="px-4 py-2 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs border border-outline-variant/30"
             >
-              <Headphones className="w-3.5 h-3.5 text-primary" />
-              <span>Quản Gia Riêng 24/7</span>
+              <QrCode className="w-4 h-4 text-primary" />
+              <span>Xem Vé E-Voucher</span>
             </button>
-            <button
-              type="button"
-              disabled={actionLoading}
-              onClick={handleSaveChanges}
-              className="px-6 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Lưu Thay Đổi</span>
-            </button>
+            {isPending && (
+              <button
+                type="button"
+                onClick={() => setIsCancelConfirmOpen(true)}
+                className="px-4 py-2 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer"
+              >
+                Hủy Đơn Đặt Phòng
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Hero Banner with Booking Details */}
+        {/* Hero Card with Booking Details */}
         <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 shadow-md p-6 sm:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/20 text-primary text-xs font-extrabold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Điều Chỉnh Hành Trình Nghỉ Dưỡng</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-base font-extrabold text-primary bg-primary-container/20 px-3 py-0.5 rounded-full">
+                {booking.booking_code}
+              </span>
+              <span
+                className={`text-xs font-bold px-3 py-1 rounded-full ${
+                  isConfirmed
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : isPending
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-rose-100 text-rose-800'
+                }`}
+              >
+                ● {isConfirmed ? 'Đã Xác Nhận' : isPending ? 'Chờ Thanh Toán' : 'Đã Hủy'}
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-sans font-bold text-on-surface tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-sans font-extrabold text-on-surface tracking-tight">
               {booking.property_name}
             </h1>
-            <p className="text-xs text-outline">
-              Hạng phòng: <strong>{booking.room_type_name || 'Biệt thự cao cấp'}</strong> • Thời gian lưu trú:{' '}
-              <strong>
-                {booking.check_in} → {booking.check_out} ({booking.nights} đêm)
-              </strong>
+            <p className="text-xs text-outline flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>{booking.property_address || 'Khu nghỉ dưỡng cao cấp'}</span>
             </p>
           </div>
 
           <div className="text-left lg:text-right">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-outline">Tổng Thanh Toán Dự Kiến</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-outline">Tổng Tiền Thanh Toán</span>
             <div className="text-2xl sm:text-3xl font-black text-primary">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(grandTotal)}
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(booking.total_price)}
             </div>
             <span className="text-xs text-emerald-700 font-semibold">
-              ● Trạng thái đơn: {booking.status}
+              {booking.payment_status === 'PAID' ? '✓ Đã thanh toán đủ' : 'Chưa thanh toán'}
             </span>
           </div>
         </div>
 
-        {/* Status Notification */}
-        {notification && (
-          <LuxuryAlertBanner
-            variant={notification.type === 'error' ? 'error' : 'success'}
-            description={notification.message}
-            onClose={() => setNotification(null)}
-          />
-        )}
-
-        {/* Main Grid: Tabs and Actions (8 cols) + Cost Summary (4 cols) */}
+        {/* 2-Column Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT 8 COLS: Tabs & Forms */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Tab Navigation */}
-            <div className="bg-surface-container-low p-1.5 rounded-2xl border border-outline-variant/20 shadow-inner flex flex-wrap sm:flex-nowrap gap-1">
-              {[
-                { id: 1 as const, label: '1. Check-in & Fast-track', icon: Clock },
-                { id: 2 as const, label: '2. Trải Nghiệm & Tiện Ích', icon: Sparkles },
-                { id: 3 as const, label: '3. Đổi Ngày & Hoàn Hủy', icon: Calendar },
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      isActive
-                        ? 'bg-surface-container-lowest text-primary shadow-sm font-extrabold border border-outline-variant/30'
-                        : 'text-outline hover:text-on-surface'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* TAB 1: Fast-track Check-in Online & E-Pass */}
-            {activeTab === 1 && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 sm:p-8 shadow-sm space-y-6">
-                  <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
-                    <div>
-                      <h3 className="text-xl font-sans font-bold text-on-surface">
-                        Thủ Tục Nhận Phòng Ưu Tiên (Fast-track)
-                      </h3>
-                      <p className="text-xs text-outline mt-0.5">
-                        Bỏ qua hàng chờ lễ tân, nhận phòng trực tiếp ngay khi xe đưa đón lăn bánh vào khuôn viên.
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                      Đã kích hoạt
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Guest ID Verification Info */}
-                    <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-on-surface uppercase tracking-wider">
-                          1. Định Danh Du Khách
-                        </span>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <p className="text-xs text-outline">
-                        CCCD/Hộ chiếu đã liên kết an toàn: <strong>{booking.guest_name}</strong>
-                      </p>
-                      <span className="text-[11px] text-primary font-semibold">
-                        ✓ Miễn kiểm tra lại tại sảnh đón
-                      </span>
-                    </div>
-
-                    {/* Arrival Time Selection */}
-                    <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-on-surface uppercase tracking-wider">
-                          2. Giờ Nhận Phòng Dự Kiến
-                        </label>
-                        <Clock className="w-4 h-4 text-primary" />
-                      </div>
-                      <select
-                        value={arrivalTime}
-                        onChange={(e) => setArrivalTime(e.target.value)}
-                        className="w-full p-2.5 bg-surface-container-lowest rounded-xl text-xs font-semibold text-on-surface border border-outline-variant/30 focus:border-primary outline-hidden"
-                      >
-                        <option>10:30 Sáng (Check-in sớm VIP miễn phí)</option>
-                        <option>12:00 Trưa (Trưa hoàng kim)</option>
-                        <option>14:00 Chiều (Giờ chuẩn resort)</option>
-                        <option>18:00 Tối (Đón hoàng hôn biển)</option>
-                      </select>
-                      <span className="text-[11px] text-emerald-700 font-semibold block">
-                        ★ Đặc quyền Gold Elite: Hỗ trợ nhận phòng sớm lúc 10:30
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Flight & Transfer info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-outline mb-1.5">
-                        Số Hiệu Chuyến Bay Đến (Nếu có xe đón)
-                      </label>
-                      <input
-                        type="text"
-                        value={flightNumber}
-                        onChange={(e) => setFlightNumber(e.target.value)}
-                        placeholder="Ví dụ: VN-1382"
-                        className="w-full px-4 py-2.5 bg-surface-container-low rounded-xl border border-outline-variant/30 text-xs font-semibold text-on-surface"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-outline mb-1.5">
-                        Yêu Cầu Đặc Biệt Cho Quản Gia
-                      </label>
-                      <input
-                        type="text"
-                        value={specialNote}
-                        onChange={(e) => setSpecialNote(e.target.value)}
-                        placeholder="Nước khoáng có ga, hoa tươi mừng kỷ niệm..."
-                        className="w-full px-4 py-2.5 bg-surface-container-low rounded-xl border border-outline-variant/30 text-xs font-semibold text-on-surface"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Smart Keyless Access Card */}
-                  <div className="p-5 rounded-2xl bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low border border-outline-variant/30 flex flex-col sm:flex-row items-center justify-between gap-5">
-                    <div className="space-y-1 text-center sm:text-left">
-                      <span className="text-[11px] font-extrabold uppercase tracking-widest text-primary">
-                        Aurum Smart Keyless Access
-                      </span>
-                      <h4 className="text-base font-bold text-on-surface">Chìa Khóa Số Di Động &amp; Thẻ VIP QR</h4>
-                      <p className="text-xs text-outline">
-                        Xuất trình mã này hoặc mở khóa cửa biệt thự trực tiếp qua giao thức NFC điện thoại.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="w-16 h-16 rounded-xl bg-white p-1 border shadow-xs flex items-center justify-center">
-                        <QrCode className="w-12 h-12 text-on-surface" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => window.print()}
-                          className="px-3.5 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface text-xs font-bold hover:bg-surface-container-high transition-colors flex items-center gap-1.5 cursor-pointer border border-outline-variant/30"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                          <span>In Phiếu E-Voucher</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: Bespoke Addon Services */}
-            {activeTab === 2 && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 sm:p-8 shadow-sm space-y-6">
-                  <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-primary">
-                      Tùy Biến Trải Nghiệm
-                    </span>
-                    <h3 className="text-xl font-sans font-bold text-on-surface mt-0.5">
-                      Gia Tăng Tiện Ích Độc Bản Trong Chuyến Đi
-                    </h3>
-                    <p className="text-xs text-outline mt-1">
-                      Chọn thêm các dịch vụ thượng hạng đã được bảo chứng giá ưu đãi dành riêng cho thành viên Gold Elite.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Addon 1: Maybach */}
-                    <div
-                      onClick={() => setAddonMaybach(!addonMaybach)}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                        addonMaybach
-                          ? 'border-primary bg-primary-container/10 shadow-xs'
-                          : 'border-outline-variant/30 bg-surface-container-low hover:border-primary/40'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center shrink-0 text-primary">
-                          <Car className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-extrabold text-on-surface">
-                              Đưa Đón Xe Sang Maybach Từ Sân Bay
-                            </h4>
-                            <span className="px-2 py-0.5 rounded text-[10px] bg-primary text-on-primary uppercase font-bold">
-                              Voucher VIP -80%
-                            </span>
-                          </div>
-                          <p className="text-xs text-outline mt-0.5">
-                            Tài xế riêng lịch thiệp đón tận cửa máy bay, phục vụ nước khoáng và khăn ướp tinh dầu.
-                          </p>
-                          <div className="pt-1 flex items-center gap-2">
-                            <span className="text-sm font-black text-primary">500.000 ₫</span>
-                            <span className="line-through text-xs text-outline">2.500.000 ₫</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
-                          addonMaybach ? 'bg-primary border-primary text-white' : 'border-outline-variant'
-                        }`}
-                      >
-                        {addonMaybach && <CheckCircle2 className="w-4 h-4" />}
-                      </div>
-                    </div>
-
-                    {/* Addon 2: Candlelit Dinner */}
-                    <div
-                      onClick={() => setAddonDinner(!addonDinner)}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                        addonDinner
-                          ? 'border-primary bg-primary-container/10 shadow-xs'
-                          : 'border-outline-variant/30 bg-surface-container-low hover:border-primary/40'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center shrink-0 text-primary">
-                          <UtensilsCrossed className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-extrabold text-on-surface">
-                              Dạ Tiệc Ánh Nến Riêng Biệt Bờ Sóng
-                            </h4>
-                            <span className="px-2 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 font-bold">
-                              Michelin Menu
-                            </span>
-                          </div>
-                          <p className="text-xs text-outline mt-0.5">
-                            Set ẩm thực hải sản Địa Trung Hải kết hợp vang trắng Grand Cru, nhạc acoustic violin.
-                          </p>
-                          <div className="pt-1 flex items-center gap-1.5">
-                            <span className="text-sm font-black text-primary">3.200.000 ₫</span>
-                            <span className="text-xs text-outline">/ Cặp đôi</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
-                          addonDinner ? 'bg-primary border-primary text-white' : 'border-outline-variant'
-                        }`}
-                      >
-                        {addonDinner && <CheckCircle2 className="w-4 h-4" />}
-                      </div>
-                    </div>
-
-                    {/* Addon 3: Jade Herbal Spa */}
-                    <div
-                      onClick={() => setAddonSpa(!addonSpa)}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                        addonSpa
-                          ? 'border-primary bg-primary-container/10 shadow-xs'
-                          : 'border-outline-variant/30 bg-surface-container-low hover:border-primary/40'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center shrink-0 text-primary">
-                          <Sparkles className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-extrabold text-on-surface">
-                            Gói Spa Thảo Mộc Ngọc Bích 90 Phút
-                          </h4>
-                          <p className="text-xs text-outline mt-0.5">
-                            Massage đá nóng núi lửa, tẩy tế bào chết với ngọc bích nghiền và dầu thơm gỗ tuyết tùng.
-                          </p>
-                          <div className="pt-1 flex items-center gap-1.5">
-                            <span className="text-sm font-black text-primary">1.800.000 ₫</span>
-                            <span className="text-xs text-outline">/ Khách</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
-                          addonSpa ? 'bg-primary border-primary text-white' : 'border-outline-variant'
-                        }`}
-                      >
-                        {addonSpa && <CheckCircle2 className="w-4 h-4" />}
-                      </div>
-                    </div>
-
-                    {/* Addon 4: Presidential Suite Upgrade */}
-                    <div
-                      onClick={() => setAddonPresidential(!addonPresidential)}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                        addonPresidential
-                          ? 'border-primary bg-primary-container/10 shadow-xs'
-                          : 'border-outline-variant/30 bg-surface-container-low hover:border-primary/40'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center shrink-0 text-primary">
-                          <CheckCircle2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-extrabold text-on-surface">
-                              Nâng Cấp Villa Tổng Thống Presidential Cliffside
-                            </h4>
-                            <span className="px-2 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold">
-                              Chỉ còn 1 căn
-                            </span>
-                          </div>
-                          <p className="text-xs text-outline mt-0.5">
-                            Không gian 320 m² vươn mình trên mỏm đá, hồ bơi 2 tầng và quản gia riêng biệt.
-                          </p>
-                          <div className="pt-1 flex items-center gap-1.5">
-                            <span className="text-sm font-black text-primary">+6.000.000 ₫</span>
-                            <span className="text-xs text-outline">/ đêm (Tổng: 18.000.000 ₫)</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
-                          addonPresidential ? 'bg-primary border-primary text-white' : 'border-outline-variant'
-                        }`}
-                      >
-                        {addonPresidential && <CheckCircle2 className="w-4 h-4" />}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: Reschedule Dates & Cancellation Policy */}
-            {activeTab === 3 && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 sm:p-8 shadow-sm space-y-6">
-                  <div>
-                    <span className="text-xs font-extrabold uppercase tracking-widest text-primary">
-                      Linh Hoạt Lịch Trình
-                    </span>
-                    <h3 className="text-xl font-sans font-bold text-on-surface mt-0.5">
-                      Đổi Lịch Nghỉ Dưỡng Hoặc Hoàn Tiền
-                    </h3>
-                    <p className="text-xs text-outline mt-1">
-                      Thay đổi ngày lưu trú tức thì không phát sinh phí quản lý. Cam kết bảo lưu giá trị đặt phòng tốt nhất.
-                    </p>
-                  </div>
-
-                  {/* Reschedule Date Pickers */}
-                  <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-3">
-                    <span className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      <span>Chọn lại ngày Nhận - Trả phòng (Miễn phí 01 lần đổi ngày)</span>
-                    </span>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs text-outline font-semibold mb-1">
-                          Ngày Nhận Phòng Mới
-                        </label>
-                        <input
-                          type="date"
-                          value={newCheckIn}
-                          onChange={(e) => setNewCheckIn(e.target.value)}
-                          className="w-full p-3 rounded-xl bg-surface-container-lowest text-sm font-semibold text-on-surface border border-outline-variant/30"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-outline font-semibold mb-1">
-                          Ngày Trả Phòng Mới
-                        </label>
-                        <input
-                          type="date"
-                          value={newCheckOut}
-                          onChange={(e) => setNewCheckOut(e.target.value)}
-                          className="w-full p-3 rounded-xl bg-surface-container-lowest text-sm font-semibold text-on-surface border border-outline-variant/30"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cancellation Guarantee Card */}
-                  <div className="p-5 rounded-2xl bg-rose-50/50 border border-rose-200/60 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-rose-900">Chính Sách Hủy Linh Hoạt 100%</h4>
-                      <span className="text-xs font-semibold text-rose-700">Miễn phí trước 48 giờ</span>
-                    </div>
-                    <p className="text-xs text-rose-800 leading-relaxed">
-                      Quý khách có thể hủy đơn đặt phòng này mà không mất bất kỳ khoản phí phạt nào. Số tiền đã thanh toán (nếu có) sẽ được hoàn trả tự động về tài khoản nguồn trong vòng 24 giờ.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsCancelConfirmOpen(true)}
-                      className="px-4 py-2 rounded-xl bg-surface-container-lowest text-rose-700 border border-rose-300 text-xs font-bold hover:bg-rose-100 transition-colors cursor-pointer"
-                    >
-                      Yêu Cầu Hủy Kỳ Nghỉ Này
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT 4 COLS: Sticky Cost Summary & Butler Quick Help */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 sm:p-7 shadow-md space-y-5 sticky top-24">
+          {/* LEFT 7 COLS: Booking Info */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 sm:p-8 shadow-sm space-y-6">
               <h3 className="text-lg font-sans font-bold text-on-surface border-b border-outline-variant/20 pb-3">
-                Tóm Tắt Chi Phí
+                Thông Tin Chi Tiết Lưu Trú
               </h3>
 
-              <div className="space-y-3 text-xs">
-                <div className="flex justify-between text-outline">
-                  <span>Giá phòng cơ bản ({booking.nights} đêm):</span>
-                  <span className="font-bold text-on-surface">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(basePrice)}
-                  </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
+                  <span className="text-outline font-semibold">Hạng phòng</span>
+                  <div className="font-bold text-base text-on-surface">{booking.room_type_name || 'Phòng nghỉ dưỡng'}</div>
+                  <div className="text-outline text-[11px]">{booking.nights} đêm lưu trú</div>
                 </div>
 
-                {addonMaybach && (
-                  <div className="flex justify-between text-outline">
-                    <span>Đưa đón xe sang Maybach:</span>
-                    <span className="font-bold text-primary">+500.000 ₫</span>
-                  </div>
-                )}
-
-                {addonDinner && (
-                  <div className="flex justify-between text-outline">
-                    <span>Dạ tiệc Michelin bờ sóng:</span>
-                    <span className="font-bold text-primary">+3.200.000 ₫</span>
-                  </div>
-                )}
-
-                {addonSpa && (
-                  <div className="flex justify-between text-outline">
-                    <span>Gói Spa ngọc bích 90 phút:</span>
-                    <span className="font-bold text-primary">+1.800.000 ₫</span>
-                  </div>
-                )}
-
-                {addonPresidential && (
-                  <div className="flex justify-between text-outline">
-                    <span>Nâng hạng Presidential Villa:</span>
-                    <span className="font-bold text-primary">+18.000.000 ₫</span>
-                  </div>
-                )}
-
-                <div className="border-t border-outline-variant/20 pt-3 flex justify-between items-center text-sm">
-                  <span className="font-bold text-on-surface">Tổng chi phí mới:</span>
-                  <span className="font-black text-xl text-primary">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(grandTotal)}
-                  </span>
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
+                  <span className="text-outline font-semibold">Thời gian nhận - trả phòng</span>
+                  <div className="font-bold text-base text-on-surface">{booking.check_in} → {booking.check_out}</div>
+                  <div className="text-outline text-[11px]">Check-in 14:00 • Check-out 12:00</div>
                 </div>
 
-                {difference > 0 && (
-                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-medium leading-relaxed">
-                    Chênh lệch thanh toán thêm: <strong>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(difference)}</strong>. Số tiền này sẽ được thanh toán trực tiếp tại sảnh đón hoặc qua thẻ tín dụng lưu trữ.
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
+                  <span className="text-outline font-semibold">Khách đại diện</span>
+                  <div className="font-bold text-base text-on-surface flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                    <span>{booking.guest_name}</span>
                   </div>
-                )}
+                  <div className="text-outline text-[11px]">{booking.guest_phone}</div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-1">
+                  <span className="text-outline font-semibold">Email liên hệ</span>
+                  <div className="font-bold text-base text-on-surface flex items-center gap-1.5 truncate">
+                    <Mail className="w-3.5 h-3.5 text-primary" />
+                    <span className="truncate">{booking.guest_email}</span>
+                  </div>
+                  <div className="text-outline text-[11px]">Đã gửi xác nhận điện tử</div>
+                </div>
               </div>
 
-              <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  disabled={actionLoading}
-                  onClick={handleSaveChanges}
-                  className="w-full py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-sm tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {actionLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Đang lưu điều chỉnh...</span>
-                    </>
-                  ) : (
-                    <span>Xác Nhận Thay Đổi</span>
-                  )}
-                </button>
-                <Link
-                  href="/my-bookings"
-                  className="w-full py-2.5 rounded-full bg-surface-container text-on-surface text-xs font-bold hover:bg-surface-container-high transition-colors text-center block"
-                >
-                  Quay lại Kỳ nghỉ của tôi
-                </Link>
-              </div>
+              {booking.special_requests && (
+                <div className="p-4 rounded-2xl bg-surface-container border border-outline-variant/30 space-y-1 text-xs">
+                  <span className="text-outline font-bold uppercase tracking-wider text-[10px]">
+                    Yêu cầu đặc biệt của khách hàng:
+                  </span>
+                  <p className="text-on-surface leading-relaxed">{booking.special_requests}</p>
+                </div>
+              )}
 
-              {/* Butler Help Box */}
-              <div className="pt-4 border-t border-outline-variant/20 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0 text-primary">
-                  <Headphones className="w-5 h-5" />
+              {/* Policies info */}
+              <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 text-xs text-outline space-y-2">
+                <div className="flex items-center gap-2 font-bold text-on-surface">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Quy định nhận phòng &amp; hủy phòng</span>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-on-surface">Cần hỗ trợ cá nhân hóa?</div>
-                  <div className="text-[11px] text-outline">
-                    Gọi quản gia:{' '}
-                    <a href="tel:+84288888LUXE" className="text-primary font-bold hover:underline">
-                      +84 28 8888 LUXE
-                    </a>
-                  </div>
-                </div>
+                <p className="leading-relaxed">
+                  Quý khách vui lòng xuất trình CCCD/Hộ chiếu trùng khớp tên khách đại diện khi làm thủ tục tại sảnh đón. Đơn phòng hỗ trợ hủy linh hoạt trước 48 giờ so với giờ nhận phòng tiêu chuẩn.
+                </p>
               </div>
             </div>
+          </div>
+
+          {/* RIGHT 5 COLS: Payment (VietQR) or Status Summary */}
+          <div className="lg:col-span-5 space-y-6">
+            {isPending && paymentIntent ? (
+              <div className="bg-surface-container-lowest rounded-3xl border border-primary/40 p-6 sm:p-7 shadow-lg space-y-5">
+                <div className="text-center space-y-1">
+                  <span className="text-xs uppercase font-extrabold tracking-widest text-primary">
+                    Cổng Thanh Toán Napas 247
+                  </span>
+                  <h3 className="text-lg font-sans font-bold text-on-surface">
+                    Chuyển Khoản Ngân Hàng VietQR
+                  </h3>
+                  <p className="text-xs text-outline">
+                    Quét mã QR để hoàn tất thanh toán tức thì
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/40 inline-block shadow-inner">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={paymentIntent.qr_code_url}
+                      alt="VietQR code"
+                      className="w-48 h-48 object-contain mx-auto rounded-xl bg-white p-2 shadow-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-surface-container p-4 rounded-2xl text-xs space-y-2.5 border border-outline-variant/20">
+                  <div className="flex justify-between">
+                    <span className="text-outline">Ngân hàng:</span>
+                    <span className="font-bold text-on-surface">{paymentIntent.bank_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-outline">Số tài khoản:</span>
+                    <span className="font-bold text-on-surface font-mono">{paymentIntent.account_number}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-outline">Chủ tài khoản:</span>
+                    <span className="font-bold text-on-surface">{paymentIntent.account_holder}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-outline">Số tiền:</span>
+                    <span className="font-black text-base text-primary">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(paymentIntent.amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t border-outline-variant/30 pt-2 items-center">
+                    <span className="text-outline">Cú pháp chuyển khoản:</span>
+                    <div className="flex items-center gap-1 font-mono font-bold text-primary text-xs bg-primary-container/20 px-2 py-0.5 rounded">
+                      <span>{paymentIntent.transfer_content}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(paymentIntent.transfer_content);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="p-1 hover:text-on-surface cursor-pointer"
+                        title="Sao chép cú pháp"
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {paymentNotice && (
+                  <div
+                    className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center gap-2 ${
+                      paymentNotice.type === 'success'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                        : paymentNotice.type === 'error'
+                        ? 'bg-rose-50 border-rose-200 text-rose-800'
+                        : 'bg-amber-50 border-amber-200 text-amber-800'
+                    }`}
+                  >
+                    {paymentNotice.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                    )}
+                    <span>{paymentNotice.message}</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  disabled={paymentLoading}
+                  onClick={handleCheckPaymentStatus}
+                  className="w-full h-11 rounded-full bg-primary text-on-primary font-bold text-xs hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {paymentLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Đang kiểm tra đối soát...</span>
+                    </>
+                  ) : (
+                    <span>Kiểm Tra Trạng Thái Thanh Toán</span>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 p-6 sm:p-7 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-base text-on-surface">Trạng Thái Đơn Hàng</h4>
+                    <p className="text-xs text-outline">
+                      {isConfirmed ? 'Đã thanh toán & xác nhận giữ chỗ' : isCancelled ? 'Đơn đặt phòng đã bị hủy' : 'Đang xử lý'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-surface-container-low text-xs space-y-2 border border-outline-variant/20">
+                  <div className="flex justify-between">
+                    <span className="text-outline">Mã đặt phòng:</span>
+                    <span className="font-mono font-bold text-primary">{booking.booking_code}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-outline">Trạng thái thanh toán:</span>
+                    <span className="font-bold text-emerald-700">
+                      {booking.payment_status === 'PAID' ? 'Đã Thanh Toán' : 'Đã Hủy / Hoàn Tiền'}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsVoucherModalOpen(true)}
+                  className="w-full h-11 rounded-full bg-primary text-on-primary font-bold text-xs hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Xuất Vé Điện Tử E-Voucher</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* BUTLER REQUEST MODAL */}
-      {isButlerModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-3xl max-w-md w-full p-7 border border-outline-variant/30 shadow-2xl space-y-4 relative">
+      {/* E-VOUCHER MODAL */}
+      {isVoucherModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-surface-container-lowest rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-outline-variant/40 relative my-8">
             <button
               type="button"
-              onClick={() => setIsButlerModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+              onClick={() => setIsVoucherModalOpen(null as unknown as boolean)}
+              className="absolute top-6 right-6 p-2 rounded-full text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="text-center space-y-1">
-              <div className="w-12 h-12 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center mx-auto mb-2">
-                <Headphones className="w-6 h-6" />
+            <div className="text-center space-y-4">
+              <span className="text-xs uppercase tracking-widest text-primary font-bold">
+                Vé Điện Tử Nghỉ Dưỡng
+              </span>
+              <h3 className="text-2xl font-sans font-bold text-on-surface">
+                E-Voucher Nhận Phòng Trực Tuyến
+              </h3>
+
+              <div className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant/40 inline-block mx-auto shadow-inner">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                    `VIETSAGE-VOUCHER:${booking.booking_code}:${booking.guest_name}`
+                  )}`}
+                  alt="Voucher QR Code"
+                  className="w-44 h-44 rounded-xl mx-auto shadow-sm"
+                />
+                <div className="mt-3 font-mono text-lg font-black text-primary tracking-wider">
+                  {booking.booking_code}
+                </div>
+                <div className="text-[11px] text-outline font-medium mt-0.5">
+                  Mã xác thực lưu trú chính thức
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-on-surface">Hỗ Trợ Riêng Bởi Quản Gia</h3>
-              <p className="text-xs text-outline">
-                Gửi yêu cầu may đo riêng cho kỳ nghỉ tại {booking.property_name}
-              </p>
-            </div>
 
-            <form onSubmit={handleSendButlerRequest} className="space-y-4 pt-2">
-              <textarea
-                required
-                rows={4}
-                value={butlerMessage}
-                onChange={(e) => setButlerMessage(e.target.value)}
-                placeholder="Ví dụ: Chúng tôi có mặt vào lúc 11:00, mong muốn chuẩn bị thêm một bình trà thảo mộc hoa cúc ấm tại phòng khách..."
-                className="w-full p-3.5 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-xs font-medium text-on-surface placeholder:text-outline/60 focus:border-primary outline-hidden"
-              />
+              <div className="text-left bg-surface-container p-5 rounded-2xl text-xs space-y-2.5 border border-outline-variant/20">
+                <div className="flex justify-between">
+                  <span className="text-outline">Cơ sở lưu trú:</span>
+                  <span className="font-bold text-on-surface">{booking.property_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">Hạng phòng:</span>
+                  <span className="font-bold text-on-surface">{booking.room_type_name || 'Tiêu chuẩn'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">Khách đại diện:</span>
+                  <span className="font-bold text-on-surface">{booking.guest_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">Thời gian:</span>
+                  <span className="font-bold text-on-surface">
+                    {booking.check_in} → {booking.check_out} ({booking.nights} đêm)
+                  </span>
+                </div>
+                <div className="flex justify-between border-t border-outline-variant/30 pt-2 font-bold">
+                  <span className="text-outline">Trạng thái:</span>
+                  <span className="text-emerald-700">{booking.status}</span>
+                </div>
+              </div>
 
-              <div className="flex items-center gap-3">
+              <div className="pt-2 flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsButlerModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-full bg-surface-container text-on-surface text-xs font-bold hover:bg-surface-container-high transition-colors cursor-pointer"
+                  onClick={() => window.print()}
+                  className="flex-1 h-11 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>In Phiếu Vé (PDF)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsVoucherModalOpen(false)}
+                  className="flex-1 h-11 rounded-full bg-primary text-on-primary font-bold text-xs hover:bg-primary-container hover:text-on-primary-container transition-all cursor-pointer"
                 >
                   Đóng
                 </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="flex-1 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold hover:bg-primary-container hover:text-on-primary-container transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {actionLoading ? 'Đang gửi...' : 'Gửi Đến Quản Gia'}
-                </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -835,14 +568,15 @@ function BookingModifyContent() {
       {/* CANCEL CONFIRMATION MODAL */}
       {isCancelConfirmOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-3xl max-w-md w-full p-7 border border-outline-variant/30 shadow-2xl space-y-4">
+          <div className="bg-surface-container-lowest rounded-3xl max-w-md w-full p-7 border border-outline-variant/40 shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-              <AlertCircle className="w-6 h-6" />
+              <ShieldAlert className="w-6 h-6" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold text-on-surface">Xác Nhận Hủy Kỳ Nghỉ?</h3>
+              <h3 className="text-xl font-bold text-on-surface">Xác Nhận Hủy Đơn Đặt Phòng?</h3>
               <p className="text-xs text-outline leading-relaxed">
-                Quý khách có chắc chắn muốn hủy đơn đặt phòng <strong>{booking.booking_code}</strong> không? Chính sách hủy miễn phí 100% sẽ được kích hoạt ngay lập tức.
+                Quý khách có chắc chắn muốn hủy đơn đặt phòng <strong>{booking.booking_code}</strong> tại{' '}
+                <strong>{booking.property_name}</strong> không?
               </p>
             </div>
 
@@ -852,15 +586,15 @@ function BookingModifyContent() {
                 onClick={() => setIsCancelConfirmOpen(false)}
                 className="flex-1 h-11 rounded-full bg-surface-container text-on-surface text-xs font-bold hover:bg-surface-container-high transition-colors cursor-pointer"
               >
-                Giữ lại phòng
+                Không, giữ phòng
               </button>
               <button
                 type="button"
                 disabled={actionLoading}
-                onClick={handleCancelStay}
+                onClick={handleCancelBooking}
                 className="flex-1 h-11 rounded-full bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50"
               >
-                {actionLoading ? 'Đang hủy...' : 'Xác Nhận Hủy'}
+                {actionLoading ? 'Đang hủy...' : 'Xác nhận hủy'}
               </button>
             </div>
           </div>
@@ -870,19 +604,16 @@ function BookingModifyContent() {
   );
 }
 
-export default function BookingModifyPage() {
+export default function BookingDetailPage() {
   return (
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs font-semibold text-outline">Đang kết nối hành trình lưu trú...</p>
-          </div>
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >
-      <BookingModifyContent />
+      <BookingDetailContent />
     </Suspense>
   );
 }

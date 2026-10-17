@@ -9,7 +9,9 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-full flex flex-col flex-1">
-      <PublicHeader />
+      <React.Suspense>
+        <PublicHeader />
+      </React.Suspense>
       <main className="flex-1">{children}</main>
       <PublicFooter />
     </div>

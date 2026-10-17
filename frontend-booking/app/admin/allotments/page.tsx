@@ -137,15 +137,30 @@ export default function AdminAllotmentsPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
           Lịch Tồn Kho &amp; Giá Phòng (Allotments &amp; Rates)
         </h1>
-        <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
+        <p className="text-xs sm:text-base text-on-surface-variant max-w-2xl leading-relaxed">
           Quản trị hạn mức phân phối phòng, giá động và chính sách Stop-Sell theo ngày của các khu nghỉ dưỡng.
         </p>
       </div>
 
       <div className="w-full space-y-8">
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
-            {error}
+          <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0" />
+              <div className="text-xs font-semibold">
+                {error.includes('UNAUTHORIZED') || error.includes('Authentication required') || error.includes('hết hạn')
+                  ? 'Phiên đăng nhập quản trị đã hết hạn hoặc chưa được xác thực. Vui lòng đăng nhập lại để xem lịch tồn kho.'
+                  : error}
+              </div>
+            </div>
+            {(error.includes('UNAUTHORIZED') || error.includes('Authentication required') || error.includes('hết hạn')) && (
+              <Link
+                href="/login?callbackUrl=/admin/allotments"
+                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shadow-xs whitespace-nowrap"
+              >
+                Đăng nhập lại
+              </Link>
+            )}
           </div>
         )}
         {/* Filter Controls Bar */}
@@ -305,7 +320,7 @@ export default function AdminAllotmentsPage() {
                     }`}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-sm font-bold text-on-surface">
+                      <span className="text-base font-bold text-on-surface">
                         Ngày {dayNum}
                       </span>
                       {isBlocked ? (
@@ -368,7 +383,7 @@ export default function AdminAllotmentsPage() {
                   step="50000"
                   value={editPrice}
                   onChange={(e) => setEditPrice(Number(e.target.value))}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary text-sm font-bold text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary text-base font-bold text-on-surface bg-surface-container-low"
                   required
                 />
               </div>
@@ -383,7 +398,7 @@ export default function AdminAllotmentsPage() {
                   max="100"
                   value={editTotalRooms}
                   onChange={(e) => setEditTotalRooms(Number(e.target.value))}
-                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary text-sm font-bold text-on-surface bg-surface-container-low"
+                  className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-primary text-base font-bold text-on-surface bg-surface-container-low"
                   required
                 />
               </div>

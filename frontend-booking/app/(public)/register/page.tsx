@@ -87,7 +87,7 @@ export default function RegisterElitePage() {
     }
 
     if (!agreeTerms) {
-      setErrorMessage('Quý khách vui lòng đồng ý với Quy chế Thành viên Aurum Elite để tiếp tục.');
+      setErrorMessage('Quý khách vui lòng đồng ý với Quy chế Thành viên VietSage VIP Club để tiếp tục.');
       return;
     }
 
@@ -117,7 +117,7 @@ export default function RegisterElitePage() {
         return;
       }
 
-      setSuccessMessage('Gia nhập Aurum Elite thành công! Đang tự động đăng nhập và áp dụng đặc quyền...');
+      setSuccessMessage('Gia nhập VietSage VIP Club thành công! Đang tự động đăng nhập và kích hoạt đặc quyền...');
 
       // Auto sign in with NextAuth credentials
       const signInRes = await signIn('credentials', {
@@ -156,7 +156,7 @@ export default function RegisterElitePage() {
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container-high/80 border border-outline-variant/30 text-xs font-semibold text-on-surface">
             <ShieldCheck className="w-4 h-4 text-primary" />
-            <span>Xác thực an toàn Aurum Elite Security 2026</span>
+            <span>Xác thực an toàn VietSage Security 2026</span>
           </div>
         </div>
 
@@ -169,13 +169,13 @@ export default function RegisterElitePage() {
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary-container/20 shadow-xs mb-4">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <span className="text-xs font-extrabold uppercase tracking-widest text-primary">
-                    Chương Trình Đặc Quyền Aurum Elite
+                    Chương Trình Đặc Quyền VietSage VIP Club
                   </span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-black text-on-surface mb-3 tracking-tight leading-tight">
-                  Gia Nhập Hội Viên <span className="italic font-normal text-primary">Aurum Elite</span>
+                  Gia Nhập Hội Viên <span className="italic font-normal text-primary">VietSage VIP Club</span>
                 </h1>
-                <p className="text-sm sm:text-base text-outline max-w-xl mb-6 leading-relaxed">
+                <p className="text-base text-outline max-w-xl mb-6 leading-relaxed">
                   Mở cánh cửa đến với trải nghiệm nghỉ dưỡng bespoke tĩnh tại. Thiết lập hồ sơ lưu trú một lần duy nhất để tận hưởng sự chăm sóc cá nhân hóa chuẩn xác tại mọi điểm đến trong hệ thống resort.
                 </p>
               </div>
@@ -190,7 +190,7 @@ export default function RegisterElitePage() {
                     <p className="text-xs font-extrabold uppercase tracking-wider text-primary">
                       Đặc Ân Chào Mừng Thành Viên Mới
                     </p>
-                    <p className="text-sm font-bold text-on-surface">
+                    <p className="text-base font-bold text-on-surface">
                       Tặng ngay E-Voucher 2.000.000₫ &amp; Nhận phòng sớm lúc 10:30
                     </p>
                   </div>
@@ -207,7 +207,7 @@ export default function RegisterElitePage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80"
-                alt="Aurum Haven Elite Tropical Resort"
+                alt="VietSage Luxury Resort"
                 className="w-full h-full object-cover absolute inset-0"
               />
               <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-surface-container-lowest via-surface-container-lowest/20 to-transparent" />
@@ -296,7 +296,7 @@ export default function RegisterElitePage() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Nguyễn Hoàng Minh"
-                      className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-sm font-medium text-on-surface focus:outline-none transition-all"
+                      className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-base font-medium text-on-surface focus:outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -314,8 +314,8 @@ export default function RegisterElitePage() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="minh.nguyen@aurum.vn"
-                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-sm font-medium text-on-surface focus:outline-none transition-all"
+                        placeholder="guest@example.com"
+                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-base font-medium text-on-surface focus:outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -331,7 +331,7 @@ export default function RegisterElitePage() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+84 908 123 456"
-                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-sm font-medium text-on-surface focus:outline-none transition-all"
+                        className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-base font-medium text-on-surface focus:outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export default function RegisterElitePage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Tối thiểu 6 ký tự"
-                        className="w-full pl-11 pr-11 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-sm font-medium text-on-surface focus:outline-none transition-all"
+                        className="w-full pl-11 pr-11 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-base font-medium text-on-surface focus:outline-none transition-all"
                       />
                       <button
                         type="button"
@@ -372,7 +372,7 @@ export default function RegisterElitePage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-sm font-medium text-on-surface focus:outline-none transition-all"
+                      className="w-full px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-base font-medium text-on-surface focus:outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -388,7 +388,7 @@ export default function RegisterElitePage() {
                       type="date"
                       value={birthday}
                       onChange={(e) => setBirthday(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-sm font-medium text-on-surface focus:outline-none transition-all"
+                      className="w-full pl-11 pr-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 focus:border-primary text-base font-medium text-on-surface focus:outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -635,7 +635,7 @@ export default function RegisterElitePage() {
                     <span>
                       Tôi đồng ý với{' '}
                       <span className="text-primary font-bold hover:underline">
-                        Quy chế Thành viên Aurum Elite
+                        Quy chế Thành viên VietSage VIP Club
                       </span>{' '}
                       và xác nhận đọc hiểu chính sách bảo mật dữ liệu khách sạn quốc tế. Mọi đặc quyền có thể hủy hoặc điều chỉnh bất kỳ lúc nào.
                     </span>
@@ -652,7 +652,7 @@ export default function RegisterElitePage() {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-sm tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-extrabold text-base tracking-wide transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {isLoading ? (
                         <>
