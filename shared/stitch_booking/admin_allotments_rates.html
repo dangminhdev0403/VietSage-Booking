@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quản trị Lịch Tồn Kho &amp; Giá Phòng - Aurum Haven</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Phosphor Icons -->
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'gold-champagne': '#C5A880',
+            'gold-light': '#F4EFEA',
+            'gold-dark': '#9A7B56',
+            'midnight': '#0F172A',
+            'midnight-light': '#1E293B',
+            'surface-ivory': '#FAF9F6',
+            'surface-card': '#FFFFFF',
+            'border-subtle': '#E7E5E0',
+            'emerald-soft': '#10B981',
+            'crimson-soft': '#EF4444'
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #FAF9F6;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #1E293B;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #D1C7BD;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F4F1EC;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex antialiased overflow-x-hidden selection:bg-[#C5A880]/20 selection:text-[#0F172A]">
+<!-- 1. SIDEBAR QUẢN TRỊ CHUYÊN NGHIỆP -->
+<aside class="w-64 bg-[#0F172A] text-slate-300 flex flex-col flex-shrink-0 border-r border-slate-800 z-20 min-h-screen">
+<!-- Brand Header -->
+<div class="p-6 border-b border-slate-800/80 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-[#C5A880] flex items-center justify-center bg-[#C5A880]/10 text-[#C5A880] font-serif font-bold text-lg tracking-wider shadow-inner">
+        AH
+      </div>
+<div>
+<h1 class="font-serif font-semibold text-white tracking-wider text-base">AURUM HAVEN</h1>
+<p class="text-[11px] uppercase tracking-widest text-[#C5A880] font-medium">Hệ Thống Quản Trị</p>
+</div>
+</div>
+<!-- Resort Branch Badge -->
+<div class="px-5 py-3 mx-4 my-4 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+<span class="text-xs text-slate-300 font-medium">Hệ thống phân phối LIVE</span>
+</div>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-[#C5A880]/20 text-[#C5A880] font-semibold">v3.4</span>
+</div>
+<!-- Navigation Menu -->
+<nav class="flex-1 px-3 space-y-1 text-sm font-medium">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition" href="#">
+<i class="ph ph-squares-four text-lg"></i>
+<span>Tổng quan (Dashboard)</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition" href="#">
+<i class="ph ph-calendar-check text-lg"></i>
+<span>Đơn đặt phòng (Bookings)</span>
+<span class="ml-auto text-xs px-2 py-0.5 rounded-full bg-[#C5A880] text-[#0F172A] font-bold">14</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition" href="#">
+<i class="ph ph-buildings text-lg"></i>
+<span>Quản lý Khách sạn</span>
+</a>
+<!-- Active Menu Item: Allotments & Rates -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#C5A880] text-[#0F172A] font-semibold shadow-md shadow-[#C5A880]/10" href="#">
+<i class="ph ph-calendar-blank text-lg font-bold"></i>
+<span>Lịch Giá &amp; Tồn Kho</span>
+<i class="ph ph-caret-right ml-auto text-sm"></i>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition" href="#">
+<i class="ph ph-chart-line-up text-lg"></i>
+<span>Báo cáo Doanh thu</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition" href="#">
+<i class="ph ph-users-three text-lg"></i>
+<span>Khách VIP &amp; Hội viên</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition" href="#">
+<i class="ph ph-gear-six text-lg"></i>
+<span>Cài đặt Hệ thống</span>
+</a>
+</nav>
+<!-- Admin User Info Footer -->
+<div class="p-4 border-t border-slate-800 flex items-center gap-3 bg-slate-900/60">
+<img alt="Avatar" class="w-10 h-10 rounded-full border border-[#C5A880]/50 object-cover" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-white truncate">Hoàng Kim (Ms.)</p>
+<p class="text-xs text-slate-400 truncate">Giám đốc Doanh Thu (Yield)</p>
+</div>
+<button class="text-slate-400 hover:text-white transition" title="Đăng xuất">
+<i class="ph ph-sign-out text-lg"></i>
+</button>
+</div>
+</aside>
+<!-- MAIN WORKSPACE -->
+<main class="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scroll">
+<!-- 2. HEADER QUẢN TRỊ & BỘ LỌC PHÒNG / THÁNG -->
+<header class="bg-white border-b border-[#E7E5E0] px-8 py-5 sticky top-0 z-10 shadow-sm">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 text-xs text-slate-500 mb-1">
+<span>Phân Phối &amp; Vận Hành</span>
+<i class="ph ph-caret-right text-[10px]"></i>
+<span class="text-[#9A7B56] font-medium">Bảng Lịch Quản Trị Allotment</span>
+</div>
+<h2 class="text-2xl font-serif font-bold text-[#0F172A] tracking-tight">
+            Lịch Tồn Kho &amp; Giá Phòng (Allotments &amp; Rates)
+          </h2>
+</div>
+<!-- Filter Dropdowns Bar -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Property Selector -->
+<div class="relative">
+<label class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Khu Nghỉ Dưỡng</label>
+<div class="flex items-center gap-2 bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg px-3.5 py-2 text-sm text-[#0F172A] font-medium hover:border-[#C5A880] transition cursor-pointer shadow-sm">
+<i class="ph ph-building text-[#9A7B56]"></i>
+<span class="font-semibold">The Anam Mũi Né Luxury Resort</span>
+<i class="ph ph-caret-down text-slate-400 text-xs ml-1"></i>
+</div>
+</div>
+<!-- Room Category Selector -->
+<div class="relative">
+<label class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Hạng Phòng</label>
+<div class="flex items-center gap-2 bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg px-3.5 py-2 text-sm text-[#0F172A] font-medium hover:border-[#C5A880] transition cursor-pointer shadow-sm">
+<i class="ph ph-bed text-[#9A7B56]"></i>
+<span class="font-semibold">Suite Hướng Biển (Ocean Suite)</span>
+<i class="ph ph-caret-down text-slate-400 text-xs ml-1"></i>
+</div>
+</div>
+<!-- Month Selector with Arrows -->
+<div class="relative">
+<label class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Thời Gian</label>
+<div class="flex items-center bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg p-0.5 shadow-sm">
+<button class="p-1.5 text-slate-500 hover:text-[#0F172A] hover:bg-white rounded transition" title="Tháng trước">
+<i class="ph ph-caret-left"></i>
+</button>
+<div class="px-3 py-1 text-sm font-semibold text-[#0F172A] flex items-center gap-1.5">
+<i class="ph ph-calendar text-[#9A7B56]"></i>
+                Tháng 11 / 2026
+              </div>
+<button class="p-1.5 text-slate-500 hover:text-[#0F172A] hover:bg-white rounded transition" title="Tháng sau">
+<i class="ph ph-caret-right"></i>
+</button>
+</div>
+</div>
+<!-- Currency & Sync button -->
+<div class="relative self-end">
+<button class="flex items-center gap-2 bg-[#0F172A] text-white hover:bg-slate-800 px-4 py-2 rounded-lg text-sm font-medium transition shadow">
+<i class="ph ph-arrows-clockwise text-sm text-[#C5A880]"></i>
+<span>Đồng Bộ OTA</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<div class="p-8 space-y-6">
+<!-- 3. BĂNG CHỈ SỐ NHANH (KPI SUMMARY STRIP) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- KPI 1 -->
+<div class="bg-white p-5 rounded-xl border border-[#E7E5E0] shadow-sm flex items-center justify-between relative overflow-hidden group hover:border-[#C5A880]/60 transition">
+<div class="space-y-1">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng Phòng Vận Hành</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif font-bold text-[#0F172A]">25</span>
+<span class="text-xs text-slate-500 font-medium">phòng/ngày</span>
+</div>
+<p class="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+<i class="ph ph-check-circle"></i> Sẵn sàng 100% allotment
+            </p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-[#FAF9F6] border border-[#E7E5E0] flex items-center justify-center text-[#9A7B56] text-2xl group-hover:bg-[#C5A880]/10 transition">
+<i class="ph ph-door"></i>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-white p-5 rounded-xl border border-[#E7E5E0] shadow-sm flex items-center justify-between relative overflow-hidden group hover:border-[#C5A880]/60 transition">
+<div class="space-y-1">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tỷ Lệ Lấp Đầy TB (OCC)</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif font-bold text-[#0F172A]">78.4%</span>
+<span class="text-xs text-emerald-600 font-semibold flex items-center">
+<i class="ph ph-arrow-up-right"></i> +6.2%
+              </span>
+</div>
+<p class="text-[11px] text-slate-500 font-medium">Đạt 588 / 750 đêm phòng</p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-[#FAF9F6] border border-[#E7E5E0] flex items-center justify-center text-[#9A7B56] text-2xl group-hover:bg-[#C5A880]/10 transition">
+<i class="ph ph-chart-pie-slice"></i>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-white p-5 rounded-xl border border-[#E7E5E0] shadow-sm flex items-center justify-between relative overflow-hidden group hover:border-[#C5A880]/60 transition">
+<div class="space-y-1">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Giá Bình Quân Đêm (ADR)</span>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-serif font-bold text-[#9A7B56]">5.850.000 ₫</span>
+</div>
+<p class="text-[11px] text-slate-500 font-medium">Cuối tuần đạt đỉnh 6.900.000 ₫</p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-[#FAF9F6] border border-[#E7E5E0] flex items-center justify-center text-[#9A7B56] text-2xl group-hover:bg-[#C5A880]/10 transition">
+<i class="ph ph-tag"></i>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-white p-5 rounded-xl border border-[#E7E5E0] shadow-sm flex items-center justify-between relative overflow-hidden group hover:border-red-300 transition">
+<div class="space-y-1">
+<span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Ngày Đang Khóa Bán (Stop Sell)</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif font-bold text-rose-600">3</span>
+<span class="text-xs text-slate-500 font-medium">ngày khóa</span>
+</div>
+<p class="text-[11px] text-rose-500 font-medium flex items-center gap-1">
+<i class="ph ph-lock-key"></i> 20, 21, 22 Th11 (Bảo trì Spa)
+            </p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 text-2xl group-hover:bg-rose-100 transition">
+<i class="ph ph-prohibit"></i>
+</div>
+</div>
+</section>
+<!-- 4. THANH CÔNG CỤ TÁC VỤ HÀNG LOẠT (BULK UPDATE BAR) -->
+<section class="bg-white rounded-xl border border-[#E7E5E0] p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#C5A880]/15 text-[#9A7B56] flex items-center justify-center font-bold">
+<i class="ph ph-lightning text-lg"></i>
+</div>
+<div>
+<h4 class="text-sm font-bold text-[#0F172A]">Thao Tác Nhanh Theo Giai Đoạn (Bulk Operations)</h4>
+<p class="text-xs text-slate-500">Áp dụng chính sách đồng thời cho nhiều ngày để tối ưu năng suất</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-2.5">
+<!-- Button 1 -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#FAF9F6] border border-[#D8D2C9] hover:border-[#C5A880] text-sm font-semibold text-[#0F172A] transition shadow-sm hover:shadow">
+<i class="ph ph-pencil-line text-[#9A7B56]"></i>
+<span>Cập nhật giá hàng loạt</span>
+</button>
+<!-- Button 2 -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#FAF9F6] border border-[#D8D2C9] hover:border-rose-400 text-sm font-semibold text-rose-700 transition shadow-sm hover:shadow">
+<i class="ph ph-lock-simple"></i>
+<span>Khóa bán theo giai đoạn (Stop-Sell)</span>
+</button>
+<!-- Button 3 -->
+<button class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#FAF9F6] border border-[#D8D2C9] hover:border-[#C5A880] text-sm font-semibold text-[#9A7B56] transition shadow-sm hover:shadow">
+<i class="ph ph-trend-up"></i>
+<span>Áp dụng giá cuối tuần (+20%)</span>
+</button>
+<!-- Button 4: Open Drawer directly -->
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C5A880] hover:bg-[#B39369] text-[#0F172A] text-sm font-bold transition shadow-sm">
+<i class="ph ph-sliders-horizontal"></i>
+<span>Mở Bảng Điều Chỉnh</span>
+</button>
+</div>
+</section>
+<!-- 5 & 6. BẢNG LƯỚI LỊCH TỒN KHO & DRAWER CHỈNH SỬA BÊN PHẢI -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+<!-- 5. BẢNG LỊCH TỒN KHO DẠNG LƯỚI TRỰC QUAN (CALENDAR GRID) - 8 Cols on XL -->
+<section class="xl:col-span-8 bg-white rounded-2xl border border-[#E7E5E0] shadow-sm p-6 overflow-hidden">
+<!-- Calendar Title & Legend Header -->
+<div class="flex flex-wrap items-center justify-between pb-5 border-b border-[#E7E5E0] gap-4">
+<div>
+<h3 class="font-serif text-lg font-bold text-[#0F172A]">Lưới Phân Bổ Tồn Kho &amp; Giá - Tháng 11/2026</h3>
+<p class="text-xs text-slate-500">Hạng phòng: Suite Hướng Biển • Tối đa 25 allotment/ngày</p>
+</div>
+<!-- Legend -->
+<div class="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-sm bg-emerald-500"></span> Còn phòng (&gt;50%)
+              </span>
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-sm bg-amber-500"></span> Sắp hết (&lt;3 phòng)
+              </span>
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-sm bg-[#C5A880]"></span> Giá Cuối tuần VIP
+              </span>
+<span class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-sm bg-rose-500"></span> Đã khóa (Stop Sell)
+              </span>
+</div>
+</div>
+<!-- Calendar Days of Week Header -->
+<div class="grid grid-cols-7 gap-2 pt-4 pb-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+<div>Thứ 2</div>
+<div>Thứ 3</div>
+<div>Thứ 4</div>
+<div>Thứ 5</div>
+<div>Thứ 6</div>
+<div class="text-[#9A7B56]">Thứ 7 (Weekend)</div>
+<div class="text-[#9A7B56]">Chủ Nhật (Weekend)</div>
+</div>
+<!-- Calendar Grid 7x5 Days -->
+<div class="grid grid-cols-7 gap-2.5">
+<!-- Week 1: Previous month fill + 1,2 -->
+<!-- Oct 27 (dimmed) -->
+<div class="bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5 opacity-40 text-xs min-h-[110px] flex flex-col justify-between">
+<span class="font-bold text-slate-400">27 Th10</span>
+<span class="text-[11px] text-slate-400">5.500.000 ₫</span>
+<span class="text-[10px] text-slate-400">Đã qua</span>
+</div>
+<!-- Oct 28 -->
+<div class="bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5 opacity-40 text-xs min-h-[110px] flex flex-col justify-between">
+<span class="font-bold text-slate-400">28 Th10</span>
+<span class="text-[11px] text-slate-400">5.500.000 ₫</span>
+<span class="text-[10px] text-slate-400">Đã qua</span>
+</div>
+<!-- Oct 29 -->
+<div class="bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5 opacity-40 text-xs min-h-[110px] flex flex-col justify-between">
+<span class="font-bold text-slate-400">29 Th10</span>
+<span class="text-[11px] text-slate-400">5.500.000 ₫</span>
+<span class="text-[10px] text-slate-400">Đã qua</span>
+</div>
+<!-- Oct 30 -->
+<div class="bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5 opacity-40 text-xs min-h-[110px] flex flex-col justify-between">
+<span class="font-bold text-slate-400">30 Th10</span>
+<span class="text-[11px] text-slate-400">5.500.000 ₫</span>
+<span class="text-[10px] text-slate-400">Đã qua</span>
+</div>
+<!-- Oct 31 -->
+<div class="bg-slate-50/70 border border-slate-200/60 rounded-xl p-2.5 opacity-40 text-xs min-h-[110px] flex flex-col justify-between">
+<span class="font-bold text-slate-400">31 Th10</span>
+<span class="text-[11px] text-slate-400">5.500.000 ₫</span>
+<span class="text-[10px] text-slate-400">Đã qua</span>
+</div>
+<!-- Nov 1 (Sat) -->
+<div class="bg-amber-50/30 border border-amber-200/80 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">01 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 7/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 2 (Sun) -->
+<div class="bg-amber-50/30 border border-amber-200/80 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">02 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 80%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 5/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Week 2: 3 to 9 Nov -->
+<!-- Nov 3 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">03 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 10/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 4 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">04 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 50%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 12/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 5 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">05 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 45%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 14/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 6 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">06 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 9/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 7 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">07 Th11</span>
+<span class="text-[9px] px-1 py-0.2 rounded bg-amber-100 text-amber-700 font-bold">Thứ 6</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">6.000.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span class="text-amber-700 font-bold">Còn 4/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 8 (Sat) -->
+<div class="bg-amber-50/40 border border-amber-200/90 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">08 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 92%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span class="text-amber-700 font-bold">Còn 2/25</span>
+<span class="text-amber-600 font-bold">SẮP HẾT</span>
+</div>
+</div>
+<!-- Nov 9 (Sun) -->
+<div class="bg-amber-50/40 border border-amber-200/90 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">09 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 80%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 5/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Week 3: 10 to 16 Nov -->
+<!-- Nov 10 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">10 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 50%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 12/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 11 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">11 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 10/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 12 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">12 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 8/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 13 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">13 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 7/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 14 (VD ĐẶC BIỆT THEO YÊU CẦU: 14 Th11) -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">14 Th11</span>
+<span class="text-[9px] px-1 py-0.2 rounded bg-amber-100 text-amber-700 font-bold">Thứ 6</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span class="text-emerald-700 font-semibold">Còn 4/10 phòng</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 15 (ACTIVE / SELECTED NGÀY TRÊN SIDE INSPECTOR) -->
+<div class="bg-white border-2 border-[#C5A880] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between shadow-md relative ring-2 ring-[#C5A880]/30 cursor-pointer">
+<div class="absolute -top-2.5 right-2 px-1.5 py-0.5 rounded bg-[#C5A880] text-[#0F172A] font-bold text-[9px] tracking-wider uppercase">
+                Đang Chọn
+              </div>
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A] text-[13px]">15 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[14px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 84%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px]">
+<span class="text-amber-800 font-bold">Còn 4/25</span>
+<span class="text-emerald-600 font-bold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 16 (Sun) -->
+<div class="bg-amber-50/40 border border-amber-200/90 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">16 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 76%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 6/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Week 4: 17 to 23 Nov (Bao gồm 3 ngày khóa 20, 21, 22) -->
+<!-- Nov 17 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">17 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 55%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 11/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 18 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">18 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 10/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 19 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">19 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 7/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 20 (ĐÃ KHÓA BÁN - BLOCKED 1) -->
+<div class="bg-rose-50/60 border border-rose-300 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between shadow-sm cursor-pointer hover:border-rose-400 transition">
+<div class="flex items-center justify-between">
+<span class="font-bold text-rose-800">20 Th11</span>
+<i class="ph ph-lock-key text-rose-600"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-slate-400 line-through text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-rose-200 h-1.5 rounded-full mt-1">
+<div class="bg-rose-500 h-full rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px]">
+<span class="text-rose-700 font-bold">Khóa 25 phòng</span>
+<span class="px-1.5 py-0.5 rounded bg-rose-200/80 text-rose-800 font-extrabold text-[9px]">ĐÃ KHÓA</span>
+</div>
+</div>
+<!-- Nov 21 (ĐÃ KHÓA BÁN - BLOCKED 2) -->
+<div class="bg-rose-50/60 border border-rose-300 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between shadow-sm cursor-pointer hover:border-rose-400 transition">
+<div class="flex items-center justify-between">
+<span class="font-bold text-rose-800">21 Th11</span>
+<i class="ph ph-lock-key text-rose-600"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-slate-400 line-through text-[13px]">6.000.000 ₫</p>
+<div class="w-full bg-rose-200 h-1.5 rounded-full mt-1">
+<div class="bg-rose-500 h-full rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px]">
+<span class="text-rose-700 font-bold">Khóa 25 phòng</span>
+<span class="px-1.5 py-0.5 rounded bg-rose-200/80 text-rose-800 font-extrabold text-[9px]">ĐÃ KHÓA</span>
+</div>
+</div>
+<!-- Nov 22 (ĐÃ KHÓA BÁN - BLOCKED 3) -->
+<div class="bg-rose-50/60 border border-rose-300 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between shadow-sm cursor-pointer hover:border-rose-400 transition">
+<div class="flex items-center justify-between">
+<span class="font-bold text-rose-800">22 Th11</span>
+<i class="ph ph-lock-key text-rose-600"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-slate-400 line-through text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-rose-200 h-1.5 rounded-full mt-1">
+<div class="bg-rose-500 h-full rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px]">
+<span class="text-rose-700 font-bold">Khóa 25 phòng</span>
+<span class="px-1.5 py-0.5 rounded bg-rose-200/80 text-rose-800 font-extrabold text-[9px]">ĐÃ KHÓA</span>
+</div>
+</div>
+<!-- Nov 23 (Sun) -->
+<div class="bg-amber-50/40 border border-amber-200/90 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">23 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 7/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Week 5: 24 to 30 Nov -->
+<!-- Nov 24 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">24 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 50%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 12/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 25 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">25 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 10/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 26 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">26 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 9/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 27 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">27 Th11</span>
+<i class="ph ph-pencil-simple text-slate-400 group-hover:text-[#9A7B56]"></i>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">5.500.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 75%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 6/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 28 -->
+<div class="bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">28 Th11</span>
+<span class="text-[9px] px-1 py-0.2 rounded bg-amber-100 text-amber-700 font-bold">Thứ 6</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#0F172A] text-[13px]">6.000.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 88%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span class="text-amber-800 font-bold">Còn 3/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+<!-- Nov 29 (Sat) -->
+<div class="bg-amber-50/40 border border-amber-200/90 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">29 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 95%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span class="text-rose-600 font-bold">Còn 1/25</span>
+<span class="text-rose-600 font-bold">SẮP HẾT</span>
+</div>
+</div>
+<!-- Nov 30 (Sun) -->
+<div class="bg-amber-50/40 border border-amber-200/90 rounded-xl p-2.5 text-xs min-h-[110px] flex flex-col justify-between hover:border-[#C5A880] transition group cursor-pointer shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-bold text-[#0F172A]">30 Th11</span>
+<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#C5A880]/20 text-[#9A7B56] font-bold">Cuối tuần</span>
+</div>
+<div>
+<p class="font-serif font-bold text-[#9A7B56] text-[13px]">6.800.000 ₫</p>
+<div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 75%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-slate-500">
+<span>Còn 6/25</span>
+<span class="text-emerald-600 font-semibold">MỞ BÁN</span>
+</div>
+</div>
+</div>
+<!-- Bottom Micro Controls -->
+<div class="mt-5 pt-4 border-t border-[#E7E5E0] flex flex-wrap items-center justify-between text-xs text-slate-500">
+<span class="flex items-center gap-2">
+<i class="ph ph-info text-[#9A7B56]"></i>
+              Nhấp vào bất kỳ ô ngày nào để tải thông số chi tiết sang bảng điều chỉnh bên phải.
+            </span>
+<div class="flex items-center gap-3">
+<button class="hover:text-[#0F172A] flex items-center gap-1 font-semibold">
+<i class="ph ph-file-csv"></i> Xuất file Excel / CSV
+              </button>
+<span>•</span>
+<button class="hover:text-[#0F172A] flex items-center gap-1 font-semibold">
+<i class="ph ph-printer"></i> In lịch Allotment
+              </button>
+</div>
+</div>
+</section>
+<!-- 6. DRAWER / PANEL CHỈNH SỬA BÊN PHẢI (SIDE INSPECTOR) - 4 Cols on XL -->
+<aside class="xl:col-span-4 bg-white rounded-2xl border border-[#E7E5E0] shadow-sm p-6 sticky top-28 space-y-5">
+<!-- Inspector Header -->
+<div class="flex items-center justify-between pb-4 border-b border-[#E7E5E0]">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#0F172A] text-[#C5A880] flex items-center justify-center font-bold">
+<i class="ph ph-sliders"></i>
+</div>
+<div>
+<h4 class="font-serif font-bold text-[#0F172A] text-base">Điều Chỉnh Chi Tiết</h4>
+<p class="text-xs text-slate-500">Ngày chọn: <strong class="text-[#0F172A]">Thứ Bảy, 15/11/2026</strong></p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
+              Đang Mở Bán
+            </span>
+</div>
+<!-- Current Room Info Mini-Card -->
+<div class="p-3.5 bg-[#FAF9F6] border border-[#E7E5E0] rounded-xl flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-[#C5A880]/20 flex items-center justify-center text-[#9A7B56] text-xl font-bold">
+<i class="ph ph-bed"></i>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-bold text-[#0F172A] truncate">Suite Hướng Biển (Ocean Suite)</p>
+<p class="text-[11px] text-slate-500">The Anam Mũi Né Luxury Resort</p>
+</div>
+</div>
+<!-- Form Fields -->
+<form class="space-y-4 text-xs" onsubmit="event.preventDefault();">
+<!-- Giá Bán Trong Ngày -->
+<div>
+<label class="block font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+<span>Giá Bán Trong Ngày (VNĐ)</span>
+<span class="text-[10px] text-[#9A7B56] font-semibold">Gốc: 5.500.000 ₫ (+24%)</span>
+</label>
+<div class="relative">
+<input class="w-full bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg px-3.5 py-2.5 text-sm font-bold text-[#0F172A] focus:outline-none focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] transition" type="text" value="6.800.000"/>
+<span class="absolute right-3.5 top-2.5 text-slate-400 font-bold text-xs">₫ / đêm</span>
+</div>
+</div>
+<!-- Tồn Kho & Allotment -->
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block font-bold text-slate-700 mb-1.5">Tổng Phòng (Quota)</label>
+<div class="flex items-center border border-[#D8D2C9] rounded-lg bg-[#FAF9F6] overflow-hidden">
+<button class="px-2.5 py-2 text-slate-500 hover:bg-slate-200 transition font-bold" type="button">-</button>
+<input class="w-full text-center bg-transparent text-xs font-bold text-[#0F172A] focus:outline-none" type="number" value="25"/>
+<button class="px-2.5 py-2 text-slate-500 hover:bg-slate-200 transition font-bold" type="button">+</button>
+</div>
+</div>
+<div>
+<label class="block font-bold text-slate-700 mb-1.5">Phòng Đã Bán</label>
+<input class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600" disabled="" type="text" value="21 phòng (84%)"/>
+</div>
+</div>
+<!-- Min Stay / Lưu trú tối thiểu -->
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block font-bold text-slate-700 mb-1.5">Lưu Trú Tối Thiểu (Min-stay)</label>
+<select class="w-full bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg px-2.5 py-2 text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#C5A880]">
+<option>1 đêm</option>
+<option selected="">2 đêm (Cuối tuần)</option>
+<option>3 đêm</option>
+</select>
+</div>
+<div>
+<label class="block font-bold text-slate-700 mb-1.5">Bữa Sáng Đi Kèm</label>
+<select class="w-full bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg px-2.5 py-2 text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#C5A880]">
+<option selected="">Buffet 5 sao (Đã gồm)</option>
+<option>Không gồm bữa sáng</option>
+</select>
+</div>
+</div>
+<!-- Công Tắc Toggle Khóa Bán (Stop-Sell Switch) -->
+<div class="pt-2 border-t border-[#E7E5E0]">
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+<div>
+<span class="font-bold text-slate-800 block text-xs">Khóa Bán Phòng (Stop Sell)</span>
+<span class="text-[11px] text-slate-500">Ngừng nhận booking trên OTA &amp; Web</span>
+</div>
+<!-- Toggle switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+</label>
+</div>
+</div>
+<!-- Lý do nếu khóa phòng -->
+<div>
+<label class="block font-bold text-slate-700 mb-1.5">Ghi Chú Vận Hành / Lý Do Điều Chỉnh</label>
+<textarea class="w-full bg-[#FAF9F6] border border-[#D8D2C9] rounded-lg p-2.5 text-xs text-[#0F172A] focus:outline-none focus:border-[#C5A880]" placeholder="Ví dụ: Áp dụng phụ thu mùa cao điểm, khách hội nghị MICE..." rows="2"></textarea>
+</div>
+<!-- Action Buttons -->
+<div class="pt-3 flex items-center gap-2.5">
+<button class="w-1/2 py-2.5 px-3 rounded-lg border border-[#D8D2C9] text-slate-700 font-bold hover:bg-slate-100 transition text-center" type="button">
+                Khôi Phục Gốc
+              </button>
+<button class="w-1/2 py-2.5 px-3 rounded-lg bg-[#0F172A] text-white hover:bg-slate-800 font-bold transition flex items-center justify-center gap-1.5 shadow-md" type="submit">
+<i class="ph ph-check text-[#C5A880]"></i>
+<span>Lưu Thay Đổi</span>
+</button>
+</div>
+</form>
+<!-- Audit Log Mini Strip -->
+<div class="pt-4 border-t border-[#E7E5E0] text-[11px] text-slate-500 space-y-1">
+<p class="flex items-center justify-between">
+<span>Lần sửa gần nhất:</span>
+<strong class="text-slate-700">14:20 Hôm nay</strong>
+</p>
+<p class="flex items-center justify-between">
+<span>Người thực hiện:</span>
+<strong class="text-slate-700">Hoàng Kim (Revenue Dir.)</strong>
+</p>
+<p class="flex items-center justify-between text-emerald-600">
+<span>Đồng bộ OTA:</span>
+<span class="font-semibold flex items-center gap-1"><i class="ph ph-check"></i> Đã khớp Booking.com, Agoda</span>
+</p>
+</div>
+</aside>
+</div>
+</div>
+</main>
+</body>
+</html>

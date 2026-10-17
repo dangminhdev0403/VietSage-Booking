@@ -45,3 +45,7 @@ coverage/
 # Regenerate with: graphify update .
 graphify-out/
 
+# Local Account Credentials
+account.json
+account*.json
+

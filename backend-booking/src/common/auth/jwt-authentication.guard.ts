@@ -18,7 +18,19 @@ export class JwtAuthenticationGuard extends AuthGuard('jwt') {
     ]);
 
     if (isPublic) {
-      return true;
+      const request = context.switchToHttp().getRequest<{
+        headers?: { authorization?: string | string[] };
+      }>();
+      const authorization = request.headers?.authorization;
+
+      // Public endpoints stay anonymous without a token. If a bearer token is
+      // present, authenticate it so ownership checks receive request.user.
+      if (
+        typeof authorization !== 'string' ||
+        !authorization.startsWith('Bearer ')
+      ) {
+        return true;
+      }
     }
 
     return super.canActivate(context);

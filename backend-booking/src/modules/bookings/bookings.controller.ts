@@ -12,7 +12,11 @@ import { ok } from '../../common/http/api-response';
 import { Public } from '../../common/auth/public.decorator';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
-import type { CreateBookingDto, UpdateBookingStatusDto } from './dto/bookings.dto';
+import type {
+  CreateBookingDto,
+  LookupBookingDto,
+  UpdateBookingStatusDto,
+} from './dto/bookings.dto';
 
 @Controller('api/v1/bookings')
 export class BookingsController {
@@ -25,6 +29,13 @@ export class BookingsController {
     @CurrentUser() user: AuthenticatedUser | null,
   ) {
     const data = await this.bookingsService.createBooking(body, user?.id);
+    return ok(data);
+  }
+
+  @Public()
+  @Post('lookup')
+  async lookupBooking(@Body() body: LookupBookingDto) {
+    const data = await this.bookingsService.lookupBooking(body);
     return ok(data);
   }
 

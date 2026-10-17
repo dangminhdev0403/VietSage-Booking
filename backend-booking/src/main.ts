@@ -8,5 +8,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`[VietSage-Booking Backend] Running at http://localhost:${port}`);
 }
-bootstrap();
-
+void bootstrap();

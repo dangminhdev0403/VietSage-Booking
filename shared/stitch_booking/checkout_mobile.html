@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><title>Aurum Haven</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-on-surface": "#f2f1ee", "on-error-container": "#93000a", "tertiary-fixed-dim": "#b6ccb6", "on-secondary-fixed": "#131b2e", "surface-container-high": "#e9e8e5", "surface": "#faf9f6", "surface-tint": "#725b38", "background": "#faf9f6", "surface-dim": "#dbdad7", "on-background": "#1a1c1a", "primary-fixed": "#fedeb2", "error": "#ba1a1a", "secondary-container": "#dae2fd", "secondary-fixed": "#dae2fd", "surface-container": "#efeeeb", "inverse-surface": "#2f312f", "on-error": "#ffffff", "on-tertiary-fixed": "#0d1f12", "inverse-primary": "#e0c298", "on-tertiary": "#ffffff", "on-surface": "#1a1c1a", "surface-container-highest": "#e3e2e0", "secondary": "#565e74", "on-primary-container": "#513d1d", "surface-variant": "#e3e2e0", "on-tertiary-fixed-variant": "#384b3b", "outline": "#7f766a", "primary-container": "#c5a880", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#3f465c", "secondary-fixed-dim": "#bec6e0", "on-primary-fixed-variant": "#584323", "surface-bright": "#faf9f6", "primary-fixed-dim": "#e0c298", "error-container": "#ffdad6", "surface-container-lowest": "#ffffff", "tertiary-container": "#9cb29d", "on-secondary-container": "#5c647a", "primary": "#725b38", "outline-variant": "#d1c5b8", "surface-container-low": "#f4f3f1", "on-surface-variant": "#4d463c", "on-primary": "#ffffff", "tertiary": "#4f6351", "tertiary-fixed": "#d2e8d2", "on-primary-fixed": "#281800", "on-tertiary-container": "#324535" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin-mobile": "1.25rem", "gutter": "1.5rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "margin": "3rem", "gutter-mobile": "1rem", "space-xs": "0.25rem", "space-xl": "2.5rem", "space-md": "1rem" }, "fontFamily": { "body-lg": ["Plus Jakarta Sans"], "display-lg": ["Playfair Display"], "headline-sm": ["Playfair Display"], "display-lg-mobile": ["Playfair Display"], "body-md": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Playfair Display"], "headline-md": ["Playfair Display"], "headline-lg": ["Playfair Display"] }, "fontSize": { "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "display-lg": ["56px", { "lineHeight": "68px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-sm": ["22px", { "lineHeight": "30px", "fontWeight": "500" }], "display-lg-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "500" }], "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "600" }], "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "0em", "fontWeight": "600" }], "headline-md": ["28px", { "lineHeight": "38px", "fontWeight": "500" }], "headline-lg": ["40px", { "lineHeight": "52px", "letterSpacing": "-0.01em", "fontWeight": "600" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#faf9f6;color:#1a1c1a;font-family:'Plus Jakarta Sans',sans-serif;-webkit-tap-highlight-color:transparent;}body{overscroll-behavior-y:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col relative"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(197,168,128,0.12)] pt-safe"><div class="h-16 px-gutter-mobile flex items-center justify-between"><div class="flex items-center gap-space-xs"><button aria-label="Quay lại" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:text-primary hover:bg-surface-container-low transition-colors duration-200" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back_ios_new</span></button><div class="flex flex-col"><span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">Aurum Haven</span><h1 class="font-headline-sm text-headline-sm text-on-surface truncate max-w-[200px]">Thanh Toán &amp; Xác Nhận</h1></div></div><div class="flex items-center gap-space-xs"><button aria-label="Chia sẻ" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors duration-200"><span class="material-symbols-outlined text-[22px]">share</span></button><div class="pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_2px_8px_rgba(114,91,56,0.18)]" src="https://lh3.googleusercontent.com/aida/AEtjO1UfValSrx5vKaPUiSPBnnIYEBbXEjvoH4hoxEt1JUlxyopWqpGVFZOAgqIlrtMp90EjeqXZe3i7HL2f7XMknpt5su_j18jK4qpWCXmvANBkJ95sq7mY3vKiH8ZKfZ32qMzvvyxlB8AEwGhbbBnvWBAT3cfXgNCCkx1W5EYRkGRJvvQK7Lv9pNRrSH3FlTW-wUtszkGQ6sm89l3AscapzSMgdmqbx_DIRDpeE8LUFA3cowQcl4K5fN9toMw"/></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-surface"><div class="flex flex-col w-full">
+<!-- Progress Stepper -->
+<section class="px-gutter-mobile py-space-md">
+<div class="flex items-center justify-between relative">
+<!-- Track Background Line -->
+<div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-0.5 bg-surface-container-highest -z-0"></div>
+<div class="absolute left-6 w-2/3 top-1/2 -translate-y-1/2 h-0.5 bg-primary -z-0"></div>
+<!-- Step 1 -->
+<div class="flex flex-col items-center gap-1 z-10">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-semibold">Thông tin</span>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center gap-1 z-10">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md shadow-sm ring-4 ring-surface">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-semibold">Yêu cầu</span>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col items-center gap-1 z-10">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-md text-label-md">
+          3
+        </div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Thanh toán</span>
+</div>
+</div>
+</section>
+<!-- Gold Member Recognition Banner -->
+<section class="px-gutter-mobile pb-space-md">
+<div class="bg-gradient-to-r from-primary-fixed to-primary-container/70 rounded-xl p-space-md shadow-sm relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-24 h-24 bg-surface-lowest/15 rounded-full pointer-events-none blur-lg"></div>
+<div class="flex items-start gap-space-sm relative z-10">
+<div class="w-9 h-9 rounded-full bg-surface-lowest/90 flex items-center justify-center shrink-0 shadow-sm text-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-primary-fixed-variant font-bold">Hội Viên Vàng (Gold Member)</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+</div>
+<p class="font-body-sm text-body-sm text-on-primary-fixed mt-0.5 leading-snug">
+            Chào mừng quý khách trở lại! Tặng kèm <strong>01 chai Champagne Ruinart</strong> &amp; <strong>Miễn phí trả phòng trễ 16:00</strong>.
+          </p>
+<div class="mt-2 inline-flex items-center gap-1 self-start bg-surface-lowest/60 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px] text-tertiary">savings</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Tiết kiệm 4.350.000₫ đợt này</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Booking Summary Accordion Card -->
+<section class="px-gutter-mobile pb-space-md">
+<details class="group bg-surface-container-low rounded-xl shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] overflow-hidden" open="">
+<summary class="list-none flex items-center justify-between p-space-md cursor-pointer select-none">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 shadow-sm relative">
+<img class="w-full h-full object-cover" data-alt="Chic infinity plunge pool over turquoise lagoon waters, wooden sundeck with sun loungers and thatched roof beach villa in background, bright tropical sun and crystal clear ocean" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCs1NqyDFOcZ5g9BuCXVWchM9BM4Kw1DKmUoVOWHzSCICxXzMfaGE8l3syU2DpSMLVRIhq19aVoc8WwEHrhwtv85LRkKzF83OVmFC_tAF9I0KLvdATal7DFcCLIf-aZY3gGKDktZmFEQZPSivix3ouPRYW25uJA9KrNe8jyZVHzEHmroQyRPaDMTtmaq1EEqXo6adpjCIV82Gqz_TGYCHCSG9hRHjqEvOMCOFPwNFmEBNVmHqCPcf4_"/>
+</div>
+<div class="flex flex-col min-w-0 pr-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline truncate">Boutique Collection</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Oceanfront Sunrise Villa</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">180m² • 3 đêm (15 - 18/11/2025)</p>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<span class="material-symbols-outlined text-outline transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</div>
+</summary>
+<div class="px-space-md pb-space-md pt-space-xs flex flex-col gap-space-sm">
+<div class="p-space-sm rounded-lg bg-surface-container flex flex-col gap-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Khu nghỉ dưỡng</span>
+<span class="text-on-surface font-semibold">Aurum Imperial Sunset Villa</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Số lượng khách</span>
+<span class="text-on-surface">2 Người lớn • Tối đa riêng tư</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Giá phòng (3 đêm)</span>
+<span class="text-on-surface">41.520.000₫</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Thuế dịch vụ &amp; VAT (10%)</span>
+<span class="text-on-surface">4.155.000₫</span>
+</div>
+<div class="pt-2 flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Tổng thanh toán</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">45.675.000₫</span>
+</div>
+</div>
+</div>
+</details>
+</section>
+<!-- Step 1: Guest Information Form -->
+<section class="px-gutter-mobile pb-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">1</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Thông tin khách hàng chính</h3>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Đã điền tự động</span>
+</div>
+<div class="flex flex-col gap-3 mt-1">
+<!-- Full Name -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase tracking-wider text-outline" for="fullname">Họ và tên khách</label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-3 py-2.5 outline-none focus:bg-surface focus:shadow-[0_0_0_2px_rgba(197,168,128,0.4)]" id="fullname" type="text" value="Nguyễn Hoàng Long"/>
+<span class="material-symbols-outlined absolute right-3 text-tertiary text-[18px]">verified</span>
+</div>
+</div>
+<!-- Phone Number -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase tracking-wider text-outline" for="phone">Số điện thoại liên hệ</label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-3 py-2.5 outline-none focus:bg-surface focus:shadow-[0_0_0_2px_rgba(197,168,128,0.4)]" id="phone" type="tel" value="+84 908 928 888"/>
+<span class="material-symbols-outlined absolute right-3 text-outline text-[18px]">call</span>
+</div>
+</div>
+<!-- Email -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm uppercase tracking-wider text-outline" for="email">Email nhận thư xác nhận lưu trú</label>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-3 py-2.5 outline-none focus:bg-surface focus:shadow-[0_0_0_2px_rgba(197,168,128,0.4)]" id="email" type="email" value="hoanglong.nguyen@aurumhaven.club"/>
+<span class="material-symbols-outlined absolute right-3 text-outline text-[18px]">mail</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline-variant">E-voucher thẻ vào phòng số sẽ gửi qua email trên</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Step 2: Bespoke Requests -->
+<section class="px-gutter-mobile pb-space-md">
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">2</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Yêu cầu đặc quyền (Bespoke)</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Tùy biến kỳ nghỉ để quản gia riêng của chúng tôi chuẩn bị trọn vẹn nhất.</p>
+<div class="flex flex-col gap-2 mt-1">
+<!-- Option 1: Limousine -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-colors">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface font-bold">Xe Limousine đưa đón sân bay riêng</span>
+<span class="px-1.5 py-0.2 bg-tertiary/15 text-tertiary font-label-sm text-label-sm rounded">Đặc quyền 0đ</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Maybach S-Class hoặc Lexus LM350 kèm khăn ướt thảo mộc</p>
+</div>
+</label>
+<!-- Option 2: High Floor & Sea View -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-colors">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-bold">Biệt thự tầng cao &amp; hướng trọn bình minh</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Vị trí mũi đảo biệt lập, hồ bơi tràn vô cực không góc khuất</p>
+</div>
+</label>
+<!-- Option 3: Early Check-in -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-colors">
+<input class="mt-1 w-4 h-4 rounded text-primary focus:ring-0 accent-primary" type="checkbox"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-bold">Nhận phòng sớm linh hoạt (Early Check-in)</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Tùy thuộc vào tình trạng phòng lúc 11:00 sáng ngày 15/11</p>
+</div>
+</label>
+</div>
+</div>
+</section>
+<!-- Step 3: Payment Options -->
+<section class="px-gutter-mobile pb-space-xl">
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold">3</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Phương thức thanh toán</h3>
+</div>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+          256-bit SSL
+        </span>
+</div>
+<div class="flex flex-col gap-2 mt-1" id="paymentOptions">
+<!-- Radio 1: VietQR (Recommended) -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-all">
+<input checked="" class="mt-1 w-4 h-4 accent-primary" name="payment_method" type="radio" value="vietqr"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Chuyển khoản VietQR 24/7</span>
+<span class="px-1.5 py-0.2 bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm rounded font-medium">Khuyên dùng</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Xác nhận tự động trong 30 giây, miễn phí mọi giao dịch</p>
+</div>
+</label>
+<!-- Radio 2: International Cards -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-all">
+<input class="mt-1 w-4 h-4 accent-primary" name="payment_method" type="radio" value="card"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Thẻ Quốc Tế (Credit / Debit)</span>
+<div class="flex items-center gap-1 opacity-70">
+<span class="font-label-sm text-label-sm font-semibold">VISA</span>
+<span class="font-label-sm text-label-sm font-semibold">MC</span>
+<span class="font-label-sm text-label-sm font-semibold">AMEX</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Hỗ trợ thanh toán bảo mật 3D-Secure 2.0</p>
+</div>
+</label>
+<!-- Radio 3: Apple Pay / Google Wallet -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-all">
+<input class="mt-1 w-4 h-4 accent-primary" name="payment_method" type="radio" value="wallet"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Apple Pay / Google Wallet</span>
+<span class="material-symbols-outlined text-[18px] text-outline">contactless</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Chạm thanh toán tức thì với FaceID / TouchID</p>
+</div>
+</label>
+<!-- Radio 4: Reserve Now Pay Later -->
+<label class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low cursor-pointer active:bg-surface-container transition-all">
+<input class="mt-1 w-4 h-4 accent-primary" name="payment_method" type="radio" value="hold"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-bold">Giữ phòng &amp; Trả tại khu nghỉ dưỡng</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Không trừ tiền ngay, chỉ khóa thẻ để đảm bảo đặt chỗ</p>
+</div>
+</label>
+</div>
+<!-- Trust Badges -->
+<div class="mt-3 pt-3 flex items-center justify-around bg-surface-container-low rounded-lg p-2 text-outline">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">security</span>
+<span class="font-label-sm text-label-sm">PCI-DSS Cấp 1</span>
+</div>
+<div class="h-3 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">published_with_changes</span>
+<span class="font-label-sm text-label-sm">Cam kết hoàn tiền tức thì</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Sticky Bottom Checkout Bar -->
+<aside class="sticky bottom-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.06)] px-gutter-mobile py-space-sm pb-safe">
+<div class="flex items-center justify-between gap-3 max-w-lg mx-auto">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Tổng cộng</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">45.675.000₫</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">verified_user</span> Miễn phí hủy trước 48h
+        </span>
+</div>
+<button class="flex-1 h-12 bg-primary hover:bg-on-primary-container text-on-primary rounded-xl font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(114,91,56,0.3)] active:scale-[0.98] transition-all" id="submitBookingBtn">
+<span>Xác Nhận &amp; Thanh Toán</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</aside>
+</div>
+<script>
+  // Simple micro-interaction for Checkout completion simulation
+  document.getElementById('submitBookingBtn')?.addEventListener('click', function() {
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Đang xử lý...`;
+    btn.disabled = true;
+
+    setTimeout(() => {
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> Đặt Phòng Hoàn Tất`;
+      btn.classList.remove('bg-primary');
+      btn.classList.add('bg-tertiary');
+      setTimeout(() => {
+        alert('Cảm ơn quý khách Nguyễn Hoàng Long! Yêu cầu đặt phòng Oceanfront Sunrise Villa đã được xác nhận thành công. Mã đặt chỗ: #AH-89214.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.classList.remove('bg-tertiary');
+        btn.classList.add('bg-primary');
+      }, 700);
+    }, 1200);
+  });
+</script></main></body></html>

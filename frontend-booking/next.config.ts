@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
+  async rewrites() {
+    const backend = process.env.INTERNAL_BACKEND_URL || 'http://127.0.0.1:8080';
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: `${backend}/api/v1/:path*`,
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

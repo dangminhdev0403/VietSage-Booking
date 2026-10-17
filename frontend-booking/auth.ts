@@ -75,8 +75,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
+      if (token) {
+        if (!session.user) {
+          (session as unknown as Record<string, unknown>).user = {};
+        }
+        session.user.id = (token.id as string) || (token.sub as string);
         const sUser = session.user as unknown as AuthUserPayload;
         sUser.role = token.role as string | undefined;
         sUser.accessToken = token.accessToken as string | undefined;

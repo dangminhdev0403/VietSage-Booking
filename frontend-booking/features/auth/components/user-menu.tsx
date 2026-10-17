@@ -110,21 +110,61 @@ export function UserMenu() {
           </div>
 
           <div className="space-y-1">
+            <Link
+              href="/my-bookings"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+            >
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              <span>Kỳ nghỉ của tôi</span>
+            </Link>
+
+            <Link
+              href="/booking/lookup"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+            >
+              <ChevronDown className="w-4 h-4 text-outline rotate-[-90deg]" />
+              <span>Tra cứu đơn đặt phòng</span>
+            </Link>
+
+            <Link
+              href="/profile"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+            >
+              <Shield className="w-4 h-4 text-amber-600" />
+              <span>Hồ sơ & Hội viên Elite</span>
+            </Link>
+
             {isAdminOrPartner && (
-              <Link
-                href="/admin"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-              >
-                <Shield className="w-4 h-4 text-primary" />
-                <span>Bảng Quản Trị Đối Tác</span>
-              </Link>
+              <>
+                <Link
+                  href="/admin"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                >
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span>Bảng Quản Trị Đối Tác</span>
+                </Link>
+
+                <Link
+                  href="/admin/allotments"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Lịch Tồn Kho & Giá Phòng</span>
+                </Link>
+              </>
             )}
 
+            <div className="h-px bg-outline-variant/20 my-1" />
+
             <button
-              onClick={() => {
+              onClick={async () => {
                 setIsDropdownOpen(false);
-                signOut({ redirect: false });
+                await signOut({ callbackUrl: '/' });
               }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-rose-50 text-xs font-bold text-rose-600 transition-colors text-left cursor-pointer"
             >

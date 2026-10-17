@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -13,7 +14,13 @@ import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { JwtAuthenticationGuard } from '../../common/auth/jwt-authentication.guard';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import { LocalAuthGuard } from './local-auth.guard';
-import type { LoginDto, RefreshDto, RegisterDto } from './dto/auth.dto';
+import type {
+  ChangePasswordDto,
+  RefreshDto,
+  RegisterDto,
+  UpdateProfileDto,
+} from './dto/auth.dto';
+import type { Account } from '@prisma/client';
 
 @Controller('api/v1/auth')
 export class AuthController {
@@ -29,7 +36,7 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req: any, @Body() _body: LoginDto) {
+  async login(@Request() req: { user: Account }) {
     const data = await this.authService.loginWithValidatedUser(req.user);
     return ok(data);
   }
@@ -45,6 +52,26 @@ export class AuthController {
   @Get('me')
   async me(@CurrentUser() user: AuthenticatedUser) {
     const data = await this.authService.getProfile(user.id);
+    return ok(data);
+  }
+
+  @UseGuards(JwtAuthenticationGuard)
+  @Put('profile')
+  async updateProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateProfileDto,
+  ) {
+    const data = await this.authService.updateProfile(user.id, body);
+    return ok(data);
+  }
+
+  @UseGuards(JwtAuthenticationGuard)
+  @Put('change-password')
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: ChangePasswordDto,
+  ) {
+    const data = await this.authService.changePassword(user.id, body);
     return ok(data);
   }
 }

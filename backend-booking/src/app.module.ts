@@ -9,6 +9,7 @@ import { JwtAuthenticationGuard } from './common/auth/jwt-authentication.guard';
 import { IdentityAccessModule } from './modules/identity-access/identity-access.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { VietSageSyncModule } from './modules/vietsage-sync/vietsage-sync.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { VietSageSyncModule } from './modules/vietsage-sync/vietsage-sync.module
     IdentityAccessModule,
     CatalogModule,
     BookingsModule,
+    PaymentsModule,
     VietSageSyncModule,
   ],
   controllers: [AppController],

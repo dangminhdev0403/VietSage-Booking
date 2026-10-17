@@ -37,7 +37,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!account || !account.isActive) {
-      throw new UnauthorizedException('Tài khoản không tồn tại hoặc đã bị khóa');
+      throw new UnauthorizedException(
+        'Tài khoản không tồn tại hoặc đã bị khóa',
+      );
     }
 
     const permissions = new Set<string>();
@@ -52,7 +54,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       username: account.username,
       displayName: account.displayName,
       email: account.email,
-      role: account.role as AuthenticatedUser['role'],
+      role: account.role,
       permissions: Array.from(permissions),
     };
   }

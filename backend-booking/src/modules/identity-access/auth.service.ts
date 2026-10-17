@@ -7,9 +7,21 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import type { Account } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from './audit.service';
-import { LoginDto, loginSchema, RefreshDto, refreshSchema, RegisterDto, registerSchema } from './dto/auth.dto';
+import {
+  ChangePasswordDto,
+  changePasswordSchema,
+  LoginDto,
+  loginSchema,
+  RefreshDto,
+  refreshSchema,
+  RegisterDto,
+  registerSchema,
+  UpdateProfileDto,
+  updateProfileSchema,
+} from './dto/auth.dto';
 
 const SALT_ROUNDS = 10;
 const REFRESH_TOKEN_DAYS = 7;
@@ -31,7 +43,7 @@ export class AuthService {
       });
     }
 
-    const { username, password, display_name, email, role } = parsed.data;
+    const { username, password, display_name, email } = parsed.data;
 
     const existing = await this.prisma.account.findFirst({
       where: { OR: [{ username }, { email }] },
@@ -49,7 +61,7 @@ export class AuthService {
         passwordHash,
         displayName: display_name,
         email,
-        role: role as any,
+        role: 'TRAVELER',
       },
     });
 
@@ -81,25 +93,36 @@ export class AuthService {
 
     const { username, password } = parsed.data;
 
-    const account = await this.prisma.account.findUnique({
-      where: { username },
+    const account = await this.prisma.account.findFirst({
+      where: {
+        OR: [{ username }, { email: username }],
+      },
     });
 
     if (!account || !account.isActive) {
-      throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không chính xác');
+      throw new UnauthorizedException(
+        'Tên đăng nhập hoặc mật khẩu không chính xác',
+      );
     }
 
     const isMatch = await bcrypt.compare(password, account.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không chính xác');
+      throw new UnauthorizedException(
+        'Tên đăng nhập hoặc mật khẩu không chính xác',
+      );
     }
 
     return this.generateTokenPair(account.id, account.username, account.role);
   }
 
-  async validateUser(username: string, pass: string): Promise<any> {
-    const account = await this.prisma.account.findUnique({
-      where: { username },
+  async validateUser(
+    usernameOrEmail: string,
+    pass: string,
+  ): Promise<Account | null> {
+    const account = await this.prisma.account.findFirst({
+      where: {
+        OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      },
     });
 
     if (!account || !account.isActive) {
@@ -114,7 +137,7 @@ export class AuthService {
     return account;
   }
 
-  async loginWithValidatedUser(account: any) {
+  async loginWithValidatedUser(account: Account) {
     return this.generateTokenPair(account.id, account.username, account.role);
   }
 
@@ -187,6 +210,103 @@ export class AuthService {
       permissions: Array.from(permissions),
       created_at: account.createdAt.toISOString(),
       updated_at: account.updatedAt.toISOString(),
+    };
+  }
+
+  async updateProfile(accountId: string, rawDto: UpdateProfileDto) {
+    const parsed = updateProfileSchema.safeParse(rawDto);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu cập nhật hồ sơ không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+
+    const { display_name, email } = parsed.data;
+
+    const existing = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+    if (!existing) {
+      throw new UnauthorizedException('Không tìm thấy tài khoản');
+    }
+
+    if (email && email !== existing.email) {
+      const emailUsed = await this.prisma.account.findUnique({
+        where: { email },
+      });
+      if (emailUsed) {
+        throw new ConflictException(
+          'Email này đã được sử dụng bởi tài khoản khác',
+        );
+      }
+    }
+
+    const updated = await this.prisma.account.update({
+      where: { id: accountId },
+      data: {
+        ...(display_name ? { displayName: display_name } : {}),
+        ...(email ? { email } : {}),
+      },
+    });
+
+    await this.auditService.logEvent({
+      actorId: accountId,
+      action: 'PROFILE_UPDATE',
+      boundedContext: 'identity-access',
+      resourceType: 'Account',
+      resourceId: accountId,
+    });
+
+    return {
+      id: updated.id,
+      username: updated.username,
+      display_name: updated.displayName,
+      email: updated.email,
+      role: updated.role,
+      updated_at: updated.updatedAt.toISOString(),
+    };
+  }
+
+  async changePassword(accountId: string, rawDto: ChangePasswordDto) {
+    const parsed = changePasswordSchema.safeParse(rawDto);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu đổi mật khẩu không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+
+    const { old_password, new_password } = parsed.data;
+
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+    });
+    if (!account) {
+      throw new UnauthorizedException('Không tìm thấy tài khoản');
+    }
+
+    const isMatch = await bcrypt.compare(old_password, account.passwordHash);
+    if (!isMatch) {
+      throw new BadRequestException('Mật khẩu hiện tại không chính xác');
+    }
+
+    const newHash = await bcrypt.hash(new_password, SALT_ROUNDS);
+    await this.prisma.account.update({
+      where: { id: accountId },
+      data: { passwordHash: newHash },
+    });
+
+    await this.auditService.logEvent({
+      actorId: accountId,
+      action: 'PASSWORD_CHANGE',
+      boundedContext: 'identity-access',
+      resourceType: 'Account',
+      resourceId: accountId,
+    });
+
+    return {
+      message: 'Đổi mật khẩu thành công',
     };
   }
 

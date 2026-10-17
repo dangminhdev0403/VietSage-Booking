@@ -2,6 +2,7 @@
 
 import React, { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import {
   X,
@@ -18,6 +19,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { LuxuryAlertBanner } from '@/components/shared/luxury-alert-banner';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -69,10 +71,14 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
       });
 
       if (res?.error) {
-        setErrorMessage('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        setErrorMessage('Thông tin đăng nhập không chính xác.');
       } else {
         onClose();
-        if (onSuccess) onSuccess();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          window.location.assign('/api/auth/post-login');
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Lỗi kết nối đến cổng đăng nhập.';
@@ -131,7 +137,15 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
         setErrorMessage('Tài khoản đã tạo thành công. Vui lòng đăng nhập.');
       } else {
         onClose();
-        if (onSuccess) onSuccess();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          window.location.assign(
+            regRole === 'HOTEL_PARTNER'
+              ? '/api/auth/post-login?callbackUrl=/admin'
+              : '/api/auth/post-login'
+          );
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Lỗi kết nối máy chủ đăng ký.';
@@ -214,17 +228,22 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
 
         {/* Alerts */}
         {errorMessage && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
+          <LuxuryAlertBanner
+            variant="error"
+            description={errorMessage}
+            onClose={() => setErrorMessage(null)}
+            className="mb-4"
+          />
         )}
 
         {successMessage && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-            <span>{successMessage}</span>
-          </div>
+          <LuxuryAlertBanner
+            variant="success"
+            title="Thao Tác Thành Công"
+            description={successMessage}
+            onClose={() => setSuccessMessage(null)}
+            className="mb-4"
+          />
         )}
 
         {/* LOGIN FORM */}
@@ -397,6 +416,17 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 <span>Tạo Tài Khoản Hội Viên</span>
               )}
             </button>
+
+            <div className="pt-2 text-center">
+              <Link
+                href="/register"
+                onClick={onClose}
+                className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Hoặc đăng ký gói Bespoke Aurum Elite đầy đủ →</span>
+              </Link>
+            </div>
           </form>
         )}
       </div>

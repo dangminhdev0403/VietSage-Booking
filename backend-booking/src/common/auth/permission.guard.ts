@@ -26,8 +26,10 @@ export class PermissionGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user: AuthenticatedUser | undefined = request.user;
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUser }>();
+    const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('Access denied');

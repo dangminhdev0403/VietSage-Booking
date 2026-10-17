@@ -11,7 +11,6 @@ export const registerSchema = z.object({
   password: z.string().min(6),
   display_name: z.string().min(2),
   email: z.string().email(),
-  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'HOTEL_PARTNER', 'TRAVELER']).optional().default('TRAVELER'),
 });
 export type RegisterDto = z.infer<typeof registerSchema>;
 
@@ -19,3 +18,15 @@ export const refreshSchema = z.object({
   refresh_token: z.string().min(10),
 });
 export type RefreshDto = z.infer<typeof refreshSchema>;
+
+export const updateProfileSchema = z.object({
+  display_name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+});
+export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
+
+export const changePasswordSchema = z.object({
+  old_password: z.string().min(6),
+  new_password: z.string().min(6),
+});
+export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;

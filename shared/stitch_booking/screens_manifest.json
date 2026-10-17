@@ -1,0 +1,135 @@
+[
+  {
+    "filename": "profile_elite_membership.html",
+    "fileId": "abb4d8b1f10947ecae284aedaf07a4da",
+    "screenId": "887e1235d86b49a08f440e53b1f38d5f",
+    "title": "Hồ Sơ Cá Nhân & Đặc Quyền Hội Viên - Aurum Haven",
+    "size": 41241
+  },
+  {
+    "filename": "guest_lookup_vietqr.html",
+    "fileId": "a7f045508e044cd29f8e6a2d99d76844",
+    "screenId": "39940912337a43eb87e7ca2861618a8a",
+    "title": "Tra cứu Đơn Đặt Phòng & Thanh toán VietQR - Aurum Haven",
+    "size": 31158
+  },
+  {
+    "filename": "admin_allotments_rates.html",
+    "fileId": "891450020d7447b397ba61d63e757be1",
+    "screenId": "809dc299398549ee8d93e20fa7cfb25f",
+    "title": "Quản trị Lịch Tồn Kho & Giá Phòng - Aurum Haven",
+    "size": 49294
+  },
+  {
+    "filename": "my_bookings_evoucher.html",
+    "fileId": "94c60407b751428ab0ac17070cbb9b9d",
+    "screenId": "fbb7cd2b911b4366b39c1232854b5ad1",
+    "title": "Kỳ Nghỉ Của Tôi & E-Voucher - Aurum Haven",
+    "size": 24449
+  },
+  {
+    "filename": "property_detail.html",
+    "fileId": "9cc3128fc19d473c9c54ffb87f468de5",
+    "screenId": "9cc3128fc19d473c9c54ffb87f468de5",
+    "title": "Chi tiết Khu nghỉ dưỡng - Aurum Haven (Đã tối ưu)",
+    "size": 24658
+  },
+  {
+    "filename": "search_results.html",
+    "fileId": "321db1ae8fd44203b92aa1224022060a",
+    "screenId": "321db1ae8fd44203b92aa1224022060a",
+    "title": "Kết quả Tìm kiếm Khách sạn - Aurum Haven (Đã tối ưu)",
+    "size": 24990
+  },
+  {
+    "filename": "auth_login_register.html",
+    "fileId": "c4bbfafe51274cd8bdae6a21b7bb9a50",
+    "screenId": "c4bbfafe51274cd8bdae6a21b7bb9a50",
+    "title": "Đăng nhập & Đăng ký - Aurum Haven",
+    "size": 34577
+  },
+  {
+    "filename": "checkout_payment.html",
+    "fileId": "3992376528970157060",
+    "screenId": "f72b196055644c528aa3d910e90659da",
+    "title": "Xác nhận & Thanh toán Đặt phòng - Aurum Haven",
+    "size": 44906
+  },
+  {
+    "filename": "search_results_mobile.html",
+    "fileId": "87200d5a350b4d97bae409bdc672f15c",
+    "screenId": "87200d5a350b4d97bae409bdc672f15c",
+    "title": "Kết quả Tìm kiếm - Aurum Haven Mobile",
+    "size": 28155
+  },
+  {
+    "filename": "checkout_mobile.html",
+    "fileId": "74596c5d68514dc69e568c478c770f9e",
+    "screenId": "74596c5d68514dc69e568c478c770f9e",
+    "title": "Xác nhận & Thanh toán - Aurum Haven Mobile",
+    "size": 23894
+  },
+  {
+    "filename": "home_search_mobile.html",
+    "fileId": "766a421579b44cfa900a64a08951f8ef",
+    "screenId": "766a421579b44cfa900a64a08951f8ef",
+    "title": "Trang chủ - Aurum Haven Mobile",
+    "size": 24881
+  },
+  {
+    "filename": "alerts_notifications.html",
+    "fileId": "a394618821cf4748b78db34fbc603d1b",
+    "screenId": "a394618821cf4748b78db34fbc603d1b",
+    "title": "Mẫu Alert & Notification - Aurum Haven UI Kit",
+    "size": 13068
+  },
+  {
+    "filename": "not_found_404.html",
+    "fileId": "1db4e89ca0c9410e9f5da2e26457838a",
+    "screenId": "1db4e89ca0c9410e9f5da2e26457838a",
+    "title": "Trang 404 - Không tìm thấy trang - Aurum Haven",
+    "size": 34218
+  },
+  {
+    "filename": "guest_register_preferences.html",
+    "fileId": "projects/7411068166474105979/screens/f4c0fbede2d34632af32a73943ade185/fileEntries/html",
+    "screenId": "f4c0fbede2d34632af32a73943ade185",
+    "title": "Đăng ký Hội viên Du lịch & Sở thích Nghỉ dưỡng - Aurum Haven",
+    "size": 31126
+  },
+  {
+    "filename": "guest_register_mobile.html",
+    "fileId": "projects/7411068166474105979/screens/a2f149139e534a9ab27cc4d1cb87a5e2/fileEntries/html",
+    "screenId": "a2f149139e534a9ab27cc4d1cb87a5e2",
+    "title": "Đăng ký Hội viên - Aurum Haven Mobile",
+    "size": 15226
+  },
+  {
+    "filename": "guest_booking_management.html",
+    "fileId": "projects/7411068166474105979/screens/82d3acd7b00c4c898a7cca5c26fa71fe/fileEntries/html",
+    "screenId": "82d3acd7b00c4c898a7cca5c26fa71fe",
+    "title": "Quản lý Đặt phòng & Hành trình Kỳ nghỉ - Aurum Haven",
+    "size": 46626
+  },
+  {
+    "filename": "booking_modify_detail.html",
+    "fileId": "projects/7411068166474105979/screens/009f89e312f94dffa8b2cafb4fd52ed0/fileEntries/html",
+    "screenId": "009f89e312f94dffa8b2cafb4fd52ed0",
+    "title": "Thao tác & Điều chỉnh Chi tiết Đặt phòng - Aurum Haven",
+    "size": 48983
+  },
+  {
+    "filename": "booking_modify_mobile.html",
+    "fileId": "projects/7411068166474105979/screens/83f9eba5bd82466d928ed19a297b0599/fileEntries/html",
+    "screenId": "83f9eba5bd82466d928ed19a297b0599",
+    "title": "Điều chỉnh Đặt phòng - Aurum Haven Mobile",
+    "size": 20692
+  },
+  {
+    "filename": "my_bookings_mobile.html",
+    "fileId": "projects/7411068166474105979/screens/182a05bbfd2f4f3e8dc749aaa5c8d2af/fileEntries/html",
+    "screenId": "182a05bbfd2f4f3e8dc749aaa5c8d2af",
+    "title": "Kỳ nghỉ của tôi - Aurum Haven Mobile",
+    "size": 16750
+  }
+]

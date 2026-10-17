@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type CreateAuditEventParams = {
@@ -7,7 +8,7 @@ export type CreateAuditEventParams = {
   boundedContext: string;
   resourceType: string;
   resourceId: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 };
 
 @Injectable()
@@ -25,7 +26,7 @@ export class AuditService {
           boundedContext: params.boundedContext,
           resourceType: params.resourceType,
           resourceId: params.resourceId,
-          metadata: (params.metadata as any) ?? {},
+          metadata: params.metadata ?? {},
         },
       });
     } catch (error) {

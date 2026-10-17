@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bộ Linh Kiện Alert & Thông Báo - Aurum Haven Design System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#c5a880',
+              'gold-dark': '#a48255',
+              'gold-light': '#f5ede2',
+              navy: '#0f172a',
+              sand: '#faf9f6',
+              surface: '#ffffff',
+              border: '#e8e2d8'
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #faf9f6;
+      color: #1e293b;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-serif-luxury {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6 md:p-12 lg:p-16 flex flex-col justify-start items-center">
+
+  <div class="max-w-4xl w-full mx-auto space-y-10">
+    
+    <!-- Header Showcase -->
+    <div class="text-center space-y-3 pb-4 border-b border-brand-border">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-gold-light border border-brand-gold/30 text-brand-gold-dark text-xs uppercase tracking-widest font-semibold">
+        <span>Aurum Haven Luxury UI Kit</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-serif-luxury text-brand-navy tracking-tight">Hệ Thống Mẫu Alert & Thông Báo Sang Trọng</h1>
+      <p class="text-sm md:text-base text-slate-500 max-w-2xl mx-auto">
+        Tuyển tập các mẫu cảnh báo (Alerts / Notifications / Toasts / Modals) thiết kế đồng bộ theo phong cách Quiet Luxury dành cho hệ thống đặt phòng khách sạn & khu nghỉ dưỡng.
+      </p>
+    </div>
+
+    <!-- SECTION 1: CÁC MẪU BANNER INLINE ALERTS -->
+    <div class="space-y-4">
+      <h2 class="text-xs uppercase tracking-widest text-slate-400 font-bold">1. Inline Alert Banners (Thông báo nổi bật trên trang)</h2>
+
+      <!-- 1. VIP PRIVILEGE / BRAND GOLD ALERT -->
+      <div class="p-4 md:p-5 rounded-xl bg-gradient-to-r from-[#211b14] via-[#1a1510] to-[#241c14] border border-brand-gold/40 shadow-sm relative overflow-hidden text-white flex items-start gap-4">
+        <div class="p-2.5 rounded-lg bg-brand-gold/20 text-brand-gold shrink-0 border border-brand-gold/30">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </div>
+        <div class="flex-1 space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="font-serif-luxury text-base md:text-lg font-semibold tracking-wide text-brand-gold">Đặc quyền Hội viên Vàng (Gold Member)</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded bg-brand-gold text-brand-navy">Tự động áp dụng</span>
+          </div>
+          <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+            Quý khách được tặng kèm <strong class="text-white font-medium">01 chai Champagne Ruinart Brut</strong> ướp lạnh tại biệt thự và hưởng quyền lợi <strong class="text-white font-medium">Trả phòng trễ đến 16:00</strong> không phụ thu.
+          </p>
+        </div>
+        <button class="text-slate-400 hover:text-white transition-colors p-1" title="Đóng">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- 2. SUCCESS ALERT -->
+      <div class="p-4 md:p-5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 shadow-sm flex items-start gap-4 text-emerald-950">
+        <div class="p-2 rounded-lg bg-emerald-100 text-emerald-700 shrink-0 border border-emerald-300/60">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="flex-1 space-y-1">
+          <h4 class="text-sm font-semibold text-emerald-900 tracking-tight">Xác Nhận Giữ Phòng Thành Công</h4>
+          <p class="text-xs md:text-sm text-emerald-800/80 leading-relaxed">
+            Hệ thống đã khóa giữ phòng Biệt thự Biển lúc hoàng hôn trong <strong>30 phút</strong>. Mã đặt phòng <span class="font-mono font-semibold text-emerald-900 underline">OTA-202610-7712</span> đã được gửi về email của bạn.
+          </p>
+        </div>
+        <button class="text-emerald-500 hover:text-emerald-800 transition-colors p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- 3. WARNING / URGENCY ALERT -->
+      <div class="p-4 md:p-5 rounded-xl bg-amber-50/70 border border-amber-200 shadow-sm flex items-start gap-4 text-amber-950">
+        <div class="p-2 rounded-lg bg-amber-100 text-amber-700 shrink-0 border border-amber-300/60">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div class="flex-1 space-y-1">
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-amber-900 tracking-tight">Số Lượng Phòng Còn Lại Rất Ít</h4>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-200 text-amber-900">Chỉ còn 1 phòng</span>
+          </div>
+          <p class="text-xs md:text-sm text-amber-800/80 leading-relaxed">
+            Giai đoạn nghỉ dưỡng này hiện có <strong class="text-amber-900 font-semibold">4 khách VIP khác</strong> cũng đang theo dõi. Đặt ngay để bảo toàn mức giá ưu đãi tốt nhất.
+          </p>
+        </div>
+        <div class="shrink-0 flex items-center gap-2">
+          <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-900 text-white hover:bg-amber-950 transition-colors shadow-sm">Giữ ngay</button>
+        </div>
+      </div>
+
+      <!-- 4. ERROR / SYSTEM ALERT -->
+      <div class="p-4 md:p-5 rounded-xl bg-rose-50/70 border border-rose-200 shadow-sm flex items-start gap-4 text-rose-950">
+        <div class="p-2 rounded-lg bg-rose-100 text-rose-700 shrink-0 border border-rose-300/60">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div class="flex-1 space-y-1">
+          <h4 class="text-sm font-semibold text-rose-900 tracking-tight">Giao Dịch VietQR Chưa Được Ghi Nhận</h4>
+          <p class="text-xs md:text-sm text-rose-800/80 leading-relaxed">
+            Hệ thống ngân hàng chưa hoàn tất đối soát mã giao dịch. Quý khách vui lòng kiểm tra lại nội dung chuyển khoản hoặc liên hệ trực tiếp Quản gia trực 24/7.
+          </p>
+        </div>
+        <button class="text-xs font-semibold text-rose-700 hover:text-rose-900 underline shrink-0 mt-0.5">Thử lại</button>
+      </div>
+    </div>
+
+    <!-- SECTION 2: FLOATING TOAST NOTIFICATION -->
+    <div class="space-y-4 pt-4">
+      <h2 class="text-xs uppercase tracking-widest text-slate-400 font-bold">2. Floating Toast Notification (Thông báo góc nổi / SnackBar)</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Toast 1: Dark Luxury Floating Toast -->
+        <div class="p-4 rounded-xl bg-slate-900/95 text-white border border-slate-700/80 shadow-2xl backdrop-blur-md flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-brand-gold/20 border border-brand-gold/40 flex items-center justify-center text-brand-gold shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-slate-200">Đã thêm vào danh sách yêu thích</p>
+              <p class="text-[11px] text-brand-gold">Aurum Imperial Sunset Villa & Spa</p>
+            </div>
+          </div>
+          <button class="text-xs font-semibold text-brand-gold hover:underline shrink-0">Xem Wishlist</button>
+        </div>
+
+        <!-- Toast 2: Concierge Live Help Toast -->
+        <div class="p-4 rounded-xl bg-white border border-brand-border shadow-xl flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div class="w-9 h-9 rounded-full bg-brand-gold-light flex items-center justify-center text-brand-gold-dark font-serif-luxury font-bold text-xs border border-brand-gold/30">
+                AH
+              </div>
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-800">Quản gia Ms. Mai Anh sẵn sàng</p>
+              <p class="text-[11px] text-slate-500">Đang trực tuyến hỗ trợ kỳ nghỉ 24/7</p>
+            </div>
+          </div>
+          <button class="px-2.5 py-1 text-xs rounded bg-brand-gold text-white font-medium hover:bg-brand-gold-dark transition-colors">Chat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: DIALOG / MODAL ALERT (Hộp thoại xác nhận) -->
+    <div class="space-y-4 pt-4">
+      <h2 class="text-xs uppercase tracking-widest text-slate-400 font-bold">3. Modal / Dialog Alert (Cửa sổ xác nhận hành động quan trọng)</h2>
+
+      <div class="bg-white rounded-2xl border border-brand-border shadow-lg p-6 md:p-8 max-w-lg mx-auto text-center space-y-4">
+        <div class="w-14 h-14 rounded-full bg-brand-gold-light border border-brand-gold/30 text-brand-gold-dark mx-auto flex items-center justify-center">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="font-serif-luxury text-xl md:text-2xl font-semibold text-slate-900">Xác Nhận Hủy Kỳ Nghỉ?</h3>
+          <p class="text-xs md:text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
+            Đơn phòng <strong class="text-slate-800 font-medium">OTA-202610-8839</strong> áp dụng chính sách miễn phí hủy trước 48 giờ. Toàn bộ tiền cọc sẽ được hoàn lại trong 3-5 ngày làm việc.
+          </p>
+        </div>
+        <div class="pt-2 flex flex-col sm:flex-row gap-2.5 justify-center">
+          <button class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+            Giữ Lại Đặt Phòng
+          </button>
+          <button class="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors shadow-sm">
+            Xác Nhận Hủy Phòng
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

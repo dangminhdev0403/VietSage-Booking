@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kỳ Nghỉ Của Tôi &amp; E-Voucher - Aurum Haven</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#c5a880',
+              'gold-hover': '#b5976e',
+              'gold-light': '#f5efe6',
+              navy: '#0f172a',
+              dark: '#1e293b',
+              ivory: '#faf9f6',
+              surface: '#ffffff',
+              muted: '#64748b',
+              border: '#e8e5df'
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #faf9f6;
+      color: #0f172a;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-serif-luxury {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+    .gold-gradient-border {
+      border-image: linear-gradient(to right, #c5a880, #dfcfb7, #c5a880) 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1ede6;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #c5a880;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#faf9f6] text-[#0f172a] antialiased flex flex-col justify-between">
+<!-- TOP APP SHELL / HEADER -->
+<header class="sticky top-0 z-40 bg-[#faf9f6]/95 backdrop-blur-md border-b border-[#e8e5df] transition-all">
+<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<!-- Logo Brand -->
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-full border border-[#c5a880] flex items-center justify-center bg-[#faf9f6] shadow-sm">
+<span class="font-serif-luxury font-bold text-[#c5a880] text-lg tracking-wider">AH</span>
+</div>
+<div>
+<span class="font-serif-luxury text-xl font-semibold tracking-wide text-[#0f172a] block leading-none">AURUM HAVEN</span>
+<span class="text-[9px] uppercase tracking-[0.25em] text-[#8c7355] block mt-1 font-medium">Resort &amp; Luxury Stays</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-[#475569]">
+<a class="hover:text-[#c5a880] transition-colors" href="#">Trang chủ</a>
+<a class="hover:text-[#c5a880] transition-colors" href="#">Điểm đến &amp; Khách sạn</a>
+<a class="hover:text-[#c5a880] transition-colors" href="#">Ưu đãi Đặc quyền</a>
+<a class="hover:text-[#c5a880] transition-colors" href="#">Dịch vụ Spa &amp; Concierge</a>
+<a class="text-[#c5a880] font-semibold border-b-2 border-[#c5a880] pb-1" href="#">Kỳ nghỉ của tôi</a>
+</nav>
+<!-- Account Profile / VIP -->
+<div class="flex items-center space-x-4">
+<div class="hidden lg:flex items-center space-x-2 text-xs text-[#64748b] bg-[#f4f1ea] px-3 py-1.5 rounded-full border border-[#e8e5df]">
+<i class="fa-solid fa-crown text-[#c5a880]"></i>
+<span class="font-medium text-[#475569]">Hội viên Vàng: <strong class="text-[#0f172a]">Hoàng Kim</strong></span>
+</div>
+<div class="flex items-center space-x-3 pl-2 border-l border-[#e8e5df]">
+<button class="relative p-2 text-[#64748b] hover:text-[#0f172a] transition-colors">
+<i class="fa-regular fa-bell text-base"></i>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#c5a880] rounded-full"></span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-[#c5a880] shadow-sm cursor-pointer">
+<img alt="Avatar VIP" class="w-full h-full object-cover" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT CONTAINER -->
+<main class="max-w-7xl mx-auto px-6 py-10 w-full flex-grow">
+<!-- Title & Breadcrumb -->
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#e8e5df] pb-6">
+<div>
+<div class="flex items-center space-x-2 text-xs text-[#8c7355] uppercase tracking-widest font-semibold mb-2">
+<span>Tài khoản Hội viên</span>
+<span>•</span>
+<span>Lịch sử đặt phòng</span>
+</div>
+<h1 class="text-3xl md:text-4xl font-serif-luxury font-semibold text-[#0f172a]">
+          Kỳ Nghỉ Của Tôi
+        </h1>
+<p class="text-sm text-[#64748b] mt-1.5 font-light">
+          Theo dõi hành trình nghỉ dưỡng, cập nhật thông tin chuyến đi và xem vé điện tử đặc quyền 24/7.
+        </p>
+</div>
+<!-- Quick Action / VIP hotline -->
+<div class="flex items-center space-x-3 bg-white px-4 py-2.5 rounded-xl border border-[#e8e5df] shadow-sm">
+<div class="w-8 h-8 rounded-full bg-[#f5efe6] flex items-center justify-center text-[#c5a880]">
+<i class="fa-solid fa-headset text-sm"></i>
+</div>
+<div class="text-xs">
+<p class="text-[#64748b]">Quản gia cá nhân (24/7)</p>
+<p class="font-semibold text-[#0f172a]">+84 28 8888 LUXE</p>
+</div>
+</div>
+</div>
+<!-- Status Tabs Filter -->
+<div class="flex items-center space-x-2 overflow-x-auto pb-3 mb-8 no-scrollbar">
+<button class="px-5 py-2.5 rounded-full text-xs font-semibold bg-[#0f172a] text-white shadow-sm transition-all whitespace-nowrap">
+        Tất cả (4)
+      </button>
+<button class="px-5 py-2.5 rounded-full text-xs font-medium bg-white text-[#475569] border border-[#e8e5df] hover:border-[#c5a880] hover:text-[#0f172a] transition-all whitespace-nowrap flex items-center space-x-2">
+<span>Đã xác nhận</span>
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">1</span>
+</button>
+<button class="px-5 py-2.5 rounded-full text-xs font-medium bg-white text-[#475569] border border-[#e8e5df] hover:border-[#c5a880] hover:text-[#0f172a] transition-all whitespace-nowrap flex items-center space-x-2">
+<span>Chờ thanh toán</span>
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold">1</span>
+</button>
+<button class="px-5 py-2.5 rounded-full text-xs font-medium bg-white text-[#475569] border border-[#e8e5df] hover:border-[#c5a880] hover:text-[#0f172a] transition-all whitespace-nowrap">
+        Đã hoàn thành (2)
+      </button>
+<button class="px-5 py-2.5 rounded-full text-xs font-medium bg-white text-[#475569] border border-[#e8e5df] hover:border-[#c5a880] hover:text-[#0f172a] transition-all whitespace-nowrap">
+        Đã hủy (0)
+      </button>
+</div>
+<!-- TWO COLUMN LAYOUT: BOOKING LIST (LEFT) & ACTIVE E-VOUCHER PREVIEW (RIGHT) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- LEFT COLUMN: BOOKINGS LIST (7 COLS) -->
+<div class="lg:col-span-7 space-y-6">
+<!-- CARD 1: ĐÃ XÁC NHẬN (THE ANAM MŨI NÉ) -->
+<div class="bg-white rounded-2xl border-2 border-[#c5a880] shadow-md hover:shadow-lg transition-all overflow-hidden relative">
+<!-- Active Highlight Accent Tag -->
+<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#c5a880] via-[#dfcfb7] to-[#c5a880]"></div>
+<div class="p-6">
+<!-- Top Header info -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#f1ede6]">
+<div class="flex items-center space-x-2">
+<span class="text-xs font-mono font-medium text-[#64748b]">Mã đặt: <strong class="text-[#0f172a]">OTA-202610-8839</strong></span>
+<span class="text-[#cbd5e1]">•</span>
+<span class="text-xs text-[#64748b]">Đặt ngày 12/04/2026</span>
+</div>
+<div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>ĐÃ XÁC NHẬN</span>
+</div>
+</div>
+<!-- Content Body: Image + Hotel Details -->
+<div class="mt-5 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+<div class="sm:col-span-5 h-44 rounded-xl overflow-hidden relative group">
+<img alt="The Anam Mũi Né" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1V1s-YWBDqokPBgNAifjNx_xostrfHVChbqa_0VRY-ZJtPlgPk9xhMBP9dgLb0Nesd0BUVhbltqt4UFipj5m6K8kazCY9u2FivOz9H1P7mJCeZErd7FxaiJPVeTTXzp5cWrUECCR9xAhV9IzmtONyjHL9psA047oe_GpLj2Cwa8sJpW_GKRh8CrPOPssHrTEDrxHt32zDFcGlvcxdYoWOfnKVgxkNDLUdoeN_O509EY-4_B1tBx2JdgDQ"/>
+<span class="absolute bottom-2 left-2 bg-[#0f172a]/80 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded tracking-wide font-medium flex items-center space-x-1">
+<i class="fa-solid fa-star text-amber-400 text-[9px]"></i>
+<span>5 Sao Luxury</span>
+</span>
+</div>
+<div class="sm:col-span-7 flex flex-col justify-between h-full">
+<div>
+<div class="flex items-center space-x-1 text-xs text-[#8c7355] font-medium mb-1">
+<i class="fa-solid fa-location-dot"></i>
+<span>Bãi Dài, Mũi Né, Phan Thiết</span>
+</div>
+<h3 class="font-serif-luxury text-xl font-semibold text-[#0f172a] hover:text-[#c5a880] transition-colors leading-tight">
+                    The Anam Mũi Né
+                  </h3>
+<p class="text-xs text-[#475569] font-medium mt-1">
+                    Hạng phòng: <span class="text-[#0f172a] font-semibold">Suite Hướng Biển (Ocean Suite)</span>
+</p>
+<div class="mt-3.5 flex items-center space-x-4 text-xs text-[#64748b] bg-[#faf9f6] p-2.5 rounded-lg border border-[#e8e5df]">
+<div>
+<span class="block text-[10px] text-[#8c7355] uppercase font-semibold">Nhận phòng</span>
+<strong class="text-[#0f172a] font-medium">24/10/2026</strong>
+</div>
+<div class="text-center px-2 text-[#c5a880]">
+<i class="fa-solid fa-arrow-right-long"></i>
+<span class="block text-[9px] text-[#64748b]">3 đêm</span>
+</div>
+<div>
+<span class="block text-[10px] text-[#8c7355] uppercase font-semibold">Trả phòng</span>
+<strong class="text-[#0f172a] font-medium">27/10/2026</strong>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#f1ede6] flex items-center justify-between">
+<span class="text-xs text-[#64748b]">2 Khách • Đã thanh toán</span>
+<div class="text-right">
+<span class="text-[10px] text-[#8c7355] block uppercase font-medium">Tổng thanh toán</span>
+<span class="text-base font-serif-luxury font-bold text-[#0f172a]">18.500.000 ₫</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Buttons -->
+<div class="mt-5 pt-4 border-t border-[#f1ede6] flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center space-x-2 text-xs text-[#0f172a]">
+<i class="fa-solid fa-circle-check text-emerald-600"></i>
+<span class="text-emerald-800 font-medium text-xs">Đặc quyền VIP Gold: Check-in sớm &amp; Trà chiều miễn phí</span>
+</div>
+<div class="flex items-center space-x-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-[#c5a880] text-[#8c7355] hover:bg-[#f5efe6] text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5">
+<i class="fa-solid fa-headset"></i>
+<span>Hỗ trợ 24/7</span>
+</button>
+<button class="flex-1 sm:flex-initial px-5 py-2 rounded-lg bg-[#c5a880] hover:bg-[#b5976e] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center space-x-2">
+<i class="fa-solid fa-qrcode"></i>
+<span>Xem Vé Điện Tử (E-Voucher)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- CARD 2: CHỜ THANH TOÁN (INTERCONTINENTAL DANANG SUN PENINSULA) -->
+<div class="bg-white rounded-2xl border border-[#e8e5df] shadow-sm hover:shadow-md transition-all overflow-hidden">
+<div class="p-6">
+<!-- Top Header info -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#f1ede6]">
+<div class="flex items-center space-x-2">
+<span class="text-xs font-mono font-medium text-[#64748b]">Mã đặt: <strong class="text-[#0f172a]">OTA-202611-3042</strong></span>
+<span class="text-[#cbd5e1]">•</span>
+<span class="text-xs text-amber-700 font-medium">Hết hạn giữ phòng sau: <strong>14:28:50</strong></span>
+</div>
+<div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+<span>CHỜ THANH TOÁN</span>
+</div>
+</div>
+<!-- Content Body: Image + Hotel Details -->
+<div class="mt-5 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+<div class="sm:col-span-5 h-44 rounded-xl overflow-hidden relative group">
+<img alt="InterContinental Danang Sun Peninsula" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1WHD-NLsJHKo1sabygMAi9QYUH6zOQjgyMQhyEIgijDgIJlVAncTUQN5VcILD2aSb101Oue_go-t8Wxn8FnAG3p1mH8HNq6PfAKKV_LS2vEQd-2lQFtc7l4BaOeJzUiYrjLPKLoUX2bFD3eltbugKVZDQqPiZnqyKNaru8BUqFkSs8bDD0aXHYZpEBWwFWPack6GL_5BTcR8d_JS9BipstXMrAktX5F7-jT_MCoied_aOazezPaatLg8ZI"/>
+<span class="absolute bottom-2 left-2 bg-[#0f172a]/80 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded tracking-wide font-medium flex items-center space-x-1">
+<i class="fa-solid fa-award text-[#c5a880] text-[9px]"></i>
+<span>Forbes 5-Star</span>
+</span>
+</div>
+<div class="sm:col-span-7 flex flex-col justify-between h-full">
+<div>
+<div class="flex items-center space-x-1 text-xs text-[#8c7355] font-medium mb-1">
+<i class="fa-solid fa-location-dot"></i>
+<span>Bán Đảo Sơn Trà, Đà Nẵng</span>
+</div>
+<h3 class="font-serif-luxury text-xl font-semibold text-[#0f172a] hover:text-[#c5a880] transition-colors leading-tight">
+                    InterContinental Danang Sun Peninsula
+                  </h3>
+<p class="text-xs text-[#475569] font-medium mt-1">
+                    Hạng phòng: <span class="text-[#0f172a] font-semibold">Biệt Thự Bán Đảo (Peninsula Villa)</span>
+</p>
+<div class="mt-3.5 flex items-center space-x-4 text-xs text-[#64748b] bg-[#faf9f6] p-2.5 rounded-lg border border-[#e8e5df]">
+<div>
+<span class="block text-[10px] text-[#8c7355] uppercase font-semibold">Nhận phòng</span>
+<strong class="text-[#0f172a] font-medium">10/11/2026</strong>
+</div>
+<div class="text-center px-2 text-[#c5a880]">
+<i class="fa-solid fa-arrow-right-long"></i>
+<span class="block text-[9px] text-[#64748b]">2 đêm</span>
+</div>
+<div>
+<span class="block text-[10px] text-[#8c7355] uppercase font-semibold">Trả phòng</span>
+<strong class="text-[#0f172a] font-medium">12/11/2026</strong>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-[#f1ede6] flex items-center justify-between">
+<span class="text-xs text-amber-700 font-medium">Tự động hủy nếu không thanh toán</span>
+<div class="text-right">
+<span class="text-[10px] text-[#8c7355] block uppercase font-medium">Tổng cần thanh toán</span>
+<span class="text-base font-serif-luxury font-bold text-[#0f172a]">32.000.000 ₫</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Buttons -->
+<div class="mt-5 pt-4 border-t border-[#f1ede6] flex flex-wrap items-center justify-between gap-3">
+<span class="text-xs text-[#64748b] flex items-center space-x-1.5">
+<i class="fa-solid fa-clock-rotate-left text-amber-600"></i>
+<span>Giữ phòng miễn phí có điều kiện</span>
+</span>
+<div class="flex items-center space-x-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold transition-colors">
+                  Hủy đặt phòng
+                </button>
+<button class="flex-1 sm:flex-initial px-5 py-2 rounded-lg bg-[#0f172a] hover:bg-[#1e293b] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center space-x-2">
+<i class="fa-solid fa-bolt text-[#c5a880]"></i>
+<span>Thanh toán ngay (VietQR)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: MODAL / HIGH-PRIORITY CARD "VÉ ĐIỆN TỬ & XÁC NHẬN E-VOUCHER" (5 COLS) -->
+<div class="lg:col-span-5 sticky top-28">
+<div class="bg-white rounded-3xl border border-[#c5a880] shadow-xl overflow-hidden relative">
+<!-- Luxury Gold Emboss Top Banner -->
+<div class="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] px-6 py-4 text-white flex items-center justify-between border-b border-[#c5a880]">
+<div class="flex items-center space-x-2.5">
+<div class="w-7 h-7 rounded-full bg-[#c5a880] text-[#0f172a] flex items-center justify-center text-xs font-serif font-bold">
+                AH
+              </div>
+<div>
+<h4 class="font-serif-luxury text-sm font-semibold tracking-wide text-[#faf9f6]">VÉ ĐIỆN TỬ &amp; XÁC NHẬN LƯU TRÚ</h4>
+<p class="text-[10px] text-[#c5a880] tracking-widest uppercase">Aurum Haven Luxury E-Voucher</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">HỢP LỆ</span>
+</div>
+<!-- Main E-Voucher Paper Body -->
+<div class="p-6 bg-white relative">
+<!-- Watermark / Texture hint -->
+<div class="flex items-center justify-between pb-4 border-b border-dashed border-[#e8e5df]">
+<div>
+<span class="text-[10px] uppercase tracking-wider text-[#8c7355] font-semibold">Tên Resort &amp; Khách sạn</span>
+<h3 class="font-serif-luxury text-lg font-bold text-[#0f172a] mt-0.5">The Anam Mũi Né</h3>
+<p class="text-xs text-[#64748b]">Bãi Dài, Mũi Né, Phan Thiết, Bình Thuận</p>
+</div>
+<div class="text-right">
+<span class="text-[10px] uppercase tracking-wider text-[#8c7355] font-semibold">Mã xác nhận (PIN)</span>
+<p class="font-mono text-sm font-bold text-[#c5a880]">AH-8839-VIP</p>
+</div>
+</div>
+<!-- QR Code Section & Fast Check-in Notice -->
+<div class="my-5 flex items-center space-x-5 bg-[#faf9f6] p-4 rounded-2xl border border-[#e8e5df]">
+<!-- Realistic Stylized SVG QR Code -->
+<div class="w-28 h-28 bg-white p-2 rounded-xl border border-[#c5a880] shadow-sm flex items-center justify-center flex-shrink-0">
+<svg class="w-full h-full text-[#0f172a]" fill="currentColor" viewbox="0 0 100 100">
+<!-- QR Finder Top Left -->
+<rect fill="#0f172a" height="28" rx="3" width="28" x="5" y="5"></rect>
+<rect fill="#ffffff" height="20" rx="2" width="20" x="9" y="9"></rect>
+<rect fill="#c5a880" height="12" width="12" x="13" y="13"></rect>
+<!-- QR Finder Top Right -->
+<rect fill="#0f172a" height="28" rx="3" width="28" x="67" y="5"></rect>
+<rect fill="#ffffff" height="20" rx="2" width="20" x="71" y="9"></rect>
+<rect fill="#c5a880" height="12" width="12" x="75" y="13"></rect>
+<!-- QR Finder Bottom Left -->
+<rect fill="#0f172a" height="28" rx="3" width="28" x="5" y="67"></rect>
+<rect fill="#ffffff" height="20" rx="2" width="20" x="9" y="71"></rect>
+<rect fill="#c5a880" height="12" width="12" x="13" y="75"></rect>
+<!-- QR Data Patterns -->
+<rect height="6" width="6" x="38" y="10"></rect>
+<rect height="6" width="6" x="48" y="10"></rect>
+<rect height="6" width="12" x="38" y="22"></rect>
+<rect height="12" width="6" x="44" y="32"></rect>
+<rect height="8" width="8" x="10" y="38"></rect>
+<rect height="8" width="8" x="22" y="44"></rect>
+<rect height="8" width="8" x="10" y="50"></rect>
+<rect fill="#0f172a" height="16" rx="2" width="16" x="38" y="42"></rect>
+<circle cx="46" cy="50" fill="#c5a880" r="3"></circle>
+<rect height="14" width="6" x="68" y="38"></rect>
+<rect height="6" width="12" x="78" y="44"></rect>
+<rect height="10" width="6" x="78" y="56"></rect>
+<rect height="8" width="6" x="38" y="68"></rect>
+<rect height="6" width="10" x="48" y="74"></rect>
+<rect height="6" width="14" x="38" y="84"></rect>
+<rect height="8" width="8" x="68" y="74"></rect>
+<rect height="12" width="12" x="80" y="80"></rect>
+</svg>
+</div>
+<!-- QR Instructions -->
+<div class="space-y-1.5">
+<span class="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full uppercase">Quét mã check-in tức thì</span>
+<p class="text-xs font-semibold text-[#0f172a]">Ưu tiên làn Fast-Track VIP</p>
+<p class="text-[11px] text-[#64748b] leading-relaxed">
+                  Xuất trình mã QR tại quầy tiếp tân hoặc qua máy tính bảng quản gia riêng khi đến sảnh.
+                </p>
+</div>
+</div>
+<!-- Booking Key Specifications Grid -->
+<div class="grid grid-cols-2 gap-3 text-xs py-3 border-y border-[#f1ede6]">
+<div>
+<span class="text-[10px] text-[#8c7355] block uppercase font-medium">Khách nhận phòng</span>
+<strong class="text-[#0f172a] font-semibold text-xs">Nguyễn Hoàng Long</strong>
+</div>
+<div>
+<span class="text-[10px] text-[#8c7355] block uppercase font-medium">Hạng phòng đăng ký</span>
+<strong class="text-[#0f172a] font-semibold text-xs">Suite Hướng Biển</strong>
+</div>
+<div>
+<span class="text-[10px] text-[#8c7355] block uppercase font-medium">Khung giờ nhận / trả phòng</span>
+<strong class="text-[#0f172a] font-semibold text-xs">14:00 • 12:00</strong>
+</div>
+<div>
+<span class="text-[10px] text-[#8c7355] block uppercase font-medium">Quy mô lưu trú</span>
+<strong class="text-[#0f172a] font-semibold text-xs">2 Người lớn (3 đêm)</strong>
+</div>
+</div>
+<!-- Privileges & Amenities Inclusion -->
+<div class="my-4 bg-[#fbf9f5] p-3.5 rounded-xl border border-[#eee8df] space-y-2">
+<span class="text-[10px] uppercase tracking-wider text-[#8c7355] font-bold block">
+<i class="fa-solid fa-gift mr-1 text-[#c5a880]"></i> Đặc quyền bao gồm trong vé
+              </span>
+<ul class="text-xs text-[#475569] space-y-1">
+<li class="flex items-center space-x-2">
+<i class="fa-solid fa-check text-emerald-600 text-[10px]"></i>
+<span>Bữa sáng buffet cao cấp hàng ngày cho 02 khách</span>
+</li>
+<li class="flex items-center space-x-2">
+<i class="fa-solid fa-check text-emerald-600 text-[10px]"></i>
+<span>Trà chiều hoàng hôn &amp; canapés tại Club Lounge</span>
+</li>
+<li class="flex items-center space-x-2">
+<i class="fa-solid fa-check text-emerald-600 text-[10px]"></i>
+<span>Trợ lý cá nhân &amp; Quản gia 24/7 trực tiếp hỗ trợ</span>
+</li>
+</ul>
+</div>
+<!-- Concierge Contact Direct -->
+<div class="flex items-center justify-between text-xs text-[#64748b] pt-2">
+<span class="text-[11px]">Trợ lý kỳ nghỉ riêng:</span>
+<span class="font-bold text-[#0f172a]">+84 908 928 888</span>
+</div>
+<!-- E-Voucher Action Buttons -->
+<div class="mt-5 grid grid-cols-2 gap-3">
+<button class="px-3 py-2.5 rounded-xl border border-[#c5a880] text-[#0f172a] hover:bg-[#f5efe6] font-semibold text-xs flex items-center justify-center space-x-2 transition-all">
+<i class="fa-solid fa-print text-[#c5a880]"></i>
+<span>In vé (Print)</span>
+</button>
+<button class="px-3 py-2.5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] text-white font-semibold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all">
+<i class="fa-solid fa-file-arrow-down text-[#c5a880]"></i>
+<span>Tải E-Voucher (PDF)</span>
+</button>
+</div>
+</div>
+<!-- Perforated Ticket Notches Effect (Decorative) -->
+<div class="relative w-full h-4 bg-[#faf9f6] flex items-center justify-between overflow-hidden">
+<div class="w-4 h-4 bg-[#faf9f6] rounded-full -ml-2 border-r border-[#c5a880]"></div>
+<div class="flex-grow border-b border-dashed border-[#c5a880]"></div>
+<div class="w-4 h-4 bg-[#faf9f6] rounded-full -mr-2 border-l border-[#c5a880]"></div>
+</div>
+<div class="p-4 bg-[#f5efe6] text-center text-[11px] text-[#8c7355]">
+<p>Bảo mật mã xác nhận. E-Voucher được phát hành chính thức bởi Aurum Haven VIP Concierge.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FOOTER -->
+<footer class="bg-white border-t border-[#e8e5df] mt-16 py-8 text-xs text-[#64748b]">
+<div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center space-x-3">
+<span class="font-serif-luxury font-bold text-[#c5a880]">Aurum Haven</span>
+<span class="text-[#cbd5e1]">|</span>
+<span>Hệ sinh thái nghỉ dưỡng chuẩn 5 sao Quiet Luxury</span>
+</div>
+<div class="flex items-center space-x-6">
+<a class="hover:text-[#c5a880] transition-colors" href="#">Điều khoản đặt phòng</a>
+<a class="hover:text-[#c5a880] transition-colors" href="#">Chính sách bảo mật</a>
+<a class="hover:text-[#c5a880] transition-colors" href="#">Trung tâm hỗ trợ</a>
+<span class="text-[#94a3b8]">© 2026 Aurum Haven Hospitality Group.</span>
+</div>
+</div>
+</footer>
+</body>
+</html>

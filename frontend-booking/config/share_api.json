@@ -2,19 +2,137 @@
   "version": "1.0.0",
   "name": "Booking Manager OTA API",
   "endpoints": [
-    { "method": "POST", "path": "/api/v1/auth/login", "implementation_status": "implemented", "description": "Authenticate user and issue tokens" },
-    { "method": "POST", "path": "/api/v1/auth/register", "implementation_status": "implemented", "description": "Register a new traveler or partner account" },
-    { "method": "POST", "path": "/api/v1/auth/refresh", "implementation_status": "implemented", "description": "Refresh access token using refresh token" },
-    { "method": "GET", "path": "/api/v1/auth/me", "implementation_status": "implemented", "description": "Get current user profile and active permissions" },
-    { "method": "GET", "path": "/api/v1/properties", "implementation_status": "implemented", "description": "List properties with destination and date filtering" },
-    { "method": "POST", "path": "/api/v1/properties", "implementation_status": "implemented", "description": "Create a new property (Admin / Partner)" },
-    { "method": "GET", "path": "/api/v1/properties/{id}", "implementation_status": "implemented", "description": "Get detailed property information by ID" },
-    { "method": "GET", "path": "/api/v1/services", "implementation_status": "implemented", "description": "List add-on travel and hospitality services" },
-    { "method": "POST", "path": "/api/v1/services", "implementation_status": "implemented", "description": "Create an add-on service" },
-    { "method": "GET", "path": "/api/v1/bookings", "implementation_status": "implemented", "description": "List bookings for traveler, partner, or admin" },
-    { "method": "POST", "path": "/api/v1/bookings", "implementation_status": "implemented", "description": "Create a new OTA booking" },
-    { "method": "GET", "path": "/api/v1/bookings/{id}", "implementation_status": "implemented", "description": "Get booking details by ID or booking code" },
-    { "method": "PATCH", "path": "/api/v1/bookings/{id}/status", "implementation_status": "implemented", "description": "Cancel reservation (local OTA mutation)" },
-    { "method": "POST", "path": "/api/v1/vietsage/sync", "implementation_status": "planned", "description": "Planned service-boundary synchronization with VietSage PMS" }
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "implementation_status": "implemented",
+      "description": "Authenticate user and issue tokens"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "implementation_status": "implemented",
+      "description": "Register a new traveler account"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "implementation_status": "implemented",
+      "description": "Refresh access token using refresh token"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "implementation_status": "implemented",
+      "description": "Get current user profile and active permissions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties",
+      "implementation_status": "implemented",
+      "description": "List properties with destination and date filtering"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/properties",
+      "implementation_status": "implemented",
+      "description": "Create a new property (Admin only)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties/{id}",
+      "implementation_status": "implemented",
+      "description": "Get detailed property information by ID"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/services",
+      "implementation_status": "implemented",
+      "description": "List add-on travel and hospitality services"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/services",
+      "implementation_status": "implemented",
+      "description": "Create an add-on service (Admin only)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/bookings",
+      "implementation_status": "implemented",
+      "description": "List bookings for traveler, partner, or admin"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/bookings",
+      "implementation_status": "implemented",
+      "description": "Create a new OTA booking"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/bookings/{id}",
+      "implementation_status": "implemented",
+      "description": "Get booking details by ID or booking code"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/bookings/{id}/status",
+      "implementation_status": "implemented",
+      "description": "Cancel booking reservation (local OTA mutation)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/vietsage/sync",
+      "implementation_status": "planned",
+      "description": "Trigger bi-directional sync with VietSage PMS"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/auth/profile",
+      "implementation_status": "implemented",
+      "description": "Update traveler or partner profile"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/auth/change-password",
+      "implementation_status": "implemented",
+      "description": "Change account password"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/properties/{id}/allotments",
+      "implementation_status": "implemented",
+      "description": "Get scoped room allotments for an authorized property"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/allotments/update",
+      "implementation_status": "implemented",
+      "description": "Update room allotment and rate quota"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/bookings/lookup",
+      "implementation_status": "implemented",
+      "description": "Look up booking by code and contact for guest"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/payments/create-intent",
+      "implementation_status": "implemented",
+      "description": "Create payment intent for the booking owner or verified guest contact"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/payments/confirm",
+      "implementation_status": "implemented",
+      "description": "Confirm payment settlement (Admin only)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/payments/booking/{bookingId}",
+      "implementation_status": "implemented",
+      "description": "Get payment details for the booking owner or verified guest contact"
+    }
   ]
 }

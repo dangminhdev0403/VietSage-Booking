@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Loader2,
   Sparkles,
-  AlertCircle,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -19,10 +18,11 @@ import {
   Wine,
   Crown,
   Headphones,
-  CheckCircle2,
   Building2,
   Compass,
 } from 'lucide-react';
+import { luxuryAlert } from '@/lib/alert/luxury-alert';
+import { LuxuryAlertBanner } from '@/components/shared/luxury-alert-banner';
 
 function LoginContent() {
   const router = useRouter();
@@ -63,9 +63,10 @@ function LoginContent() {
   // If already authenticated, redirect to destination immediately
   useEffect(() => {
     if (status === 'authenticated') {
-      router.replace(callbackUrl);
+      const postLoginUrl = `/api/auth/post-login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`;
+      window.location.assign(postLoginUrl);
     }
-  }, [status, callbackUrl, router]);
+  }, [status, callbackUrl]);
 
   // Handle Login
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -86,10 +87,10 @@ function LoginContent() {
       });
 
       if (res?.error) {
-        setErrorMessage('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        setErrorMessage('Thông tin đăng nhập không chính xác.');
       } else {
-        router.push(callbackUrl);
-        router.refresh();
+        const postLoginUrl = `/api/auth/post-login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`;
+        window.location.assign(postLoginUrl);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Lỗi kết nối cổng đăng nhập.';
@@ -161,8 +162,8 @@ function LoginContent() {
         setLoginUsername(regUsername.trim());
         setErrorMessage('Tài khoản đã tạo thành công. Vui lòng đăng nhập.');
       } else {
-        router.push('/');
-        router.refresh();
+        const postLoginUrl = `/api/auth/post-login${regRole === 'HOTEL_PARTNER' ? '?callbackUrl=/admin' : ''}`;
+        window.location.assign(postLoginUrl);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Lỗi kết nối đăng ký.';
@@ -227,7 +228,7 @@ function LoginContent() {
                 </p>
                 <h2 className="text-3xl font-extrabold text-white leading-tight">
                   Bản Giao Hưởng <br />
-                  <span className="font-serif italic font-bold text-primary-fixed">
+                  <span className="font-sans italic font-bold text-primary-fixed">
                     Nghỉ Dưỡng Thượng Lưu
                   </span>
                 </h2>
@@ -272,10 +273,10 @@ function LoginContent() {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold text-white tracking-wide">
-                      Quản Gia Riêng Concierge 24/7
+                      Chăm Sóc Khách Hàng 24/7
                     </span>
                     <span className="text-[11px] text-slate-300 truncate">
-                      Hỗ trợ lịch trình di sản và xe đưa đón chuyên biệt
+                      Tư vấn lịch trình nghỉ dưỡng và dịch vụ đưa đón chu đáo
                     </span>
                   </div>
                 </div>
@@ -349,17 +350,22 @@ function LoginContent() {
 
               {/* Status Alerts */}
               {errorMessage && (
-                <div className="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMessage}</span>
-                </div>
+                <LuxuryAlertBanner
+                  variant="error"
+                  description={errorMessage}
+                  onClose={() => setErrorMessage(null)}
+                  className="mb-5"
+                />
               )}
 
               {successMessage && (
-                <div className="mb-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-                  <span>{successMessage}</span>
-                </div>
+                <LuxuryAlertBanner
+                  variant="success"
+                  title="Thao Tác Thành Công"
+                  description={successMessage}
+                  onClose={() => setSuccessMessage(null)}
+                  className="mb-5"
+                />
               )}
 
               {/* FORM 1: LOGIN */}
@@ -390,9 +396,11 @@ function LoginContent() {
                       <button
                         type="button"
                         onClick={() =>
-                          alert(
-                            'Bộ phận Concierge đã ghi nhận yêu cầu hỗ trợ. Vui lòng liên hệ hotline 1900 8888 nếu bạn cần đặt lại mật khẩu khẩn cấp.',
-                          )
+                          luxuryAlert.info({
+                            title: 'Hỗ Trợ Khôi Phục Mật Khẩu',
+                            message: 'Quý khách vui lòng liên hệ tổng đài hỗ trợ 1900 8888 hoặc hòm thư hỗ trợ để được hướng dẫn cấp lại mật khẩu.',
+                            confirmText: 'Đã Tiếp Nhận',
+                          })
                         }
                         className="text-xs text-primary font-bold hover:underline"
                       >
@@ -625,6 +633,16 @@ function LoginContent() {
                       <span>Tạo Tài Khoản VietSage</span>
                     )}
                   </button>
+
+                  <div className="pt-2 text-center">
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-1.5 text-xs text-primary font-bold hover:underline"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Trải nghiệm Đăng ký Hội Viên May Đo Sở Thích (Aurum Elite) →</span>
+                    </Link>
+                  </div>
                 </form>
               )}
 

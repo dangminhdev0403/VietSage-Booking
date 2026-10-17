@@ -28,6 +28,18 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentMethod {
+  VIETQR
+  BANK_TRANSFER
+  PAY_AT_HOTEL
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 enum SyncStatus {
   SUCCESS
   FAILED
@@ -45,10 +57,12 @@ model Account {
   displayName     String                  @map("display_name")
   email           String                  @unique
   role            AccountRole             @default(TRAVELER)
+  managedPropertyId String?               @map("managed_property_id")
   isActive        Boolean                 @default(true) @map("is_active")
   createdAt       DateTime                @default(now()) @map("created_at")
   updatedAt       DateTime                @updatedAt @map("updated_at")
 
+  managedProperty Property?               @relation("PartnerProperty", fields: [managedPropertyId], references: [id], onDelete: SetNull)
   roleAssignments AccountRoleAssignment[]
   refreshSessions RefreshSession[]
   auditEvents     AuditEvent[]
@@ -162,6 +176,7 @@ model Property {
 
   roomTypes    RoomType[]
   bookings     Booking[]
+  partnerAccounts Account[] @relation("PartnerProperty")
 
   @@index([city])
   @@map("properties")
@@ -249,6 +264,7 @@ model Booking {
   roomType        RoomType?     @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
   account         Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
   addons          BookingAddon[]
+  payments        Payment[]
 
   @@index([bookingCode])
   @@index([guestEmail])
@@ -268,6 +284,26 @@ model BookingAddon {
   addonService   AddonService @relation(fields: [addonServiceId], references: [id], onDelete: Restrict)
 
   @@map("booking_addons")
+}
+
+model Payment {
+  id             String                   @id @default(uuid())
+  bookingId      String                   @map("booking_id")
+  paymentMethod  PaymentMethod            @default(VIETQR) @map("payment_method")
+  amount         Int
+  currency       String                   @default("VND")
+  status         PaymentTransactionStatus @default(PENDING)
+  transactionRef String                   @unique @map("transaction_ref")
+  qrCodeUrl      String?                  @map("qr_code_url")
+  paidAt         DateTime?                @map("paid_at")
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+
+  booking        Booking                  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([transactionRef])
+  @@map("payments")
 }
 
 // -------------------------------------------------------------

@@ -3,8 +3,15 @@ import { bookingsResource } from '../service/bookings.resource';
 
 const bookings = bookingsResource.bind();
 
-export function useBookingsQuery(params?: { status?: string; page?: number; pageSize?: number }) {
-  return useQuery(bookings.queries.list.options(params));
+export function useBookingsQuery(
+  params?: { status?: string; page?: number; pageSize?: number },
+  options?: { enabled?: boolean },
+) {
+  const queryOptions = bookings.queries.list.options(params);
+  return useQuery({
+    ...queryOptions,
+    ...(options?.enabled !== undefined ? { enabled: options.enabled } : {}),
+  });
 }
 
 export function useCreateBookingMutation() {

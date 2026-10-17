@@ -1,17 +1,42 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { CreatePropertyDto, CreateServiceDto } from './dto/catalog.dto';
+import type { Prisma, RoomAllotment } from '@prisma/client';
+import {
+  type CreatePropertyDto,
+  createPropertySchema,
+  type CreateServiceDto,
+  createServiceSchema,
+  type UpdateAllotmentDto,
+  updateAllotmentSchema,
+} from './dto/catalog.dto';
+import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listProperties(filter?: { city?: string; keyword?: string; page?: number; pageSize?: number }) {
+  async listProperties(filter?: {
+    city?: string;
+    keyword?: string;
+    min_price?: number;
+    max_price?: number;
+    star_rating?: number;
+    guests?: number;
+    sort_by?: 'price_asc' | 'price_desc' | 'rating_desc' | 'newest';
+    page?: number;
+    pageSize?: number;
+  }) {
     const page = filter?.page ?? 1;
     const pageSize = filter?.pageSize ?? 10;
     const skip = (page - 1) * pageSize;
 
-    const where: any = { isActive: true };
+    const where: Prisma.PropertyWhereInput = { isActive: true };
     if (filter?.city) {
       where.city = { contains: filter.city, mode: 'insensitive' };
     }
@@ -19,7 +44,34 @@ export class CatalogService {
       where.OR = [
         { name: { contains: filter.keyword, mode: 'insensitive' } },
         { description: { contains: filter.keyword, mode: 'insensitive' } },
+        { city: { contains: filter.keyword, mode: 'insensitive' } },
       ];
+    }
+    if (filter?.star_rating) {
+      where.starRating = { gte: Number(filter.star_rating) };
+    }
+    if (filter?.min_price || filter?.max_price || filter?.guests) {
+      where.roomTypes = {
+        some: {
+          isActive: true,
+          ...(filter.min_price
+            ? { basePrice: { gte: Number(filter.min_price) } }
+            : {}),
+          ...(filter.max_price
+            ? { basePrice: { lte: Number(filter.max_price) } }
+            : {}),
+          ...(filter.guests
+            ? { maxGuests: { gte: Number(filter.guests) } }
+            : {}),
+        },
+      };
+    }
+
+    let orderBy: Prisma.PropertyOrderByWithRelationInput = {
+      createdAt: 'desc',
+    };
+    if (filter?.sort_by === 'rating_desc') {
+      orderBy = { starRating: 'desc' };
     }
 
     const [items, total] = await Promise.all([
@@ -28,7 +80,7 @@ export class CatalogService {
         skip,
         take: pageSize,
         include: { roomTypes: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       this.prisma.property.count({ where }),
     ]);
@@ -43,11 +95,14 @@ export class CatalogService {
         description: p.description,
         star_rating: p.starRating,
         thumbnail_url: p.thumbnailUrl,
+        images: p.images ?? [],
         room_types: p.roomTypes.map((rt) => ({
           id: rt.id,
           name: rt.name,
+          description: rt.description,
           max_guests: rt.maxGuests,
           base_price: rt.basePrice,
+          amenities: rt.amenities ?? [],
         })),
         created_at: p.createdAt.toISOString(),
       })),
@@ -61,7 +116,21 @@ export class CatalogService {
   async getPropertyById(id: string) {
     const p = await this.prisma.property.findUnique({
       where: { id },
-      include: { roomTypes: true },
+      include: {
+        roomTypes: {
+          include: {
+            allotments: {
+              where: {
+                date: {
+                  gte: new Date(),
+                },
+              },
+              take: 30,
+              orderBy: { date: 'asc' },
+            },
+          },
+        },
+      },
     });
 
     if (!p) {
@@ -77,22 +146,294 @@ export class CatalogService {
       description: p.description,
       star_rating: p.starRating,
       thumbnail_url: p.thumbnailUrl,
+      images: p.images ?? [],
       room_types: p.roomTypes.map((rt) => ({
         id: rt.id,
         name: rt.name,
         description: rt.description,
         max_guests: rt.maxGuests,
         base_price: rt.basePrice,
+        amenities: rt.amenities ?? [],
+        allotments: (rt.allotments ?? []).map((a) => ({
+          date: a.date.toISOString().split('T')[0],
+          total_rooms: a.totalRooms,
+          booked_rooms: a.bookedRooms,
+          available_rooms: Math.max(0, a.totalRooms - a.bookedRooms),
+          price: a.price,
+          is_blocked: a.isBlocked,
+        })),
       })),
       created_at: p.createdAt.toISOString(),
     };
   }
 
-  async createProperty(dto: CreatePropertyDto) {
-    const slug = dto.name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-') + '-' + Date.now();
+  async getPropertyAllotments(
+    propertyId: string,
+    month?: string,
+    actor?: AuthenticatedUser,
+  ) {
+    if (!actor) {
+      throw new UnauthorizedException('Yêu cầu xác thực để xem lịch tồn kho');
+    }
+
+    if (actor.role === 'HOTEL_PARTNER') {
+      const account = await this.prisma.account.findUnique({
+        where: { id: actor.id },
+        select: { managedPropertyId: true },
+      });
+      if (
+        !account?.managedPropertyId ||
+        account.managedPropertyId !== propertyId
+      ) {
+        throw new ForbiddenException(
+          'Đối tác chỉ có quyền xem lịch tồn kho của khách sạn mình quản lý',
+        );
+      }
+    } else if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Không có quyền xem lịch tồn kho');
+    }
+
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+      include: {
+        roomTypes: true,
+      },
+    });
+
+    if (!property) {
+      throw new NotFoundException('Không tìm thấy khách sạn');
+    }
+
+    const roomTypeIds = property.roomTypes.map((rt) => rt.id);
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month !== undefined && month !== null && month !== '') {
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        throw new BadRequestException(
+          'Tháng không hợp lệ (định dạng yêu cầu: YYYY-MM)',
+        );
+      }
+      const [year, m] = month.split('-').map(Number);
+      if (m < 1 || m > 12) {
+        throw new BadRequestException('Tháng không hợp lệ (phải từ 01 đến 12)');
+      }
+      startDate = new Date(Date.UTC(year, m - 1, 1));
+      endDate = new Date(Date.UTC(year, m, 1));
+    } else {
+      const now = new Date();
+      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1));
+    }
+
+    const allotments = await this.prisma.roomAllotment.findMany({
+      where: {
+        roomTypeId: { in: roomTypeIds },
+        date: {
+          gte: startDate,
+          lt: endDate,
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    return {
+      property_id: property.id,
+      property_name: property.name,
+      month:
+        month ??
+        `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`,
+      room_types: property.roomTypes.map((rt) => {
+        const rtAllotments = allotments.filter((a) => a.roomTypeId === rt.id);
+        return {
+          id: rt.id,
+          name: rt.name,
+          base_price: rt.basePrice,
+          total_rooms: 10,
+          allotments: rtAllotments.map((a) => ({
+            id: a.id,
+            date:
+              a.date instanceof Date
+                ? a.date.toISOString().split('T')[0]
+                : String(a.date).split('T')[0],
+            total_rooms: a.totalRooms,
+            booked_rooms: a.bookedRooms,
+            available_rooms: Math.max(0, a.totalRooms - a.bookedRooms),
+            price: a.price,
+            is_blocked: a.isBlocked,
+          })),
+        };
+      }),
+    };
+  }
+
+  async updateAllotment(rawDto: UpdateAllotmentDto, actor?: AuthenticatedUser) {
+    if (!actor) {
+      throw new UnauthorizedException(
+        'Yêu cầu xác thực tài khoản để cập nhật tồn kho',
+      );
+    }
+
+    const parsed = updateAllotmentSchema.safeParse(rawDto);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu cập nhật allotment không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+
+    const dto = parsed.data;
+
+    // Strict date validation
+    const [y, m, d] = dto.date.split('-').map(Number);
+    const targetDate = new Date(Date.UTC(y, m - 1, d));
+    if (
+      isNaN(targetDate.getTime()) ||
+      targetDate.getUTCFullYear() !== y ||
+      targetDate.getUTCMonth() !== m - 1 ||
+      targetDate.getUTCDate() !== d
+    ) {
+      throw new BadRequestException('Ngày không hợp lệ');
+    }
+
+    const roomType = await this.prisma.roomType.findUnique({
+      where: { id: dto.room_type_id },
+      include: { property: true },
+    });
+    if (!roomType) {
+      throw new NotFoundException('Không tìm thấy hạng phòng');
+    }
+
+    // Role and partner ownership enforcement
+    if (actor.role === 'HOTEL_PARTNER') {
+      const account = await this.prisma.account.findUnique({
+        where: { id: actor.id },
+        select: { managedPropertyId: true },
+      });
+      const managedPropertyId = account?.managedPropertyId ?? null;
+
+      if (!managedPropertyId) {
+        throw new ForbiddenException(
+          'Tài khoản đối tác chưa được liên kết với khách sạn quản lý',
+        );
+      }
+
+      if (roomType.propertyId !== managedPropertyId) {
+        throw new ForbiddenException(
+          'Đối tác chỉ có quyền cập nhật các hạng phòng thuộc khách sạn quản lý',
+        );
+      }
+    } else if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Không có quyền thực hiện thao tác này');
+    }
+
+    const existing = await this.prisma.roomAllotment.findUnique({
+      where: {
+        roomTypeId_date: {
+          roomTypeId: dto.room_type_id,
+          date: targetDate,
+        },
+      },
+    });
+
+    if (dto.total_rooms !== undefined) {
+      const currentBooked = existing ? existing.bookedRooms : 0;
+      if (dto.total_rooms < currentBooked) {
+        throw new BadRequestException(
+          `Số lượng phòng (${dto.total_rooms}) không được nhỏ hơn số phòng đã đặt (${currentBooked})`,
+        );
+      }
+    }
+
+    let target = existing;
+    if (!target) {
+      await this.prisma.roomAllotment.createMany({
+        data: {
+          roomTypeId: dto.room_type_id,
+          date: targetDate,
+          totalRooms: dto.total_rooms ?? 10,
+          bookedRooms: 0,
+          price: dto.price ?? roomType.basePrice,
+          isBlocked: dto.is_blocked ?? false,
+        },
+        skipDuplicates: true,
+      });
+      target = await this.prisma.roomAllotment.findUnique({
+        where: {
+          roomTypeId_date: {
+            roomTypeId: dto.room_type_id,
+            date: targetDate,
+          },
+        },
+      });
+    }
+
+    if (!target) {
+      throw new NotFoundException('Không tìm thấy lịch tồn kho vừa cập nhật');
+    }
+
+    const updateResult = await this.prisma.roomAllotment.updateMany({
+      where: {
+        id: target.id,
+        ...(dto.total_rooms !== undefined
+          ? { bookedRooms: { lte: dto.total_rooms } }
+          : {}),
+      },
+      data: {
+        ...(dto.total_rooms !== undefined
+          ? { totalRooms: dto.total_rooms }
+          : {}),
+        ...(dto.price !== undefined ? { price: dto.price } : {}),
+        ...(dto.is_blocked !== undefined ? { isBlocked: dto.is_blocked } : {}),
+      },
+    });
+
+    if (updateResult.count !== 1) {
+      throw new BadRequestException(
+        'Số lượng phòng vừa thay đổi; vui lòng tải lại lịch tồn kho',
+      );
+    }
+
+    const updated: RoomAllotment | null =
+      await this.prisma.roomAllotment.findUnique({
+        where: { id: target.id },
+      });
+    if (!updated) {
+      throw new NotFoundException('Không tìm thấy lịch tồn kho vừa cập nhật');
+    }
+
+    return {
+      id: updated.id,
+      room_type_id: updated.roomTypeId,
+      date:
+        updated.date instanceof Date
+          ? updated.date.toISOString().split('T')[0]
+          : String(updated.date).split('T')[0],
+      total_rooms: updated.totalRooms,
+      booked_rooms: updated.bookedRooms,
+      available_rooms: Math.max(0, updated.totalRooms - updated.bookedRooms),
+      price: updated.price,
+      is_blocked: updated.isBlocked,
+    };
+  }
+
+  async createProperty(rawDto: CreatePropertyDto) {
+    const parsed = createPropertySchema.safeParse(rawDto);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu khách sạn không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+    const dto = parsed.data;
+    const slug =
+      dto.name
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-') +
+      '-' +
+      Date.now();
 
     const p = await this.prisma.property.create({
       data: {
@@ -118,7 +459,7 @@ export class CatalogService {
   }
 
   async listServices(category?: string) {
-    const where: any = { isActive: true };
+    const where: Prisma.AddonServiceWhereInput = { isActive: true };
     if (category) {
       where.category = category;
     }
@@ -138,7 +479,15 @@ export class CatalogService {
     }));
   }
 
-  async createService(dto: CreateServiceDto) {
+  async createService(rawDto: CreateServiceDto) {
+    const parsed = createServiceSchema.safeParse(rawDto);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu dịch vụ không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+    const dto = parsed.data;
     const s = await this.prisma.addonService.create({
       data: {
         name: dto.name,

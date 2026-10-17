@@ -39,11 +39,15 @@ export async function parseApiResponse<T>(
   const error = apiErrorSchema.safeParse(body);
 
   if (error.success) {
-    console.error(`[API Error] ${response.url} (${response.status}):`, error.data.error);
+    const errObj = error.data.error;
+    console.error(
+      `[API Error] ${response.url} (${response.status}): [${errObj.code}] ${errObj.message}`,
+      errObj.details ?? '',
+    );
     throw new ApiClientError(
-      error.data.error.code,
-      error.data.error.message,
-      error.data.error.details,
+      errObj.code,
+      errObj.message,
+      errObj.details,
       error.data.request_id,
       response.status,
     );
@@ -80,7 +84,16 @@ export const roomTypeSummarySchema = z.object({
   name: z.string(),
   max_guests: z.number(),
   base_price: z.number(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
+  amenities: z.array(z.string()).default([]),
+  allotments: z.array(z.object({
+    date: z.string(),
+    total_rooms: z.number(),
+    booked_rooms: z.number(),
+    available_rooms: z.number(),
+    price: z.number(),
+    is_blocked: z.boolean(),
+  })).default([]),
 });
 
 export const propertyItemSchema = z.object({
@@ -92,6 +105,7 @@ export const propertyItemSchema = z.object({
   description: z.string().nullable().optional(),
   star_rating: z.number(),
   thumbnail_url: z.string().nullable().optional(),
+  images: z.array(z.string()).default([]),
   room_types: z.array(roomTypeSummarySchema).default([]),
   created_at: z.string(),
 });
@@ -113,11 +127,23 @@ export const addonServiceItemSchema = z.object({
   is_active: z.boolean(),
 });
 
+export const paymentRecordSchema = z.object({
+  id: z.string(),
+  payment_method: z.string(),
+  amount: z.number(),
+  status: z.string(),
+  transaction_ref: z.string().optional(),
+  qr_code_url: z.string().nullable().optional(),
+  paid_at: z.string().nullable().optional(),
+  created_at: z.string().optional(),
+});
+
 export const bookingItemSchema = z.object({
   id: z.string(),
   booking_code: z.string(),
   property_id: z.string(),
   property_name: z.string(),
+  property_address: z.string().optional(),
   room_type_name: z.string().nullable().optional(),
   guest_name: z.string(),
   guest_email: z.string(),
@@ -127,11 +153,13 @@ export const bookingItemSchema = z.object({
   nights: z.number(),
   total_price: z.number(),
   status: z.enum(['PENDING', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED']),
+  payment_status: z.enum(['UNPAID', 'PAID', 'REFUNDED']).default('UNPAID'),
   special_requests: z.string().nullable().optional(),
   addons: z.array(z.object({
     service_name: z.string(),
     price: z.number(),
   })).default([]),
+  payments: z.array(paymentRecordSchema).default([]),
   created_at: z.string(),
 });
 
@@ -141,4 +169,22 @@ export const bookingListResponseSchema = z.object({
   page_size: z.number(),
   total: z.number(),
   has_next: z.boolean(),
+});
+
+export const paymentIntentSchema = z.object({
+  id: z.string(),
+  booking_id: z.string(),
+  booking_code: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  payment_method: z.string(),
+  status: z.string(),
+  transaction_ref: z.string(),
+  bank_code: z.string(),
+  bank_name: z.string(),
+  account_number: z.string(),
+  account_holder: z.string(),
+  transfer_content: z.string(),
+  qr_code_url: z.string(),
+  created_at: z.string(),
 });

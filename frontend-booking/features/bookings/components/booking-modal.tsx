@@ -5,6 +5,8 @@ import { X, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useCreateBookingMutation } from '../hooks/use-bookings';
 import { useServicesQuery } from '@/features/catalog/hooks/use-catalog';
 import { Property } from '@/features/catalog/components/property-card';
+import { luxuryAlert } from '@/lib/alert/luxury-alert';
+import { LuxuryAlertBanner } from '@/components/shared/luxury-alert-banner';
 
 export function BookingModal({
   property,
@@ -22,6 +24,7 @@ export function BookingModal({
   const [selectedRoomId, setSelectedRoomId] = useState(roomTypes[0]?.id || '');
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [specialRequests] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<{
     booking_code: string;
     total_price: number;
@@ -54,13 +57,56 @@ export function BookingModal({
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const roomTypeId = selectedRoomId || roomTypes[0]?.id;
-      if (!roomTypeId) {
-        alert('Vui lòng chọn hạng phòng trước khi đặt chỗ');
-        return;
-      }
+    setErrorMessage(null);
 
+    const roomTypeId = selectedRoomId || roomTypes[0]?.id;
+    if (!roomTypeId) {
+      const msg = 'Quý khách vui lòng chọn một hạng phòng hoặc biệt thự phù hợp trước khi tiếp tục.';
+      setErrorMessage(msg);
+      luxuryAlert.warning({
+        title: 'Chưa Chọn Hạng Phòng',
+        message: msg,
+        confirmText: 'Chọn Hạng Phòng',
+      });
+      return;
+    }
+
+    const dCheckIn = new Date(checkIn);
+    const dCheckOut = new Date(checkOut);
+    if (isNaN(dCheckIn.getTime()) || isNaN(dCheckOut.getTime()) || dCheckOut <= dCheckIn) {
+      const msg = 'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 đêm.';
+      setErrorMessage(msg);
+      luxuryAlert.warning({
+        title: 'Lịch Trình Chưa Hợp Lệ',
+        message: msg,
+        confirmText: 'Điều Chỉnh Lại Ngày',
+      });
+      return;
+    }
+
+    if (guestName.trim().length < 2) {
+      const msg = 'Quý khách vui lòng nhập đầy đủ họ & tên để làm thủ tục đón tiếp.';
+      setErrorMessage(msg);
+      luxuryAlert.warning({
+        title: 'Thiếu Họ & Tên Quý Khách',
+        message: msg,
+        confirmText: 'Nhập Họ Tên',
+      });
+      return;
+    }
+
+    if (guestPhone.trim().length < 8) {
+      const msg = 'Số điện thoại liên hệ phải có tối thiểu 8 chữ số để Quản gia liên hệ.';
+      setErrorMessage(msg);
+      luxuryAlert.warning({
+        title: 'Số Điện Thoại Chưa Hợp Lệ',
+        message: msg,
+        confirmText: 'Kiểm Tra Lại',
+      });
+      return;
+    }
+
+    try {
       // Submit WITHOUT client total_price: server derives authoritative pricing
       const res = await createMutation.mutateAsync({
         property_id: property.id,
@@ -79,9 +125,17 @@ export function BookingModal({
         total_price: res.total_price,
         status: res.status,
       });
+
+      luxuryAlert.toast('Đơn đặt phòng đã được tiếp nhận thành công!', 'success');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Đặt phòng thất bại, vui lòng kiểm tra lại';
-      alert(msg);
+      const formatted = luxuryAlert.formatApiError(err);
+      setErrorMessage(formatted.message);
+      luxuryAlert.error({
+        title: formatted.title,
+        message: formatted.message,
+        details: formatted.details,
+        confirmText: 'Đã Hiểu & Kiểm Tra Lại',
+      });
     }
   };
 
@@ -158,6 +212,17 @@ export function BookingModal({
               </h2>
               <p className="text-sm text-outline mt-1">{property.address}, {property.city}</p>
             </div>
+
+            {errorMessage && (
+              <LuxuryAlertBanner
+                variant="error"
+                title="Thông Tin Cần Lưu Ý"
+                description={errorMessage}
+                onClose={() => setErrorMessage(null)}
+                actionText="Đóng"
+                onAction={() => setErrorMessage(null)}
+              />
+            )}
 
             {/* Room Selector */}
             {roomTypes.length > 0 && (

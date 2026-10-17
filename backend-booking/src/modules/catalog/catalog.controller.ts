@@ -13,7 +13,13 @@ import { Public } from '../../common/auth/public.decorator';
 import { JwtAuthenticationGuard } from '../../common/auth/jwt-authentication.guard';
 import { RequireRole } from '../../common/auth/require-role.decorator';
 import { PermissionGuard } from '../../common/auth/permission.guard';
-import type { CreatePropertyDto, CreateServiceDto } from './dto/catalog.dto';
+import { CurrentUser } from '../../common/auth/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
+import type {
+  CreatePropertyDto,
+  CreateServiceDto,
+  UpdateAllotmentDto,
+} from './dto/catalog.dto';
 
 @Controller('api/v1')
 export class CatalogController {
@@ -24,12 +30,23 @@ export class CatalogController {
   async listProperties(
     @Query('city') city?: string,
     @Query('keyword') keyword?: string,
+    @Query('min_price') minPrice?: string,
+    @Query('max_price') maxPrice?: string,
+    @Query('star_rating') starRating?: string,
+    @Query('guests') guests?: string,
+    @Query('sort_by')
+    sortBy?: 'price_asc' | 'price_desc' | 'rating_desc' | 'newest',
     @Query('page') page?: string,
     @Query('page_size') pageSize?: string,
   ) {
     const data = await this.catalogService.listProperties({
       city,
       keyword,
+      min_price: minPrice ? parseInt(minPrice, 10) : undefined,
+      max_price: maxPrice ? parseInt(maxPrice, 10) : undefined,
+      star_rating: starRating ? parseFloat(starRating) : undefined,
+      guests: guests ? parseInt(guests, 10) : undefined,
+      sort_by: sortBy,
       page: page ? parseInt(page, 10) : 1,
       pageSize: pageSize ? parseInt(pageSize, 10) : 10,
     });
@@ -45,6 +62,33 @@ export class CatalogController {
 
   @UseGuards(JwtAuthenticationGuard, PermissionGuard)
   @RequireRole('ADMIN', 'SUPER_ADMIN', 'HOTEL_PARTNER')
+  @Get('properties/:id/allotments')
+  async getPropertyAllotments(
+    @Param('id') id: string,
+    @Query('month') month: string | undefined,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const data = await this.catalogService.getPropertyAllotments(
+      id,
+      month,
+      user,
+    );
+    return ok(data);
+  }
+
+  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
+  @RequireRole('ADMIN', 'SUPER_ADMIN', 'HOTEL_PARTNER')
+  @Post('allotments/update')
+  async updateAllotment(
+    @Body() body: UpdateAllotmentDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const data = await this.catalogService.updateAllotment(body, user);
+    return ok(data);
+  }
+
+  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
+  @RequireRole('ADMIN', 'SUPER_ADMIN')
   @Post('properties')
   async createProperty(@Body() body: CreatePropertyDto) {
     const data = await this.catalogService.createProperty(body);
@@ -59,7 +103,7 @@ export class CatalogController {
   }
 
   @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN', 'HOTEL_PARTNER')
+  @RequireRole('ADMIN', 'SUPER_ADMIN')
   @Post('services')
   async createService(@Body() body: CreateServiceDto) {
     const data = await this.catalogService.createService(body);

@@ -22,7 +22,9 @@ export class VietSageSyncController {
   async sync(@Body() body?: { sync_type?: string }) {
     const syncType = body?.sync_type || 'all';
     if (!ALLOWED_SYNC_TYPES.includes(syncType)) {
-      throw new BadRequestException(`sync_type '${syncType}' không được hỗ trợ`);
+      throw new BadRequestException(
+        `sync_type '${syncType}' không được hỗ trợ`,
+      );
     }
 
     const data = await this.syncService.syncFromVietSage(syncType);

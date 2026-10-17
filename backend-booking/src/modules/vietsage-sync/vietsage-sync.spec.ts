@@ -51,9 +51,9 @@ describe('VietSageSyncModule', () => {
     });
 
     it('pushBookingToVietSage rejects fake reservation ID emission with NotImplementedException', async () => {
-      await expect(service.pushBookingToVietSage('booking-id-123')).rejects.toThrow(
-        NotImplementedException,
-      );
+      await expect(
+        service.pushBookingToVietSage('booking-id-123'),
+      ).rejects.toThrow(NotImplementedException);
     });
   });
 });

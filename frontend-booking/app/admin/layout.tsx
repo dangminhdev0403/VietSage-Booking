@@ -1,6 +1,9 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import { canAccessPathByRole, resolveSafeRedirect } from '@/lib/auth/rbac';
+
+import { AdminShell } from '@/components/layouts/admin-shell';
 
 export const instant = false;
 
@@ -16,11 +19,10 @@ export default async function AdminLayout({
     redirect('/login?callbackUrl=/admin');
   }
 
-  // If logged in but role is not ADMIN/SUPER_ADMIN, redirect to home page
-  const role = (session.user as { role?: string }).role;
-  if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
-    redirect('/?error=forbidden');
+  const role = (session.user as { role?: string } | undefined)?.role;
+  if (!canAccessPathByRole(role, '/admin')) {
+    redirect(resolveSafeRedirect(role));
   }
 
-  return <>{children}</>;
+  return <AdminShell sessionUser={session.user}>{children}</AdminShell>;
 }

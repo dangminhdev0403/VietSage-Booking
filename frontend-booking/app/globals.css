@@ -34,7 +34,7 @@
   --color-outline-variant: #d1c5b8;
 
   --font-sans: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-playfair), 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
+  --font-serif: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   --font-display-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   --font-headline-lg: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   --font-headline-md: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
@@ -55,4 +55,113 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Aurum Haven Quiet Luxury SweetAlert2 Theme
+   ========================================================================== */
+.aurum-swal-container {
+  backdrop-filter: blur(8px) !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  z-index: 99999 !important;
+}
+
+.aurum-swal-popup {
+  background: #ffffff !important;
+  border-radius: 1.5rem !important;
+  border: 1px solid rgba(197, 168, 128, 0.35) !important;
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(197, 168, 128, 0.15) !important;
+  padding: 2.25rem 2.25rem 2rem !important;
+  max-width: 32rem !important;
+  width: 90% !important;
+}
+
+.aurum-swal-popup .swal2-icon {
+  border: none !important;
+  margin: 0 auto 0.75rem !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.aurum-swal-title {
+  font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
+  font-size: 1.45rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.015em !important;
+  padding: 0 !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.35 !important;
+}
+
+.aurum-swal-html {
+  font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+  color: #4d463c !important;
+  margin: 0.25rem 0 1.25rem 0 !important;
+  padding: 0 !important;
+}
+
+.aurum-swal-actions {
+  display: flex !important;
+  gap: 0.75rem !important;
+  justify-content: center !important;
+  margin-top: 1rem !important;
+  width: 100% !important;
+}
+
+.aurum-swal-btn-confirm {
+  background-color: #725b38 !important;
+  color: #ffffff !important;
+  padding: 0.8rem 1.85rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 6px 18px rgba(114, 91, 56, 0.25) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.aurum-swal-btn-confirm:hover {
+  background-color: #c5a880 !important;
+  color: #1a1c1a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(197, 168, 128, 0.35) !important;
+}
+
+.aurum-swal-btn-cancel {
+  background-color: transparent !important;
+  color: #4d463c !important;
+  padding: 0.8rem 1.85rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  border: 1px solid #d1c5b8 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.aurum-swal-btn-cancel:hover {
+  background-color: #f4f3f1 !important;
+  color: #0f172a !important;
+  border-color: #7f766a !important;
+}
+
+.aurum-swal-toast {
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 32px -8px rgba(0, 0, 0, 0.45) !important;
+  padding: 0.85rem 1.25rem !important;
+}
+
+.aurum-swal-toast-progress {
+  background-color: #c5a880 !important;
 }
