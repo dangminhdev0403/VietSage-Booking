@@ -10,10 +10,9 @@ import {
   Award,
   Crown,
   Compass,
-  Sparkle,
   CheckCircle2,
 } from 'lucide-react';
-import { usePropertiesQuery, useServicesQuery } from '@/features/catalog/hooks/use-catalog';
+import { usePropertiesQuery } from '@/features/catalog/hooks/use-catalog';
 import { Property, PropertyCard } from '@/features/catalog/components/property-card';
 import { BookingModal } from '@/features/bookings/components/booking-modal';
 import { TypingText } from '@/components/ui/typing-text';
@@ -28,8 +27,6 @@ export default function HomePage() {
     city: cityFilter || undefined,
     keyword: keyword || undefined,
   });
-
-  const { data: services } = useServicesQuery();
 
   const handleDestinationSelect = (city: string) => {
     setCityFilter(city);
@@ -66,7 +63,7 @@ export default function HomePage() {
               <span className="block font-sans text-white/95">
                 Khám Phá Bản Giao Hưởng
               </span>
-              <span className="block mt-2 sm:mt-3 text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-serif italic font-bold sm:font-extrabold tracking-normal text-primary-fixed drop-shadow-[0_4px_24px_rgba(254,222,178,0.45)] min-h-[1.3em]">
+              <span className="block mt-2 sm:mt-3 text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-sans italic font-bold sm:font-extrabold tracking-normal text-primary-fixed drop-shadow-[0_4px_24px_rgba(254,222,178,0.45)] min-h-[1.3em]">
                 <TypingText
                   words={[
                     'Nghỉ Dưỡng Thượng Lưu',
@@ -351,56 +348,6 @@ export default function HomePage() {
             ))}
           </div>
         )}
-      </section>
-
-      {/* 6. BESPOKE PRIVILEGES & SERVICES */}
-      <section id="services" className="w-full max-w-[1360px] mx-auto px-6 lg:px-10 pt-10">
-        <FadeIn delay={0.1}>
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-2 text-primary mb-2">
-              <Sparkles className="w-5 h-5" />
-              <span className="text-xs sm:text-sm uppercase tracking-wider font-bold">Đặc Quyền Thượng Hạng</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight max-w-3xl mx-auto">
-              <span className="whitespace-nowrap">Nghệ Thuật Phục Vụ</span> <span className="whitespace-nowrap">May Đo Riêng</span>
-            </h2>
-            <p className="text-sm sm:text-base text-on-surface-variant mt-3 leading-relaxed text-balance">
-              Mỗi giây phút tại VietSageBooking không đơn thuần là một kỳ nghỉ dưỡng, mà là bản giao hưởng trải nghiệm được thiết kế riêng theo từng sở thích của quý khách.
-            </p>
-          </div>
-        </FadeIn>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(services || []).map((srv, idx) => (
-            <FadeIn key={srv.id} delay={idx * 0.08} duration={0.5}>
-              <div
-                className="p-7 rounded-3xl bg-surface-container-lowest border border-outline-variant/30 hover:shadow-lg transition-all flex flex-col justify-between h-full"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center mb-4">
-                    <Sparkle className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-on-surface">{srv.name}</h3>
-                  <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">
-                    {srv.description || 'Đặc quyền nghỉ dưỡng tiêu chuẩn 5 sao được sắp xếp chu đáo.'}
-                  </p>
-                </div>
-
-                <div className="pt-4 mt-6 border-t border-outline-variant/20 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-outline block uppercase font-bold">Giá đặc quyền</span>
-                    <span className="text-base font-extrabold text-primary">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(srv.price)}
-                    </span>
-                  </div>
-                  <span className="text-xs text-tertiary font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-tertiary-container/20">
-                    {srv.category}
-                  </span>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
       </section>
 
       {/* Booking Modal */}

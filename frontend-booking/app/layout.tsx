@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Be_Vietnam_Pro, Playfair_Display } from 'next/font/google';
+import { Be_Vietnam_Pro } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/lib/query/query-provider';
 import { AuthSessionProvider } from '@/providers/auth-session-provider';
@@ -9,16 +9,9 @@ import { Compass, CalendarCheck } from 'lucide-react';
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-be-vietnam',
-  display: 'swap',
-});
-
-const playfair = Playfair_Display({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['400', '600', '700', '800', '900'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
   style: ['normal', 'italic'],
-  variable: '--font-playfair',
+  variable: '--font-be-vietnam',
   display: 'swap',
 });
 
@@ -33,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className={`h-full antialiased scroll-smooth ${beVietnamPro.variable} ${playfair.variable}`}>
+    <html lang="vi" className={`h-full antialiased scroll-smooth ${beVietnamPro.variable}`}>
       <body className="min-h-full flex flex-col bg-background text-on-surface font-sans selection:bg-primary-container selection:text-on-primary-container">
         <AuthSessionProvider>
           <QueryProvider>
@@ -75,12 +68,6 @@ export default function RootLayout({
                       className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
                     >
                       Bộ sưu tập Phòng
-                    </Link>
-                    <Link
-                      href="/#services"
-                      className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
-                    >
-                      Đặc quyền & Dịch vụ
                     </Link>
                   </nav>
 
