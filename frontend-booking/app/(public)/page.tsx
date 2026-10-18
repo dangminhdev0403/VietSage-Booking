@@ -136,7 +136,7 @@ export default function HomePage() {
               <div className="flex-1 px-4 sm:px-5 py-2 hover:bg-surface-container-low/60 rounded-xl lg:rounded-full transition-colors cursor-pointer group">
                 <div className="flex items-center gap-1.5 text-primary">
                   <Compass className="w-3.5 h-3.5 text-primary" />
-                  <label className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-extrabold cursor-pointer">
+                  <label className="text-xs sm:text-xs uppercase tracking-wider text-primary font-extrabold cursor-pointer">
                     Điểm Đến Tinh Hoa
                   </label>
                 </div>
@@ -156,7 +156,7 @@ export default function HomePage() {
               <div className="flex-1 px-4 sm:px-5 py-2 hover:bg-surface-container-low/60 rounded-xl lg:rounded-full transition-colors group">
                 <div className="flex items-center gap-1.5 text-primary">
                   <Search className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-extrabold">
+                  <span className="text-xs sm:text-xs uppercase tracking-wider text-primary font-extrabold">
                     Khách Sạn & Resort
                   </span>
                 </div>
@@ -176,7 +176,7 @@ export default function HomePage() {
               <div className="w-full lg:w-48 px-4 sm:px-5 py-2 hover:bg-surface-container-low/60 rounded-xl lg:rounded-full transition-colors shrink-0">
                 <div className="flex items-center gap-1.5 text-primary">
                   <Users className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-extrabold">
+                  <span className="text-xs sm:text-xs uppercase tracking-wider text-primary font-extrabold">
                     Khách & Phòng
                   </span>
                 </div>

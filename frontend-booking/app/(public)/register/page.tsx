@@ -84,7 +84,7 @@ export default function RegisterRedirectPage() {
           </Link>
         </div>
 
-        <p className="text-[11px] text-outline pt-2">
+        <p className="text-xs text-outline pt-2">
           Hệ thống sẽ tự động chuyển hướng đến trang Tra cứu đơn sau <span className="font-bold text-primary">{countdown}</span> giây...
         </p>
       </div>

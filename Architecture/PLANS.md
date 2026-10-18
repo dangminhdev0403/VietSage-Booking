@@ -6,7 +6,7 @@
 
 Nền tảng OTA đã có baseline scaffold và full-stack prototype. Các nhãn dưới đây không thay runtime verification hoặc production-readiness gates:
 - **Architecture & Contracts**: Monorepo NestJS + Next.js 16 App Router, authoritative OpenAPI v1 contract (`openapi.json`), đồng bộ status.
-- **Identity & Access**: Full-stack Passport.js (Local/JWT) + Auth.js v5 Credentials Provider, session state, role-based guard (`SUPER_ADMIN`, `ADMIN`, `HOTEL_PARTNER`, `TRAVELER`).
+- **Identity & Access**: Full-stack Passport.js (Local/JWT) + Auth.js v5 Credentials Provider, session state, granular Role & Permission capabilities (`ADMIN`, `HOTEL_PARTNER`, `TRAVELER`).
 - **Catalog & Booking Engine**: Schema/property projection và flow tạo booking (`OTA-xxxx`) hiện hữu; server pricing, snapshot đầy đủ, authorization và state-machine hardening còn trong roadmap.
 - **Frontend & Design System**: Next.js 16 + Tailwind CSS 4, Aurum Haven Design Tokens (Quiet Luxury), `@dangminhdev04032005/query-resource` 4-layer architecture.
 - **Service Boundary**: Boundary OTA vs PMS rõ ràng, adapter contract VietSageSyncModule.

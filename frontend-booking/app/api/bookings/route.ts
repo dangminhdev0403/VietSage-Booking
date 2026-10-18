@@ -22,8 +22,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { searchParams } = new URL(req.url);
-    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    const searchParams = req.nextUrl.searchParams;
+    const q = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (value !== undefined && value !== null && value !== '') {
+        q.set(key, value);
+      }
+    });
+    const queryString = q.toString() ? `?${q.toString()}` : '';
 
     const res = await backendFetch(`api/v1/bookings${queryString}`, {
       method: 'GET',

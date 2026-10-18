@@ -383,6 +383,49 @@
         "security": []
       }
     },
+    "/api/v1/bookings/summary": {
+      "get": {
+        "summary": "Get aggregate booking metrics and status summary",
+        "operationId": "getBookingSummary",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking aggregate metrics summary"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/bookings/{id}": {
       "get": {
         "summary": "Get booking details by ID or booking code",
@@ -701,6 +744,57 @@
         "security": []
       }
     },
+    "/api/v1/payments": {
+      "get": {
+        "summary": "List payment transactions with optional property and status filter",
+        "operationId": "listPayments",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of payment transactions"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/payments/create-intent": {
       "post": {
         "summary": "Create payment intent for the booking owner or verified guest contact",
@@ -852,9 +946,7 @@
       "accountRoleSchema": {
         "type": "string",
         "enum": [
-          "SUPER_ADMIN",
-          "ADMIN",
-          "HOTEL_PARTNER"
+          "ADMIN"
         ]
       }
     }

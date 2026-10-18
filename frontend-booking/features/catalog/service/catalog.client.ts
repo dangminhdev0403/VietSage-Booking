@@ -44,6 +44,28 @@ export async function getProperty(id: string) {
   return data.data;
 }
 
+export type CreatePropertyPayload = {
+  name: string;
+  city: string;
+  address: string;
+  description?: string;
+  star_rating?: number;
+  thumbnail_url?: string;
+};
+
+export async function createProperty(payload: CreatePropertyPayload) {
+  const res = await fetch('/api/admin/properties', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseApiResponse(res, successSchema(propertyItemSchema.passthrough()));
+  return data.data;
+}
+
 export const allotmentDaySchema = z.object({
   id: z.string().optional(),
   date: z.string(),

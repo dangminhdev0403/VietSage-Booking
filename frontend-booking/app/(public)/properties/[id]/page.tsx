@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
@@ -15,29 +15,20 @@ import {
   CheckCircle2,
   UserCheck,
 } from 'lucide-react';
-import { getProperty } from '@/features/catalog/service/catalog.client';
+import { usePropertyDetailQuery } from '@/features/catalog/hooks/use-catalog';
 import { Property } from '@/features/catalog/components/property-card';
 import { BookingModal } from '@/features/bookings/components/booking-modal';
 
 function PropertyDetailContent() {
   const routeParams = useParams();
   const id = typeof routeParams?.id === 'string' ? routeParams.id : '';
-  const [property, setProperty] = useState<Property | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  useEffect(() => {
-    getProperty(id)
-      .then((data) => {
-        setProperty(data as Property);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message || 'Không thể tải thông tin khách sạn');
-        setLoading(false);
-      });
-  }, [id]);
+  const {
+    data: property,
+    isLoading: loading,
+    error,
+  } = usePropertyDetailQuery(id, { enabled: Boolean(id) });
 
   if (loading) {
     return (
@@ -55,7 +46,9 @@ function PropertyDetailContent() {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="text-center space-y-4 max-w-md">
           <h2 className="text-2xl font-bold text-on-surface">Không tìm thấy khách sạn</h2>
-          <p className="text-base text-outline">{error || 'Cơ sở lưu trú không tồn tại hoặc đã ngừng hoạt động.'}</p>
+          <p className="text-base text-outline">
+            {error instanceof Error ? error.message : 'Cơ sở lưu trú không tồn tại hoặc đã ngừng hoạt động.'}
+          </p>
           <Link
             href="/"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-bold text-base shadow hover:bg-primary-container hover:text-on-primary-container transition-all"
@@ -152,7 +145,7 @@ function PropertyDetailContent() {
                 alt="Room detail"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
-              <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-surface-bright/85 text-[11px] font-semibold">
+              <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-surface-bright/85 text-xs font-semibold">
                 Không gian sang trọng
               </div>
             </div>
@@ -162,7 +155,7 @@ function PropertyDetailContent() {
                 alt="Amenities"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
-              <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-surface-bright/85 text-[11px] font-semibold">
+              <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-surface-bright/85 text-xs font-semibold">
                 Tiện ích biểu tượng
               </div>
             </div>

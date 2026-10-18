@@ -17,7 +17,7 @@ export const apiErrorSchema = z.object({
   request_id: z.string().optional(),
 });
 
-export const accountRoleSchema = z.enum(["SUPER_ADMIN", "ADMIN", "HOTEL_PARTNER"]);
+export const accountRoleSchema = z.enum(["ADMIN"]);
 
 export const accountSchema = z.object({
   id: z.string(),
@@ -75,4 +75,44 @@ export const bookingSchema = z.object({
   status: bookingStatusSchema,
   special_requests: z.string().nullable().optional(),
   created_at: z.string(),
+});
+
+export const bookingSummarySchema = z.object({
+  total_bookings: z.number(),
+  gross_booking_value: z.number(),
+  pending_count: z.number(),
+  confirmed_count: z.number(),
+  cancelled_count: z.number(),
+  upcoming_checkins_count: z.number(),
+});
+
+export const paymentItemSchema = z.object({
+  id: z.string(),
+  booking_id: z.string(),
+  booking_code: z.string().optional(),
+  property_id: z.string().optional(),
+  property_name: z.string().optional(),
+  guest_name: z.string().optional(),
+  payment_method: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  purpose: z.string().optional(),
+  status: z.string(),
+  provider_name: z.string().optional(),
+  provider_payment_id: z.string().nullable().optional(),
+  transaction_ref: z.string(),
+  qr_code_url: z.string().nullable().optional(),
+  expires_at: z.string().nullable().optional(),
+  refunded_amount: z.number().nullable().optional(),
+  paid_at: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+});
+
+export const paymentListResponseSchema = z.object({
+  items: z.array(paymentItemSchema),
+  total: z.number(),
+  page: z.number(),
+  page_size: z.number(),
+  has_next: z.boolean(),
 });

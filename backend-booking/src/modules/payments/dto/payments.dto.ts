@@ -27,8 +27,17 @@ export type ConfirmPaymentDto = z.infer<typeof confirmPaymentSchema>;
 export const createDepositCheckoutSchema = z.object({
   booking_code: z.string().min(1, 'Mã đặt phòng không được để trống'),
   lookup_token: z.string().optional(),
+  return_url: z.string().url().optional(),
 });
 
 export type CreateDepositCheckoutDto = z.infer<
   typeof createDepositCheckoutSchema
 >;
+
+export const verifyCheckoutSchema = z.object({
+  booking_code: z.string().min(1, 'Mã đặt phòng không được để trống'),
+  session_id: z.string().optional(),
+  lookup_token: z.string().optional(),
+});
+
+export type VerifyCheckoutDto = z.infer<typeof verifyCheckoutSchema>;

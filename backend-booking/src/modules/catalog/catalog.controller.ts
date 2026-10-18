@@ -1,18 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
 import { ok } from '../../common/http/api-response';
 import { Public } from '../../common/auth/public.decorator';
-import { JwtAuthenticationGuard } from '../../common/auth/jwt-authentication.guard';
-import { RequireRole } from '../../common/auth/require-role.decorator';
-import { PermissionGuard } from '../../common/auth/permission.guard';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import type {
@@ -60,8 +49,6 @@ export class CatalogController {
     return ok(data);
   }
 
-  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN', 'HOTEL_PARTNER')
   @Get('properties/:id/allotments')
   async getPropertyAllotments(
     @Param('id') id: string,
@@ -76,8 +63,6 @@ export class CatalogController {
     return ok(data);
   }
 
-  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN', 'HOTEL_PARTNER')
   @Post('allotments/update')
   async updateAllotment(
     @Body() body: UpdateAllotmentDto,
@@ -87,8 +72,6 @@ export class CatalogController {
     return ok(data);
   }
 
-  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN')
   @Post('properties')
   async createProperty(@Body() body: CreatePropertyDto) {
     const data = await this.catalogService.createProperty(body);
@@ -102,8 +85,6 @@ export class CatalogController {
     return ok(data);
   }
 
-  @UseGuards(JwtAuthenticationGuard, PermissionGuard)
-  @RequireRole('ADMIN', 'SUPER_ADMIN')
   @Post('services')
   async createService(@Body() body: CreateServiceDto) {
     const data = await this.catalogService.createService(body);

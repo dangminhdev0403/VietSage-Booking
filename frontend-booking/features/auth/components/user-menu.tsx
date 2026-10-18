@@ -75,10 +75,6 @@ export function UserMenu() {
     );
   }
 
-  const user = session.user as { name?: string | null; email?: string | null; role?: string };
-  const role = user.role || 'HOTEL_PARTNER';
-  const isAdminOrPartner = ['SUPER_ADMIN', 'ADMIN', 'HOTEL_PARTNER'].includes(role);
-
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -90,7 +86,7 @@ export function UserMenu() {
         </div>
         <div className="text-left hidden sm:block">
           <div className="text-xs font-bold text-on-surface line-clamp-1 max-w-[120px]">
-            {session.user.name || 'Quản Trị / Đối Tác'}
+            {session.user.name || 'Quản Trị Viên'}
           </div>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-outline transition-transform duration-200" />
@@ -101,14 +97,14 @@ export function UserMenu() {
         <div className="absolute right-0 mt-2 w-64 rounded-3xl bg-surface-container-lowest border border-outline-variant/30 shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="p-3 border-b border-outline-variant/20 mb-2">
             <div className="font-bold text-base text-on-surface">
-              {session.user.name || 'Tài khoản VietSage'}
+              {session.user.name || 'Quản Trị Viên VietSage'}
             </div>
             <div className="text-xs text-outline truncate mt-0.5">
-              {session.user.email || 'Đã xác thực phiên'}
+              {session.user.email || 'Phiên làm việc nội bộ'}
             </div>
-            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary text-xs font-extrabold uppercase tracking-wider">
               <CheckCircle2 className="w-3 h-3" />
-              <span>{role}</span>
+              <span>Quản Trị Viên</span>
             </div>
           </div>
 
@@ -122,27 +118,25 @@ export function UserMenu() {
               <span>Tra cứu đơn đặt phòng</span>
             </Link>
 
-            {isAdminOrPartner && (
-              <>
-                <Link
-                  href="/admin"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                >
-                  <Shield className="w-4 h-4 text-primary" />
-                  <span>Bảng Quản Trị Đối Tác</span>
-                </Link>
+            <Link
+              href="/admin"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+            >
+              <Shield className="w-4 h-4 text-primary" />
+              <span>Bảng Quản Trị</span>
+            </Link>
 
-                <Link
-                  href="/admin/allotments"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Lịch Tồn Kho & Giá Phòng</span>
-                </Link>
-              </>
-            )}
+            <Link
+              href="/admin/allotments"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+            >
+              <Shield className="w-4 h-4 text-outline" />
+              <span>Lịch Tồn Kho & Giá Phòng</span>
+            </Link>
+
+
 
             <div className="h-px bg-outline-variant/20 my-1" />
 

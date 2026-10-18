@@ -6,17 +6,19 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard,
-  CalendarDays,
+  Calendar,
+  CreditCard,
   Building2,
+  CalendarDays,
   Headphones,
   Search,
-  Calendar,
   Bell,
   ChevronDown,
   LogOut,
   Menu,
   X,
   ShieldCheck,
+  Hotel,
 } from 'lucide-react';
 import { luxuryAlert } from '@/lib/alert/luxury-alert';
 
@@ -26,6 +28,8 @@ interface AdminShellProps {
     name?: string | null;
     email?: string | null;
     role?: string;
+    managedPropertyId?: string | null;
+    accessibleProperties?: Array<{ id: string; name: string }>;
   };
 }
 
@@ -49,36 +53,61 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
 
   const navItems = [
     {
-      label: 'Tổng quan & Đặt phòng',
-      sublabel: 'Dashboard & Bookings',
+      label: 'Tổng quan',
+      sublabel: 'Dashboard',
       href: '/admin',
       icon: LayoutDashboard,
       active: pathname === '/admin',
     },
     {
-      label: 'Lịch Giá & Tồn Kho',
-      sublabel: 'Allotments & Rates',
-      href: '/admin/allotments',
-      icon: CalendarDays,
-      active: pathname === '/admin/allotments',
+      label: 'Đơn đặt phòng',
+      sublabel: 'Bookings',
+      href: '/admin/bookings',
+      icon: Calendar,
+      active: pathname.startsWith('/admin/bookings'),
     },
     {
-      label: 'Danh Sách Khách Sạn & Resort',
+      label: 'Lịch sử thanh toán',
+      sublabel: 'Payments',
+      href: '/admin/payments',
+      icon: CreditCard,
+      active: pathname.startsWith('/admin/payments'),
+    },
+    {
+      label: 'Cơ sở lưu trú & Phòng',
       sublabel: 'Properties & Catalog',
       href: '/admin/properties',
       icon: Building2,
-      active: pathname === '/admin/properties',
+      active: pathname.startsWith('/admin/properties'),
+    },
+    {
+      label: 'Lịch giá & Tồn kho',
+      sublabel: 'Allotments & Rates',
+      href: '/admin/allotments',
+      icon: CalendarDays,
+      active: pathname.startsWith('/admin/allotments'),
     },
   ];
 
   const role = sessionUser?.role || 'ADMIN';
   const displayName = sessionUser?.name || 'Tổng Quản Lý';
   const displayEmail = sessionUser?.email || 'admin@vietsage.com';
+  const managedPropertyId = sessionUser?.managedPropertyId;
+
+  const managedPropertyName = managedPropertyId
+    ? sessionUser?.accessibleProperties?.find((p) => p.id === managedPropertyId)?.name || 'Cơ sở lưu trú'
+    : null;
+
+  const scopeBadgeLabel = managedPropertyId
+    ? managedPropertyName
+      ? `Quản lý: ${managedPropertyName}`
+      : 'Quản lý cơ sở lưu trú'
+    : 'Quản trị toàn sàn OTA';
 
   const handleNotificationClick = () => {
     luxuryAlert.info({
-      title: 'Thông Báo Điều Hành OTA',
-      message: 'Hệ thống vận hành trực tuyến đang hoạt động ổn định. Vui lòng kiểm tra danh sách đơn đặt phòng mới và đối soát thanh toán chuyển khoản kịp thời.',
+      title: 'Trạng Thái Hệ Thống',
+      message: 'Hệ thống vận hành OTA kết nối trực tiếp với máy chủ. Tất cả giao dịch và dịch vụ đang hoạt động ổn định.',
     });
   };
 
@@ -94,7 +123,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                 VB
               </div>
               <div>
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-primary block leading-none">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-primary block leading-none">
                   VIETSAGE BOOKING
                 </span>
                 <span className="text-base font-bold text-on-surface tracking-tight block mt-0.5">
@@ -102,18 +131,24 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                 </span>
               </div>
             </div>
-            <p className="text-[11px] text-outline mt-1 font-medium leading-tight">
+            <p className="text-xs text-outline mt-1 font-medium leading-tight">
               Hệ thống Quản trị &amp; Điều hành OTA
             </p>
           </div>
 
-          {/* Live Distribution Status Badge */}
+          {/* Scope Badge */}
           <div className="px-3.5 py-2.5 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-between shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs text-on-surface font-semibold">Hệ thống phân phối LIVE</span>
+            <div className="flex items-center gap-2 min-w-0">
+              {managedPropertyId ? (
+                <Hotel className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+              )}
+              <span className="text-xs text-on-surface font-semibold truncate" title={scopeBadgeLabel}>
+                {scopeBadgeLabel}
+              </span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-container/30 text-on-primary-container font-extrabold uppercase">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary-container/30 text-on-primary-container font-extrabold uppercase shrink-0">
               v1.0
             </span>
           </div>
@@ -135,7 +170,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                   <Icon className={`w-5 h-5 shrink-0 ${item.active ? 'text-on-primary-container' : 'text-primary'}`} />
                   <div className="flex flex-col">
                     <span className="text-xs font-bold leading-tight">{item.label}</span>
-                    <span className={`text-[10px] leading-tight mt-0.5 ${item.active ? 'text-on-primary-container/80' : 'text-outline'}`}>
+                    <span className={`text-xs leading-tight mt-0.5 ${item.active ? 'text-on-primary-container/80' : 'text-outline'}`}>
                       {item.sublabel}
                     </span>
                   </div>
@@ -156,7 +191,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
 
           <div className="p-3.5 bg-surface-container rounded-2xl border border-outline-variant/30 flex items-center justify-between shadow-2xs">
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-outline tracking-wider">Hỗ trợ vận hành</span>
+              <span className="text-xs uppercase font-bold text-outline tracking-wider">Hỗ trợ vận hành</span>
               <span className="text-xs font-bold text-on-surface mt-0.5">Hotline: 1900 6868</span>
             </div>
             <div className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center">
@@ -188,6 +223,16 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                 >
                   <X className="w-5 h-5" />
                 </button>
+              </div>
+
+              {/* Scope Badge in Mobile */}
+              <div className="px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 flex items-center gap-2">
+                {managedPropertyId ? (
+                  <Hotel className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                )}
+                <span className="text-xs text-on-surface font-semibold truncate">{scopeBadgeLabel}</span>
               </div>
 
               <nav className="flex flex-col gap-1.5">
@@ -254,10 +299,14 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
 
         {/* Right Section: System Indicator, Notifications, User Profile */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* OTA Status Indicator */}
-          <div className="hidden sm:flex items-center gap-2 bg-surface-container-low px-3.5 py-1.5 rounded-xl border border-outline-variant/30 text-on-surface">
-            <Building2 className="w-4 h-4 text-primary shrink-0" />
-            <span className="text-xs font-bold text-on-surface">Kênh Phân Phối OTA Trực Tuyến</span>
+          {/* Scope Indicator Badge */}
+          <div className="hidden sm:flex items-center gap-2 bg-surface-container-low px-3.5 py-1.5 rounded-xl border border-outline-variant/30 text-on-surface max-w-xs truncate">
+            {managedPropertyId ? (
+              <Hotel className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <Building2 className="w-4 h-4 text-primary shrink-0" />
+            )}
+            <span className="text-xs font-bold text-on-surface truncate">{scopeBadgeLabel}</span>
           </div>
 
           {/* Notifications Button */}
@@ -268,7 +317,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
             title="Xem thông báo điều hành"
           >
             <Bell className="w-4.5 h-4.5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500" />
           </button>
 
           {/* User Profile Pill */}
@@ -284,7 +333,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                 <span className="text-xs font-bold text-on-surface block leading-tight line-clamp-1 max-w-[110px]">
                   {displayName}
                 </span>
-                <span className="text-[10px] text-outline font-medium block leading-tight">
+                <span className="text-xs text-outline font-medium block leading-tight">
                   {role}
                 </span>
               </div>
@@ -297,9 +346,9 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                 <div className="p-3 border-b border-outline-variant/20 mb-2">
                   <div className="font-bold text-base text-on-surface">{displayName}</div>
                   <div className="text-xs text-outline truncate mt-0.5">{displayEmail}</div>
-                  <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary text-xs font-extrabold uppercase tracking-wider">
                     <ShieldCheck className="w-3 h-3" />
-                    <span>{role} Scope</span>
+                    <span>{scopeBadgeLabel}</span>
                   </div>
                 </div>
 
@@ -310,15 +359,23 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <LayoutDashboard className="w-4 h-4 text-primary" />
-                    <span>Bảng Tổng Quan</span>
+                    <span>Tổng quan</span>
                   </Link>
                   <Link
-                    href="/admin/allotments"
+                    href="/admin/bookings"
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
-                    <CalendarDays className="w-4 h-4 text-emerald-600" />
-                    <span>Lịch Tồn Kho &amp; Giá Phòng</span>
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <span>Đơn đặt phòng</span>
+                  </Link>
+                  <Link
+                    href="/admin/payments"
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4 text-primary" />
+                    <span>Lịch sử thanh toán</span>
                   </Link>
                   <Link
                     href="/admin/properties"
@@ -326,7 +383,15 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <Building2 className="w-4 h-4 text-primary" />
-                    <span>Danh Sách Khách Sạn &amp; Resort</span>
+                    <span>Cơ sở lưu trú &amp; Phòng</span>
+                  </Link>
+                  <Link
+                    href="/admin/allotments"
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                  >
+                    <CalendarDays className="w-4 h-4 text-emerald-600" />
+                    <span>Lịch giá &amp; Tồn kho</span>
                   </Link>
 
                   <div className="h-px bg-outline-variant/20 my-1" />
@@ -360,7 +425,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
             <span className="text-outline-variant">•</span>
             <span>Hệ thống điều hành OTA v1.0</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex items-center gap-4 text-xs">
             <span>Múi giờ chuẩn: Asia/Ho_Chi_Minh (UTC+7)</span>
             <span className="text-outline-variant">•</span>
             <Link href="/" className="text-primary hover:underline font-semibold">

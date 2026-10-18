@@ -110,7 +110,7 @@ function PublicHeaderContent() {
 
   const getNavLinkClass = (section: 'home' | 'destinations' | 'catalog-stream') => {
     const isActive = pathname === '/' && activeSection === section;
-    return `px-4 py-2 text-base rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+    return `px-3 lg:px-4 py-2 text-sm lg:text-base rounded-xl transition-all whitespace-nowrap cursor-pointer ${
       isActive
         ? 'font-bold bg-primary-container/25 text-on-primary-container shadow-xs'
         : 'font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
@@ -119,8 +119,8 @@ function PublicHeaderContent() {
 
   return (
     <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-[0_2px_16px_rgba(197,168,128,0.08)]">
-      <div className="w-full max-w-[1360px] mx-auto px-6 lg:px-10">
-        <div className="h-20 flex items-center justify-between gap-6">
+      <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10">
+        <div className="h-20 flex items-center justify-between gap-3 lg:gap-6">
           {/* Brand Logo: VietSageBooking */}
           <Link
             href="/"
@@ -141,7 +141,7 @@ function PublicHeaderContent() {
           </Link>
 
           {/* Public Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
+          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
             <Link
               href="/"
               onClick={(e) => handleNavClick(e, 'home')}
@@ -163,16 +163,6 @@ function PublicHeaderContent() {
             >
               Bộ sưu tập Phòng
             </Link>
-            <Link
-              href="/booking/lookup"
-              className={`px-4 py-2 text-base rounded-xl transition-all whitespace-nowrap cursor-pointer ${
-                pathname === '/booking/lookup'
-                  ? 'font-bold bg-primary-container/25 text-on-primary-container shadow-xs'
-                  : 'font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-              }`}
-            >
-              Tra cứu đơn
-            </Link>
           </nav>
 
           {/* Right Public Actions (User Menu + Primary CTA) */}
@@ -181,7 +171,7 @@ function PublicHeaderContent() {
             <Link
               href="/#destinations"
               onClick={(e) => handleNavClick(e, 'destinations')}
-              className="hidden sm:inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-base font-extrabold shadow-sm whitespace-nowrap cursor-pointer active:scale-95"
+              className="hidden md:inline-flex items-center gap-1.5 lg:gap-2 h-10 lg:h-11 px-4 lg:px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm lg:text-base font-extrabold shadow-sm whitespace-nowrap cursor-pointer active:scale-95"
             >
               <CalendarCheck className="w-4 h-4" />
               <span>Đặt Kỳ Nghỉ Ngay</span>
@@ -196,8 +186,8 @@ function PublicHeaderContent() {
 function PublicHeaderFallback() {
   return (
     <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-[0_2px_16px_rgba(197,168,128,0.08)]">
-      <div className="w-full max-w-[1360px] mx-auto px-6 lg:px-10">
-        <div className="h-20 flex items-center justify-between gap-6">
+      <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10">
+        <div className="h-20 flex items-center justify-between gap-3 lg:gap-6">
           <Link href="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
               <Compass className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200" />
@@ -211,37 +201,31 @@ function PublicHeaderFallback() {
               </span>
             </div>
           </Link>
-          <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
+          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
             <Link
               href="/"
-              className="px-4 py-2 text-base font-bold rounded-xl bg-primary-container/25 text-on-primary-container whitespace-nowrap"
+              className="px-3 lg:px-4 py-2 text-sm lg:text-base font-bold rounded-xl bg-primary-container/25 text-on-primary-container whitespace-nowrap"
             >
               Trang chủ
             </Link>
             <Link
               href="/#destinations"
-              className="px-4 py-2 text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
+              className="px-3 lg:px-4 py-2 text-sm lg:text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
             >
               Điểm đến Tinh hoa
             </Link>
             <Link
               href="/#catalog-stream"
-              className="px-4 py-2 text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
+              className="px-3 lg:px-4 py-2 text-sm lg:text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
             >
               Bộ sưu tập Phòng
-            </Link>
-            <Link
-              href="/booking/lookup"
-              className="px-4 py-2 text-base font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all rounded-xl whitespace-nowrap"
-            >
-              Tra cứu đơn
             </Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <UserMenu />
             <Link
               href="/#destinations"
-              className="hidden sm:inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-on-primary text-base font-extrabold shadow-sm whitespace-nowrap"
+              className="hidden md:inline-flex items-center gap-1.5 lg:gap-2 h-10 lg:h-11 px-4 lg:px-6 rounded-full bg-primary text-on-primary text-sm lg:text-base font-extrabold shadow-sm whitespace-nowrap"
             >
               <CalendarCheck className="w-4 h-4" />
               <span>Đặt Kỳ Nghỉ Ngay</span>

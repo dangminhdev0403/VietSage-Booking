@@ -9,6 +9,7 @@ import {
 export interface CreateCheckoutSessionParams {
   paymentId: string;
   bookingCode: string;
+  lookupToken?: string;
   amount: number;
   currency?: string;
   checkoutAttemptId?: string;
@@ -101,13 +102,16 @@ export class StripeLocalMateClient {
     body.append('metadata[bookingCode]', params.bookingCode);
     body.append('metadata[paymentId]', params.paymentId);
     body.append('expires_at', String(expiresAt));
+    const lookupTokenParam = params.lookupToken
+      ? `&token=${encodeURIComponent(params.lookupToken)}`
+      : '';
     body.append(
       'success_url',
-      `${returnBaseUrl}/booking/success?booking_code=${params.bookingCode}`,
+      `${returnBaseUrl}/booking/success?booking_code=${encodeURIComponent(params.bookingCode)}${lookupTokenParam}&session_id={CHECKOUT_SESSION_ID}`,
     );
     body.append(
       'cancel_url',
-      `${returnBaseUrl}/booking/cancel?booking_code=${params.bookingCode}`,
+      `${returnBaseUrl}/booking/cancel?booking_code=${encodeURIComponent(params.bookingCode)}`,
     );
 
     const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {

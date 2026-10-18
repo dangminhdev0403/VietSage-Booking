@@ -1,7 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { resolveSafeRedirect, sanitizeInternalCallbackUrl } from '@/lib/auth/rbac';
-
+import {
+  getSafePublicOrigin,
+  resolveSafeRedirect,
+  sanitizeInternalCallbackUrl,
+} from '@/lib/auth/rbac';
 
 /**
  * GET /api/auth/post-login?callbackUrl=...
@@ -11,7 +14,8 @@ import { resolveSafeRedirect, sanitizeInternalCallbackUrl } from '@/lib/auth/rba
  * re-evaluates destination access against the authenticated user's role,
  * and issues an HTTP 303 See Other redirect.
  *
- * This completely eliminates client-side session polling race conditions.
+ * Uses getSafePublicOrigin(request) to prevent invalid "https://localhost:<dev-port>"
+ * redirects behind reverse proxies like Portless.
  */
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -19,7 +23,10 @@ export async function GET(request: NextRequest) {
   const callbackUrl = rawCallbackUrl ? sanitizeInternalCallbackUrl(rawCallbackUrl) : null;
 
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const safePath = resolveSafeRedirect(role, callbackUrl);
+  const permissions = (session?.user as { permissions?: string[] } | undefined)?.permissions;
+  const safePath = resolveSafeRedirect(role, callbackUrl, permissions);
+  const origin = getSafePublicOrigin(request);
 
-  return NextResponse.redirect(new URL(safePath, request.url), 303);
+  return NextResponse.redirect(new URL(safePath, origin), 303);
 }
+

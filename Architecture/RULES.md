@@ -69,7 +69,11 @@
 - Server state: `Feature API Client → Resource (@dangminhdev04032005/query-resource) → Feature Hook → Component`.
 - Không raw `fetch`/`useQuery`/`useMutation` trong presentation component hoặc feature hook.
 - Shared/persistent client state dùng Zustand safe storage; không gọi `localStorage`/`sessionStorage` trực tiếp trong component.
-- Route `app/**/page.tsx` là composition shell mỏng; UI copy sạch, hospitality-grade.
+- Route `app/**/page.tsx` là composition shell mỏng.
+- Tuân thủ nghiêm ngặt chuẩn Typography & UI Pruning tại `FRONTEND_GUIDE.md`:
+  - Sàn font tối thiểu: Cấm font size < 12px (`text-xs`). Tuyệt đối cấm micro-font tuỳ tiện (`text-[10px]`, `text-[11px]`).
+  - Cấm văn bản sáo rỗng, hoa mỹ, hoặc mô tả một dòng thừa thãi dưới tiêu đề rõ nghĩa.
+  - Cấm lạm dụng card lồng card (nested cards), banner trang trí chiếm diện tích không có giá trị thông tin, và các nút thao tác trùng lặp.
 
 ## 9. Contract
 
@@ -88,6 +92,23 @@
 | Auth/PII | Positive/negative authorization và scope tests. |
 | Booking/payment | Date, money, snapshot, state transition, idempotency tests. |
 | VietSage integration | Contract/mapper tests; duplicate, timeout-after-write, compensation, reconciliation, webhook verification. |
-| Frontend | Feature client tests, lint, TypeScript build. |
+| Frontend | Feature client tests, lint, TypeScript build, UI design gate (`node scripts/verify-ui-rules.cjs`). |
 
+- **Zero-Waste Validation Protocol (Quy Tắc Miễn Trừ Lệnh Thừa & Tối Ưu Tốc Độ)**:
+  - Khi chỉnh sửa UI, CSS, Tailwind classes, spacing, layout JSX, copywriting, hoặc thêm component hiển thị:
+    - **CẤM CHẠY**: Test suites (`test`, `jest`, `vitest`, `playwright`), full-repo lint (`eslint .`, `pnpm lint`), full Next build (`next build`).
+    - **Chỉ chạy**: `node scripts/verify-ui-rules.cjs`. Chỉ chạy thêm scoped `tsc --noEmit` nếu có imports/props/types mới.
+  - **Lệnh thừa khác cấm chạy tự tiện**: Cấm chạy `verify-contract` khi không đổi contract; cấm chạy Prisma/DB commands cho frontend; cấm chạy `graphify update` cho các sửa đổi UI/CSS/copy nhỏ; cấm format diện rộng (`prettier --write .`); cấm chạy Docker rebuild; cấm chạy test chéo repository không liên quan.
+
+### Ma trận kiểm thử tối thiểu (Zero-Waste Matrix)
+
+| Phạm vi công việc (Scope) | Lệnh CẦN CHẠY duy nhất | Lệnh TUYỆT ĐỐI CẤM CHẠY (Thừa thãi) |
+| :--- | :--- | :--- |
+| **Chỉnh UI, CSS, Component, Copy** | `node scripts/verify-ui-rules.cjs`<br>(+ scoped `tsc --noEmit` nếu có import/type mới) | CẤM: `test`, `vitest`, `jest`, `playwright`, `eslint .`, `next lint`, `next build`, `verify-contract`, `prisma`, `graphify update`. |
+| **Sửa DTO / Backend Service logic** | Scoped unit test cho service đó (`jest path/to/service.spec.ts`) + scoped `tsc` | CẤM: test toàn repo, E2E browser tests, next build, frontend lint. |
+| **Sửa API Contract / Endpoints** | `node shared/api-contract/scripts/verify-contract.cjs` | CẤM: full frontend test, UI visual checks, DB seed. |
+| **Sửa Database Schema / Migration** | `npx prisma validate` | CẤM: `db:reset`, seed production, frontend test suite. |
+| **Sửa Docs / Markdown / Quy tắc** | Đọc lại Git diff | CẤM: Mọi lệnh test, lint, build, tsc. |
+
+- **Chế độ rà soát (Audit Mode)**: Bắt buộc Silent Execution (thực thi ngầm, không spam tiến trình). Khi rà soát UI, đối chiếu nghiêm ngặt tiêu chuẩn Typography Floor >= 12px, Zero-Fluff Copy, Ruthless Pruning, và kiểm tra bằng `node scripts/verify-ui-rules.cjs`.
 Migration/apply, dependency, provider write, deploy/cutover và commit/push là protected steps cần phê duyệt riêng.

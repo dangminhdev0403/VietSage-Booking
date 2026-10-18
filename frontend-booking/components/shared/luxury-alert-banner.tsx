@@ -46,7 +46,7 @@ export function LuxuryAlertBanner({
                 {title}
               </span>
               {badgeText && (
-                <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-[#c5a880] text-[#0f172a]">
+                <span className="px-2 py-0.5 text-xs font-bold tracking-wider uppercase rounded-full bg-[#c5a880] text-[#0f172a]">
                   {badgeText}
                 </span>
               )}
@@ -106,7 +106,7 @@ export function LuxuryAlertBanner({
                 {title}
               </h4>
               {badgeText && (
-                <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-emerald-200 text-emerald-900">
+                <span className="px-2 py-0.5 text-xs font-bold tracking-wider uppercase rounded-full bg-emerald-200 text-emerald-900">
                   {badgeText}
                 </span>
               )}
@@ -166,7 +166,7 @@ export function LuxuryAlertBanner({
                 {title}
               </h4>
               {badgeText && (
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-200 text-amber-900">
+                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-200 text-amber-900">
                   {badgeText}
                 </span>
               )}
@@ -219,7 +219,7 @@ export function LuxuryAlertBanner({
                 {title}
               </h4>
               {badgeText && (
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-200 text-rose-900">
+                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-rose-200 text-rose-900">
                   {badgeText}
                 </span>
               )}
@@ -272,7 +272,7 @@ export function LuxuryAlertBanner({
               {title}
             </h4>
             {badgeText && (
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-surface-container text-on-surface-variant">
+              <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-surface-container text-on-surface-variant">
                 {badgeText}
               </span>
             )}

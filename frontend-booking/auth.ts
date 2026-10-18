@@ -1,12 +1,16 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import { getPermissionsForRole } from '@/lib/auth/rbac';
 
 interface AuthUserPayload {
   id?: string;
   role?: string;
+  permissions?: string[];
   accessToken?: string;
   refreshToken?: string;
   accessTokenExpires?: number;
+  managedPropertyId?: string | null;
+  accessibleProperties?: Array<{ id: string; name: string }>;
   error?: string;
 }
 
@@ -93,6 +97,19 @@ async function refreshAccessToken(token: Record<string, unknown>): Promise<Recor
         refreshToken: refresh_token ?? rawRefreshToken,
         accessTokenExpires: Date.now() + (expires_in ?? 3600) * 1000,
         role: account?.role ?? token.role,
+        permissions:
+          account?.permissions ??
+          token.permissions ??
+          getPermissionsForRole((account?.role ?? token.role) as string),
+        managedPropertyId:
+          account?.managed_property_id ??
+          account?.managedPropertyId ??
+          token.managedPropertyId ??
+          null,
+        accessibleProperties:
+          account?.accessible_properties ??
+          token.accessibleProperties ??
+          [],
         error: undefined,
       };
 
@@ -161,14 +178,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           const { account, access_token, refresh_token, expires_in } = envelope.data;
 
+          const permissions =
+            account.permissions && account.permissions.length > 0
+              ? account.permissions
+              : getPermissionsForRole(account.role);
+
           return {
             id: account.id,
             name: account.display_name,
             email: account.email,
             role: account.role,
+            permissions,
             accessToken: access_token,
             refreshToken: refresh_token,
             accessTokenExpires: Date.now() + (expires_in ?? 3600) * 1000,
+            managedPropertyId: account.managed_property_id ?? account.managedPropertyId ?? null,
+            accessibleProperties: account.accessible_properties ?? [],
           };
         } catch (err) {
           console.error('[Auth.js] authorize error:', err);
@@ -186,9 +211,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ...token,
           id: u.id,
           role: u.role,
+          permissions: u.permissions ?? getPermissionsForRole(u.role),
           accessToken: u.accessToken,
           refreshToken: u.refreshToken,
           accessTokenExpires: u.accessTokenExpires ?? Date.now() + 3600 * 1000,
+          managedPropertyId: u.managedPropertyId ?? null,
+          accessibleProperties: u.accessibleProperties ?? [],
           error: undefined,
         };
       }
@@ -242,12 +270,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = (token.id as string) || (token.sub as string);
         const sUser = session.user as unknown as AuthUserPayload;
         sUser.role = token.role as string | undefined;
+        sUser.permissions =
+          (token.permissions as string[]) ??
+          getPermissionsForRole(token.role as string | undefined);
         sUser.accessToken = token.accessToken as string | undefined;
         sUser.refreshToken = token.refreshToken as string | undefined;
+        sUser.managedPropertyId = (token.managedPropertyId as string | null) ?? null;
+        sUser.accessibleProperties = (token.accessibleProperties as Array<{ id: string; name: string }>) ?? [];
 
         const s = session as unknown as AuthUserPayload & { error?: string };
         s.accessToken = token.accessToken as string | undefined;
         s.refreshToken = token.refreshToken as string | undefined;
+        s.managedPropertyId = (token.managedPropertyId as string | null) ?? null;
+        s.accessibleProperties = (token.accessibleProperties as Array<{ id: string; name: string }>) ?? [];
         s.error = undefined;
       }
       return session;

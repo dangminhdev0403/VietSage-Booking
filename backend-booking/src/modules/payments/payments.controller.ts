@@ -16,14 +16,17 @@ import { PaymentsService } from './payments.service';
 import { ok } from '../../common/http/api-response';
 import { Public } from '../../common/auth/public.decorator';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
-import { RequireRole } from '../../common/auth/require-role.decorator';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import type {
   ConfirmPaymentDto,
   CreateDepositCheckoutDto,
   CreatePaymentIntentDto,
+  VerifyCheckoutDto,
 } from './dto/payments.dto';
-import { createDepositCheckoutSchema } from './dto/payments.dto';
+import {
+  createDepositCheckoutSchema,
+  verifyCheckoutSchema,
+} from './dto/payments.dto';
 
 @Controller('api/v1/payments')
 export class PaymentsController {
@@ -35,6 +38,8 @@ export class PaymentsController {
     @Body() body: CreateDepositCheckoutDto,
     @Headers('idempotency-key') idempotencyKey?: string,
     @Headers('x-lookup-token') lookupTokenHeader?: string,
+    @Headers('origin') originHeader?: string,
+    @Headers('referer') refererHeader?: string,
   ) {
     const parsed = createDepositCheckoutSchema.safeParse(body);
     if (!parsed.success) {
@@ -44,10 +49,39 @@ export class PaymentsController {
       });
     }
     const lookupToken = parsed.data.lookup_token || lookupTokenHeader;
+    let returnBaseUrl = parsed.data.return_url || originHeader;
+    if (!returnBaseUrl && refererHeader) {
+      try {
+        returnBaseUrl = new URL(refererHeader).origin;
+      } catch {}
+    }
     const data = await this.paymentsService.createDepositCheckout(
       parsed.data.booking_code,
       lookupToken,
       idempotencyKey,
+      returnBaseUrl,
+    );
+    return ok(data);
+  }
+
+  @Public()
+  @Post('verify-checkout')
+  async verifyCheckout(
+    @Body() body: VerifyCheckoutDto,
+    @Headers('x-lookup-token') lookupTokenHeader?: string,
+  ) {
+    const parsed = verifyCheckoutSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu kiểm tra thanh toán không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+    const lookupToken = parsed.data.lookup_token || lookupTokenHeader;
+    const data = await this.paymentsService.verifyCheckoutSession(
+      parsed.data.booking_code,
+      parsed.data.session_id,
+      lookupToken,
     );
     return ok(data);
   }
@@ -89,13 +123,29 @@ export class PaymentsController {
     return ok(data);
   }
 
-  @RequireRole('ADMIN', 'SUPER_ADMIN')
   @Post('confirm')
   async confirmPayment(
     @Body() body: ConfirmPaymentDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const data = await this.paymentsService.confirmPayment(body, user);
+    return ok(data);
+  }
+
+  @Get()
+  async listPayments(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('property_id') propertyId?: string,
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('page_size') pageSize?: string,
+  ) {
+    const data = await this.paymentsService.listPayments(user, {
+      propertyId,
+      status,
+      page: page ? parseInt(page, 10) : 1,
+      pageSize: pageSize ? parseInt(pageSize, 10) : 10,
+    });
     return ok(data);
   }
 

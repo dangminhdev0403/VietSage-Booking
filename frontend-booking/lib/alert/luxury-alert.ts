@@ -138,7 +138,7 @@ function buildDetailsHtml(details?: unknown): string {
   if (typeof details === 'object') {
     return `
       <div class="mt-3 p-3 rounded-xl bg-surface-container-low text-left text-xs text-on-surface-variant border border-outline-variant/30">
-        <pre class="font-mono text-[11px] overflow-x-auto">${JSON.stringify(details, null, 2)}</pre>
+        <pre class="font-mono text-xs overflow-x-auto">${JSON.stringify(details, null, 2)}</pre>
       </div>
     `;
   }

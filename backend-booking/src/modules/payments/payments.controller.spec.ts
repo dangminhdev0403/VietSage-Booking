@@ -10,6 +10,7 @@ describe('PaymentsController', () => {
   beforeEach(async () => {
     service = {
       createDepositCheckout: jest.fn(),
+      verifyCheckoutSession: jest.fn(),
       handleWebhook: jest.fn(),
       createPaymentIntent: jest.fn(),
       confirmPayment: jest.fn(),
@@ -49,6 +50,7 @@ describe('PaymentsController', () => {
         'OTA-1234',
         'token-abc',
         'idemp-key-1',
+        undefined,
       );
     });
 
@@ -72,6 +74,32 @@ describe('PaymentsController', () => {
         'OTA-1234',
         'token-from-header',
         undefined,
+        undefined,
+      );
+    });
+  });
+
+  describe('verifyCheckout', () => {
+    it('should call paymentsService.verifyCheckoutSession with validated parameters', async () => {
+      service.verifyCheckoutSession.mockResolvedValue({
+        booking_code: 'OTA-1234',
+        status: 'CONFIRMED',
+        payment_status: 'DEPOSIT_PAID',
+        is_paid: true,
+      });
+
+      const body = {
+        booking_code: 'OTA-1234',
+        session_id: 'cs_test_123',
+      };
+
+      const result = await controller.verifyCheckout(body, 'token-from-header');
+      expect(result.success).toBe(true);
+      expect(result.data.is_paid).toBe(true);
+      expect(service.verifyCheckoutSession).toHaveBeenCalledWith(
+        'OTA-1234',
+        'cs_test_123',
+        'token-from-header',
       );
     });
   });

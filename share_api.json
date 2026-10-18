@@ -64,6 +64,12 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/bookings/summary",
+      "implementation_status": "implemented",
+      "description": "Get aggregate booking metrics and status summary"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/bookings/{id}",
       "implementation_status": "implemented",
       "description": "Get booking details by ID or booking code"
@@ -109,6 +115,12 @@
       "path": "/api/v1/bookings/lookup",
       "implementation_status": "implemented",
       "description": "Look up booking by code and contact for guest"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/payments",
+      "implementation_status": "implemented",
+      "description": "List payment transactions with optional property and status filter"
     },
     {
       "method": "POST",

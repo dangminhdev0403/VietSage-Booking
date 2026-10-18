@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -16,6 +15,7 @@ import {
   updateAllotmentSchema,
 } from './dto/catalog.dto';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
+import { resolvePropertyScope } from '../../common/auth/property-scope.helper';
 
 @Injectable()
 export class CatalogService {
@@ -79,7 +79,29 @@ export class CatalogService {
         where,
         skip,
         take: pageSize,
-        include: { roomTypes: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          city: true,
+          address: true,
+          description: true,
+          starRating: true,
+          thumbnailUrl: true,
+          images: true,
+          createdAt: true,
+          roomTypes: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              maxGuests: true,
+              basePrice: true,
+              amenities: true,
+            },
+          },
+        },
         orderBy,
       }),
       this.prisma.property.count({ where }),
@@ -116,9 +138,25 @@ export class CatalogService {
   async getPropertyById(id: string) {
     const p = await this.prisma.property.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        city: true,
+        address: true,
+        description: true,
+        starRating: true,
+        thumbnailUrl: true,
+        images: true,
+        createdAt: true,
         roomTypes: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            maxGuests: true,
+            basePrice: true,
+            amenities: true,
             allotments: {
               where: {
                 date: {
@@ -127,6 +165,14 @@ export class CatalogService {
               },
               take: 30,
               orderBy: { date: 'asc' },
+              select: {
+                id: true,
+                date: true,
+                totalRooms: true,
+                bookedRooms: true,
+                price: true,
+                isBlocked: true,
+              },
             },
           },
         },
@@ -176,27 +222,20 @@ export class CatalogService {
       throw new UnauthorizedException('Yêu cầu xác thực để xem lịch tồn kho');
     }
 
-    if (actor.role === 'HOTEL_PARTNER') {
-      const account = await this.prisma.account.findUnique({
-        where: { id: actor.id },
-        select: { managedPropertyId: true },
-      });
-      if (
-        !account?.managedPropertyId ||
-        account.managedPropertyId !== propertyId
-      ) {
-        throw new ForbiddenException(
-          'Đối tác chỉ có quyền xem lịch tồn kho của khách sạn mình quản lý',
-        );
-      }
-    } else if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Không có quyền xem lịch tồn kho');
-    }
+    resolvePropertyScope(actor, propertyId);
 
     const property = await this.prisma.property.findUnique({
       where: { id: propertyId },
-      include: {
-        roomTypes: true,
+      select: {
+        id: true,
+        name: true,
+        roomTypes: {
+          select: {
+            id: true,
+            name: true,
+            basePrice: true,
+          },
+        },
       },
     });
 
@@ -299,34 +338,17 @@ export class CatalogService {
 
     const roomType = await this.prisma.roomType.findUnique({
       where: { id: dto.room_type_id },
-      include: { property: true },
+      select: {
+        id: true,
+        propertyId: true,
+        basePrice: true,
+      },
     });
     if (!roomType) {
       throw new NotFoundException('Không tìm thấy hạng phòng');
     }
 
-    // Role and partner ownership enforcement
-    if (actor.role === 'HOTEL_PARTNER') {
-      const account = await this.prisma.account.findUnique({
-        where: { id: actor.id },
-        select: { managedPropertyId: true },
-      });
-      const managedPropertyId = account?.managedPropertyId ?? null;
-
-      if (!managedPropertyId) {
-        throw new ForbiddenException(
-          'Tài khoản đối tác chưa được liên kết với khách sạn quản lý',
-        );
-      }
-
-      if (roomType.propertyId !== managedPropertyId) {
-        throw new ForbiddenException(
-          'Đối tác chỉ có quyền cập nhật các hạng phòng thuộc khách sạn quản lý',
-        );
-      }
-    } else if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Không có quyền thực hiện thao tác này');
-    }
+    resolvePropertyScope(actor, roomType.propertyId);
 
     const existing = await this.prisma.roomAllotment.findUnique({
       where: {

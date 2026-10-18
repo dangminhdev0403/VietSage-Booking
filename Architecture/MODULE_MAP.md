@@ -6,7 +6,7 @@ Tài liệu này xác định quyền sở hữu domain và hướng phụ thu�
 
 | Context | Module hiện tại/mục tiêu | Model local hiện tại | Authority và trách nhiệm |
 | --- | --- | --- | --- |
-| **Identity & Access** | `IdentityAccessModule` | `Account`, `Role`, `Permission`, `RolePermission`, `AccountRoleAssignment`, `RefreshSession`, `AuditEvent` | OTA auth/session/RBAC/audit. Mọi thao tác quản lý kiểm tra actor và resource scope tại backend. |
+| **Identity & Access** | `IdentityAccessModule` | `Account`, `Role`, `Permission`, `RolePermission`, `AccountRoleAssignment`, `RefreshSession`, `AuditEvent` | OTA auth/session/Role-Permission capabilities/audit. Mọi thao tác quản lý kiểm tra actor, capability permissions và resource scope tại backend. |
 | **Catalog Projection & Merchandising** | `CatalogModule` | `Property`, `RoomType`, `AddonService` | `Property`/`RoomType` là projection của VietSage khi integration bật. `AddonService` chỉ local-authoritative cho sản phẩm OTA; dữ liệu PMS phải mang origin/external ID riêng. |
 | **Availability Projection** | `InventoryRatesModule` (planned boundary) | `RoomAllotment` | Cache tìm kiếm từ VietSage. Không xác nhận sellability hoặc decrement inventory có thẩm quyền. |
 | **Booking Commerce** | `BookingsModule` | `Booking`, `BookingAddon` | OTA order, guest, snapshot thương mại, customer workflow và correlation với PMS. Không sở hữu phòng vật lý/check-in/out. |

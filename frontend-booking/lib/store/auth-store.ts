@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HOTEL_PARTNER' | 'TRAVELER';
+export type UserRole = 'ADMIN' | 'HOTEL_PARTNER' | 'TRAVELER';
 
 export type AuthUser = {
   id: string;

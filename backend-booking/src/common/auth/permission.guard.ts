@@ -6,11 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { AuthenticatedUser } from './authenticated-user';
-import {
-  IS_PUBLIC_KEY,
-  REQUIRED_PERMISSIONS_KEY,
-  REQUIRED_ROLES_KEY,
-} from './auth.constants';
+import { IS_PUBLIC_KEY, REQUIRED_PERMISSIONS_KEY } from './auth.constants';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -35,36 +31,27 @@ export class PermissionGuard implements CanActivate {
       throw new ForbiddenException('Access denied');
     }
 
-    if (user.role === 'SUPER_ADMIN') {
-      return true;
-    }
-
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
-      REQUIRED_ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-
-    if (requiredRoles && requiredRoles.length > 0) {
-      const hasRole = requiredRoles.includes(user.role);
-      if (!hasRole) {
-        throw new ForbiddenException('Insufficient role privileges');
-      }
-    }
-
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       REQUIRED_PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
 
-    if (requiredPermissions && requiredPermissions.length > 0) {
-      const userPermissions = new Set(user.permissions || []);
-      const hasPermission = requiredPermissions.every((perm) =>
-        userPermissions.has(perm),
-      );
+    if (!requiredPermissions || requiredPermissions.length === 0) {
+      return true;
+    }
 
-      if (!hasPermission) {
-        throw new ForbiddenException('Insufficient permissions');
-      }
+    const userPermissions = user.permissions ?? [];
+    if (userPermissions.includes('*')) {
+      return true;
+    }
+
+    const hasAll = requiredPermissions.every((req) =>
+      userPermissions.includes(req) ||
+      userPermissions.some((p) => p.endsWith(':*') && req.startsWith(p.slice(0, -1))),
+    );
+
+    if (!hasAll) {
+      throw new ForbiddenException('Không có quyền thực hiện thao tác này');
     }
 
     return true;

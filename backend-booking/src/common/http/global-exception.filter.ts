@@ -87,9 +87,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     status: number,
   ): void {
     const requestId = getRequestId(request);
+    const code =
+      typeof exception === 'object' &&
+      exception !== null &&
+      'code' in exception &&
+      typeof (exception as { code: unknown }).code === 'string'
+        ? (exception as { code: string }).code
+        : undefined;
+    const message =
+      exception instanceof Error ? exception.message : undefined;
 
     this.logger.error({
       exception_type: getExceptionType(exception),
+      ...(code ? { exception_code: code } : {}),
+      ...(message ? { message } : {}),
       method: request.method,
       path: request.path,
       status,

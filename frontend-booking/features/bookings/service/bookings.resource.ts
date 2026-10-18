@@ -7,10 +7,12 @@ import {
   createBooking,
   createDepositCheckout,
   getBookingQuote,
+  getBookingSummary,
   listBookings,
   updateBookingStatus,
   type CreateBookingPayload,
   type DepositCheckoutPayload,
+  type ListBookingsParams,
   type QuoteBookingPayload,
 } from './bookings.client';
 
@@ -20,12 +22,25 @@ export const bookingsResource = createResource<void>()({
   scopeKey: () => ['user'],
   queries: {
     list: defineQuery({
-      inputKey: (params?: { status?: string; page?: number; pageSize?: number }) => [
+      inputKey: (params?: ListBookingsParams) => [
+        params?.search ?? '',
         params?.status ?? 'ALL',
+        params?.payment_status ?? '',
+        params?.property_id ?? '',
+        params?.check_in_from ?? '',
+        params?.check_in_to ?? '',
         String(params?.page ?? 1),
         String(params?.pageSize ?? 10),
       ],
       queryFn: ({ input }) => listBookings(input),
+    }),
+    summary: defineQuery({
+      inputKey: (params?: { property_id?: string; from?: string; to?: string }) => [
+        params?.property_id ?? '',
+        params?.from ?? '',
+        params?.to ?? '',
+      ],
+      queryFn: ({ input }) => getBookingSummary(input),
     }),
     quote: defineQuery({
       inputKey: (params: QuoteBookingPayload) => [

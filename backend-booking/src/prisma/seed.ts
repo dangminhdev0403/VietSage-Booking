@@ -11,7 +11,6 @@ async function main() {
 
   // 1. Roles
   const roles = [
-    { code: 'SUPER_ADMIN', name: 'Super Administrator', isSystem: true },
     { code: 'ADMIN', name: 'Platform Administrator', isSystem: true },
     { code: 'HOTEL_PARTNER', name: 'Hotel & Property Partner', isSystem: true },
   ];
@@ -22,6 +21,62 @@ async function main() {
       update: {},
       create: r,
     });
+  }
+
+  // 1.1 Granular Role-Permission Capabilities
+  const permissions = [
+    { key: 'admin:access', label: 'Truy cập Admin', description: 'Quyền truy cập khu vực quản trị', boundedContext: 'identity-access' },
+    { key: 'catalog:read', label: 'Xem danh mục', description: 'Xem danh sách khách sạn và phòng', boundedContext: 'catalog' },
+    { key: 'catalog:manage', label: 'Quản lý danh mục', description: 'Tạo, sửa khách sạn và hạng phòng', boundedContext: 'catalog' },
+    { key: 'allotments:read', label: 'Xem tồn kho', description: 'Xem lịch allotment và giá phòng', boundedContext: 'catalog' },
+    { key: 'allotments:manage', label: 'Quản lý tồn kho', description: 'Cập nhật allotment và quota phòng', boundedContext: 'catalog' },
+    { key: 'bookings:read', label: 'Xem đơn đặt', description: 'Xem danh sách đơn đặt phòng', boundedContext: 'bookings' },
+    { key: 'bookings:manage', label: 'Quản lý đơn đặt', description: 'Cập nhật và hủy đơn đặt phòng', boundedContext: 'bookings' },
+    { key: 'payments:read', label: 'Xem thanh toán', description: 'Xem giao dịch thanh toán và đối soát', boundedContext: 'payments' },
+    { key: 'payments:manage', label: 'Quản lý thanh toán', description: 'Xử lý hoàn tiền và đối soát giao dịch', boundedContext: 'payments' },
+    { key: 'sync:manage', label: 'Đồng bộ VietSage', description: 'Kích hoạt đồng bộ tồn kho từ VietSage PMS', boundedContext: 'vietsage-sync' },
+  ];
+
+  for (const p of permissions) {
+    await prisma.permission.upsert({
+      where: { key: p.key },
+      update: {},
+      create: p,
+    });
+  }
+
+  // Link permissions to roles
+  const adminRole = await prisma.role.findUnique({ where: { code: 'ADMIN' } });
+  const partnerRole = await prisma.role.findUnique({ where: { code: 'HOTEL_PARTNER' } });
+
+  if (adminRole) {
+    for (const p of permissions) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionKey: { roleId: adminRole.id, permissionKey: p.key } },
+        update: {},
+        create: { roleId: adminRole.id, permissionKey: p.key },
+      });
+    }
+  }
+
+  if (partnerRole) {
+    const partnerPermKeys = [
+      'admin:access',
+      'catalog:read',
+      'catalog:manage',
+      'allotments:read',
+      'allotments:manage',
+      'bookings:read',
+      'bookings:manage',
+      'payments:read',
+    ];
+    for (const key of partnerPermKeys) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionKey: { roleId: partnerRole.id, permissionKey: key } },
+        update: {},
+        create: { roleId: partnerRole.id, permissionKey: key },
+      });
+    }
   }
 
   const defaultPassword = await bcrypt.hash('Admin@123456', 10);
@@ -303,18 +358,7 @@ async function main() {
     }
   }
 
-  // 4. Accounts: SuperAdmin, Admin, Hotel Partner
-  await prisma.account.upsert({
-    where: { username: 'superadmin' },
-    update: {},
-    create: {
-      username: 'superadmin',
-      displayName: 'VietSage OTA SuperAdmin',
-      email: 'admin@vietsage-ota.vn',
-      passwordHash: defaultPassword,
-      role: 'SUPER_ADMIN',
-    },
-  });
+  // 4. Accounts: Platform Admin and Hotel Partners
 
   await prisma.account.upsert({
     where: { username: 'admin' },
@@ -328,20 +372,58 @@ async function main() {
     },
   });
 
-  await prisma.account.upsert({
-    where: { username: 'partner_hanoi' },
-    update: {
-      managedPropertyId: createdProperties[0].id,
-    },
-    create: {
+  const partnerAccountsData = [
+    {
       username: 'partner_hanoi',
       displayName: 'Giám Đốc Vận Hành Aurum Hà Nội',
       email: 'partner.hanoi@aurumhaven.vn',
-      passwordHash: defaultPassword,
-      role: 'HOTEL_PARTNER',
-      managedPropertyId: createdProperties[0].id,
+      propertyIndex: 0,
     },
-  });
+    {
+      username: 'partner_sapa',
+      displayName: 'Quản Lý Vận Hành Sapa Cloud Sanctuary',
+      email: 'partner.sapa@sapacloud.vn',
+      propertyIndex: 1,
+    },
+    {
+      username: 'partner_danang',
+      displayName: 'Quản Lý Vận Hành Aurum Đà Nẵng',
+      email: 'partner.danang@aurumhaven.vn',
+      propertyIndex: 2,
+    },
+    {
+      username: 'partner_dalat',
+      displayName: 'Quản Lý Vận Hành VietSage Pine Forest Đà Lạt',
+      email: 'partner.dalat@vietsage-resort.vn',
+      propertyIndex: 3,
+    },
+    {
+      username: 'partner_phuquoc',
+      displayName: 'Quản Lý Vận Hành Aurum Serene Haven Phú Quốc',
+      email: 'partner.phuquoc@aurumhaven.vn',
+      propertyIndex: 4,
+    },
+  ];
+
+  for (const partner of partnerAccountsData) {
+    const targetProperty = createdProperties[partner.propertyIndex];
+    if (targetProperty) {
+      await prisma.account.upsert({
+        where: { username: partner.username },
+        update: {
+          managedPropertyId: targetProperty.id,
+        },
+        create: {
+          username: partner.username,
+          displayName: partner.displayName,
+          email: partner.email,
+          passwordHash: defaultPassword,
+          role: 'HOTEL_PARTNER',
+          managedPropertyId: targetProperty.id,
+        },
+      });
+    }
+  }
 
   // 5. Addon Services
   const services = [

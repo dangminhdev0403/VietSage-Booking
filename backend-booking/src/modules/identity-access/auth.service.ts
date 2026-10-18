@@ -155,23 +155,61 @@ export class AuthService {
       throw new UnauthorizedException('Không tìm thấy tài khoản');
     }
 
-    const permissions = new Set<string>();
-    for (const assignment of account.roleAssignments) {
-      for (const rp of assignment.role.rolePermissions) {
-        permissions.add(rp.permissionKey);
-      }
-    }
+    const assignedPermissions = account.roleAssignments?.flatMap((assignment) =>
+      assignment.role?.rolePermissions?.map((rp) => rp.permissionKey) ?? [],
+    ) ?? [];
+
+    const effectiveRole = account.role === 'SUPER_ADMIN' ? 'ADMIN' : account.role;
+    const permissions = assignedPermissions.length > 0
+      ? Array.from(new Set(assignedPermissions))
+      : this.resolvePermissionsForRole(effectiveRole);
 
     return {
       id: account.id,
       username: account.username,
       display_name: account.displayName,
       email: account.email,
-      role: account.role,
-      permissions: Array.from(permissions),
+      role: effectiveRole,
+      permissions,
+      managedPropertyId: account.managedPropertyId ?? null,
+      managed_property_id: account.managedPropertyId ?? null,
+      accessible_properties: account.managedPropertyId
+        ? [{ id: account.managedPropertyId, name: 'Khách sạn liên kết' }]
+        : [],
       created_at: account.createdAt.toISOString(),
       updated_at: account.updatedAt.toISOString(),
     };
+  }
+
+  resolvePermissionsForRole(role: string): string[] {
+    switch (role.toUpperCase()) {
+      case 'ADMIN':
+        return [
+          'admin:access',
+          'catalog:read',
+          'catalog:manage',
+          'allotments:read',
+          'allotments:manage',
+          'bookings:read',
+          'bookings:manage',
+          'payments:read',
+          'payments:manage',
+          'sync:manage',
+        ];
+      case 'HOTEL_PARTNER':
+        return [
+          'admin:access',
+          'catalog:read',
+          'catalog:manage',
+          'allotments:read',
+          'allotments:manage',
+          'bookings:read',
+          'bookings:manage',
+          'payments:read',
+        ];
+      default:
+        return [];
+    }
   }
 
   async updateProfile(accountId: string, rawDto: UpdateProfileDto) {
@@ -224,7 +262,7 @@ export class AuthService {
       username: updated.username,
       display_name: updated.displayName,
       email: updated.email,
-      role: updated.role,
+      role: updated.role === 'SUPER_ADMIN' ? 'ADMIN' : updated.role,
       updated_at: updated.updatedAt.toISOString(),
     };
   }
@@ -276,7 +314,8 @@ export class AuthService {
     username: string,
     role: string,
   ) {
-    const payload = { sub: accountId, username, role };
+    const effectiveRole = role === 'SUPER_ADMIN' ? 'ADMIN' : role;
+    const payload = { sub: accountId, username, role: effectiveRole };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
 
     const rawRefreshToken = crypto.randomBytes(40).toString('hex');

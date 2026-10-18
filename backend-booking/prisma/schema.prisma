@@ -8,7 +8,6 @@ datasource db {
 }
 
 enum AccountRole {
-  SUPER_ADMIN
   ADMIN
   HOTEL_PARTNER
   TRAVELER

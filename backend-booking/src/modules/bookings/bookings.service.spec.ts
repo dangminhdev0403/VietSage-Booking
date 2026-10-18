@@ -7,6 +7,7 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
@@ -37,15 +38,6 @@ describe('BookingsService', () => {
     isActive: true,
   };
 
-  const unauthorizedUser: AuthenticatedUser = {
-    id: 'u0000000-0000-0000-0000-000000000009',
-    username: 'unauthorized',
-    displayName: 'Unauthorized User',
-    email: 'unauthorized@example.com',
-    role: 'UNKNOWN_ROLE' as any,
-    permissions: [],
-  };
-
   const adminUser: AuthenticatedUser = {
     id: 'u0000000-0000-0000-0000-000000000002',
     username: 'admin1',
@@ -55,13 +47,14 @@ describe('BookingsService', () => {
     permissions: ['*'],
   };
 
-  const partnerUser: AuthenticatedUser = {
+  const scopedPartnerUser: AuthenticatedUser = {
     id: 'u0000000-0000-0000-0000-000000000003',
     username: 'partner1',
     displayName: 'Hotel Partner',
     email: 'partner1@example.com',
-    role: 'HOTEL_PARTNER',
+    role: 'ADMIN',
     permissions: [],
+    managedPropertyId: mockProperty.id,
   };
 
   beforeEach(async () => {
@@ -81,6 +74,8 @@ describe('BookingsService', () => {
         findFirst: jest.fn(),
         findUnique: jest.fn(),
         count: jest.fn(),
+        aggregate: jest.fn(),
+        groupBy: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
@@ -306,26 +301,102 @@ describe('BookingsService', () => {
   });
 
   describe('listBookings - Authorization & Scope enforcement', () => {
-    it('fails closed for HOTEL_PARTNER', async () => {
-      await expect(service.listBookings({}, partnerUser)).rejects.toThrow(
-        ForbiddenException,
+    it('rejects unauthenticated caller with UnauthorizedException', async () => {
+      await expect(service.listBookings({}, undefined as any)).rejects.toThrow(
+        UnauthorizedException,
       );
     });
 
-    it('rejects unauthorized role with ForbiddenException', async () => {
-      await expect(service.listBookings({}, unauthorizedUser)).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('allows ADMIN to query all bookings globally', async () => {
+    it('allows authenticated user to query all bookings globally', async () => {
       prisma.booking.findMany.mockResolvedValue([]);
       prisma.booking.count.mockResolvedValue(0);
 
-      await service.listBookings({}, adminUser);
+      const result = await service.listBookings({}, adminUser);
+      expect(result.items).toEqual([]);
 
       const callArgs = prisma.booking.findMany.mock.calls[0][0];
       expect(callArgs.where.accountId).toBeUndefined();
+    });
+
+    it('scopes listBookings to managedPropertyId for hotel partner', async () => {
+      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.count.mockResolvedValue(0);
+
+      await service.listBookings({}, scopedPartnerUser);
+
+      const callArgs = prisma.booking.findMany.mock.calls[0][0];
+      expect(callArgs.where.propertyId).toBe(mockProperty.id);
+    });
+
+    it('rejects partner trying to query a different propertyId', async () => {
+      await expect(
+        service.listBookings(
+          { propertyId: 'other-property-id' },
+          scopedPartnerUser,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('applies search across bookingCode, guestName, guestEmail, guestPhone and filters by paymentStatus and checkIn range', async () => {
+      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.count.mockResolvedValue(0);
+
+      await service.listBookings(
+        {
+          search: 'Nguyen',
+          paymentStatus: 'PAID',
+          checkInFrom: '2026-11-01',
+          checkInTo: '2026-11-30',
+        },
+        adminUser,
+      );
+
+      const callArgs = prisma.booking.findMany.mock.calls[0][0];
+      expect(callArgs.where.paymentStatus).toBe('PAID');
+      expect(callArgs.where.checkIn).toBeDefined();
+      expect(callArgs.where.OR).toBeDefined();
+      expect(callArgs.where.OR.length).toBe(4);
+    });
+  });
+
+  describe('getBookingSummary - Metrics & property scoping', () => {
+    it('rejects unauthenticated caller with UnauthorizedException', async () => {
+      await expect(
+        service.getBookingSummary(undefined as any, {}),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('returns aggregate metrics and status counts scoped by managedPropertyId', async () => {
+      prisma.booking.aggregate.mockResolvedValue({
+        _count: { id: 10 },
+        _sum: { totalPrice: 50000000 },
+      });
+      prisma.booking.groupBy.mockResolvedValue([
+        { status: 'PENDING', _count: { id: 3 } },
+        { status: 'CONFIRMED', _count: { id: 5 } },
+        { status: 'CANCELLED', _count: { id: 2 } },
+      ]);
+      prisma.booking.count.mockResolvedValue(4);
+
+      const summary = await service.getBookingSummary(scopedPartnerUser, {});
+
+      expect(summary.total_bookings).toBe(10);
+      expect(summary.gross_booking_value).toBe(50000000);
+      expect(summary.pending_count).toBe(3);
+      expect(summary.confirmed_count).toBe(5);
+      expect(summary.cancelled_count).toBe(2);
+      expect(summary.upcoming_checkins_count).toBe(4);
+
+      const aggCall = prisma.booking.aggregate.mock.calls[0][0];
+      expect(aggCall.where.propertyId).toBe(mockProperty.id);
+    });
+
+    it('rejects partner querying different propertyId for summary', async () => {
+      await expect(
+        service.getBookingSummary(scopedPartnerUser, {
+          propertyId: 'different-prop',
+        }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -337,11 +408,11 @@ describe('BookingsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('rejects unauthorized role with ForbiddenException', async () => {
+    it('rejects unauthenticated caller with UnauthorizedException', async () => {
       const dto = { status: 'CANCELLED', reason: 'Change of plans' };
       await expect(
-        service.updateBookingStatus('b1', dto as any, unauthorizedUser),
-      ).rejects.toThrow(ForbiddenException);
+        service.updateBookingStatus('b1', dto as any, undefined as any),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('rejects cancelling a booking that is not in PENDING status', async () => {
@@ -362,6 +433,7 @@ describe('BookingsService', () => {
         id: 'b1',
         bookingCode: 'OTA-202611-ABC',
         status: 'PENDING',
+        paymentStatus: 'UNPAID',
         accountId: null,
       });
       prisma.booking.updateMany.mockResolvedValue({ count: 1 });
@@ -384,6 +456,7 @@ describe('BookingsService', () => {
         id: 'b1',
         bookingCode: 'OTA-202611-ABC',
         status: 'PENDING',
+        paymentStatus: 'UNPAID',
         accountId: null,
         roomTypeId: mockRoomType.id,
         checkIn: new Date('2026-11-05T00:00:00.000Z'),
@@ -396,6 +469,88 @@ describe('BookingsService', () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(prisma.roomAllotment.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects partner cancelling booking belonging to another property', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        id: 'b1',
+        bookingCode: 'OTA-202611-ABC',
+        propertyId: 'different-prop-id',
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+      });
+
+      await expect(
+        service.updateBookingStatus(
+          'b1',
+          { status: 'CANCELLED' },
+          scopedPartnerUser,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects cancelling booking if paymentStatus is not UNPAID', async () => {
+      prisma.booking.findUnique.mockResolvedValue({
+        id: 'b1',
+        bookingCode: 'OTA-202611-ABC',
+        propertyId: mockProperty.id,
+        status: 'PENDING',
+        paymentStatus: 'PAID',
+      });
+
+      await expect(
+        service.updateBookingStatus('b1', { status: 'CANCELLED' }, adminUser),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getBookingByIdOrCode - Scoping and retrieval', () => {
+    it('rejects unauthenticated caller with UnauthorizedException', async () => {
+      await expect(
+        service.getBookingByIdOrCode('b1', undefined as any),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects partner viewing booking belonging to another property', async () => {
+      prisma.booking.findFirst.mockResolvedValue({
+        id: 'b1',
+        bookingCode: 'OTA-202611-ABC',
+        propertyId: 'different-prop-id',
+        property: mockProperty,
+        roomType: mockRoomType,
+        addons: [],
+        payments: [],
+      });
+
+      await expect(
+        service.getBookingByIdOrCode('b1', scopedPartnerUser),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows partner to view booking belonging to their property', async () => {
+      prisma.booking.findFirst.mockResolvedValue({
+        id: 'b1',
+        bookingCode: 'OTA-202611-ABC',
+        propertyId: mockProperty.id,
+        property: mockProperty,
+        roomType: mockRoomType,
+        addons: [],
+        payments: [],
+        guestName: 'Test Guest',
+        guestEmail: 'guest@example.com',
+        guestPhone: '0901234567',
+        checkIn: new Date('2026-11-05T00:00:00.000Z'),
+        checkOut: new Date('2026-11-06T00:00:00.000Z'),
+        nights: 1,
+        totalPrice: 1000000,
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+        createdAt: new Date('2026-11-01T00:00:00.000Z'),
+      });
+
+      const res = await service.getBookingByIdOrCode('b1', scopedPartnerUser);
+      expect(res.id).toBe('b1');
+      expect(res.property_id).toBe(mockProperty.id);
     });
   });
 

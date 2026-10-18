@@ -36,32 +36,60 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-    if (
-      !account ||
-      !account.isActive ||
-      (account.role !== 'SUPER_ADMIN' &&
-        account.role !== 'ADMIN' &&
-        account.role !== 'HOTEL_PARTNER')
-    ) {
+    if (!account || !account.isActive) {
       throw new UnauthorizedException(
-        'Tài khoản không tồn tại, đã bị khóa, hoặc không có quyền truy cập hệ thống quản trị',
+        'Tài khoản không tồn tại hoặc đã bị khóa',
       );
     }
 
-    const permissions = new Set<string>();
-    for (const assignment of account.roleAssignments) {
-      for (const rp of assignment.role.rolePermissions) {
-        permissions.add(rp.permissionKey);
-      }
-    }
+    const assignedPermissions = account.roleAssignments?.flatMap((assignment) =>
+      assignment.role?.rolePermissions?.map((rp) => rp.permissionKey) ?? [],
+    ) ?? [];
+
+    const effectiveRole = account.role === 'SUPER_ADMIN' ? 'ADMIN' : account.role;
+    const permissions = assignedPermissions.length > 0
+      ? Array.from(new Set(assignedPermissions))
+      : this.resolvePermissionsForRole(effectiveRole);
 
     return {
       id: account.id,
       username: account.username,
       displayName: account.displayName,
       email: account.email,
-      role: account.role as 'SUPER_ADMIN' | 'ADMIN' | 'HOTEL_PARTNER',
-      permissions: Array.from(permissions),
+      role: effectiveRole,
+      permissions,
+      managedPropertyId: account.managedPropertyId ?? null,
     };
+  }
+
+  private resolvePermissionsForRole(role: string): string[] {
+    switch (role.toUpperCase()) {
+      case 'ADMIN':
+        return [
+          'admin:access',
+          'catalog:read',
+          'catalog:manage',
+          'allotments:read',
+          'allotments:manage',
+          'bookings:read',
+          'bookings:manage',
+          'payments:read',
+          'payments:manage',
+          'sync:manage',
+        ];
+      case 'HOTEL_PARTNER':
+        return [
+          'admin:access',
+          'catalog:read',
+          'catalog:manage',
+          'allotments:read',
+          'allotments:manage',
+          'bookings:read',
+          'bookings:manage',
+          'payments:read',
+        ];
+      default:
+        return [];
+    }
   }
 }

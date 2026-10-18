@@ -20,6 +20,7 @@ import {
   updateBookingStatusSchema,
 } from './dto/bookings.dto';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
+import { resolvePropertyScope } from '../../common/auth/property-scope.helper';
 import type {
   Booking,
   Property,
@@ -552,6 +553,11 @@ export class BookingsService {
   async listBookings(
     filter: {
       status?: string;
+      paymentStatus?: string;
+      search?: string;
+      checkInFrom?: string;
+      checkInTo?: string;
+      propertyId?: string;
       accountId?: string;
       page?: number;
       pageSize?: number;
@@ -564,34 +570,49 @@ export class BookingsService {
       );
     }
 
+    const scope = resolvePropertyScope(user, filter?.propertyId);
+
     const page = filter?.page ?? 1;
     const pageSize = filter?.pageSize ?? 10;
     const skip = (page - 1) * pageSize;
 
     const where: Record<string, unknown> = {};
 
-    if (user.role === 'HOTEL_PARTNER') {
-      const partnerAccount = this.prisma.account
-        ? await this.prisma.account.findUnique({ where: { id: user.id } })
-        : null;
-      if (!partnerAccount?.managedPropertyId) {
-        throw new ForbiddenException(
-          'Tài khoản đối tác khách sạn chưa được hỗ trợ tra cứu booking do chưa có ánh xạ khách sạn quản lý',
-        );
-      }
-      where.propertyId = partnerAccount.managedPropertyId;
-    } else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
-      if (filter?.accountId) {
-        where.accountId = filter.accountId;
-      }
-    } else {
-      throw new ForbiddenException(
-        'Vai trò người dùng không có quyền truy cập',
-      );
+    if (scope.propertyId) {
+      where.propertyId = scope.propertyId;
+    }
+
+    if (filter?.accountId) {
+      where.accountId = filter.accountId;
     }
 
     if (filter?.status) {
       where.status = filter.status;
+    }
+
+    if (filter?.paymentStatus) {
+      where.paymentStatus = filter.paymentStatus;
+    }
+
+    if (filter?.checkInFrom || filter?.checkInTo) {
+      const checkInFilter: Record<string, Date> = {};
+      if (filter.checkInFrom) {
+        checkInFilter.gte = new Date(filter.checkInFrom);
+      }
+      if (filter.checkInTo) {
+        checkInFilter.lte = new Date(filter.checkInTo);
+      }
+      where.checkIn = checkInFilter;
+    }
+
+    if (filter?.search && filter.search.trim()) {
+      const term = filter.search.trim();
+      where.OR = [
+        { bookingCode: { contains: term, mode: 'insensitive' } },
+        { guestName: { contains: term, mode: 'insensitive' } },
+        { guestEmail: { contains: term, mode: 'insensitive' } },
+        { guestPhone: { contains: term } },
+      ];
     }
 
     const [items, total] = await Promise.all([
@@ -641,6 +662,89 @@ export class BookingsService {
     };
   }
 
+  async getBookingSummary(
+    user: AuthenticatedUser,
+    filter: {
+      propertyId?: string;
+      from?: string;
+      to?: string;
+    },
+  ) {
+    if (!user) {
+      throw new UnauthorizedException(
+        'Yêu cầu xác thực tài khoản để xem thống kê đặt phòng',
+      );
+    }
+
+    const scope = resolvePropertyScope(user, filter?.propertyId);
+
+    const where: Record<string, unknown> = {};
+
+    if (scope.propertyId) {
+      where.propertyId = scope.propertyId;
+    }
+
+    if (filter?.from || filter?.to) {
+      const createdAtFilter: Record<string, Date> = {};
+      if (filter.from) {
+        createdAtFilter.gte = new Date(filter.from);
+      }
+      if (filter.to) {
+        createdAtFilter.lte = new Date(filter.to);
+      }
+      where.createdAt = createdAtFilter;
+    }
+
+    const now = new Date();
+    const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const [aggregate, statusGroups, upcomingCheckinsCount] = await Promise.all([
+      this.prisma.booking.aggregate({
+        where,
+        _count: { id: true },
+        _sum: { totalPrice: true },
+      }),
+      this.prisma.booking.groupBy({
+        by: ['status'],
+        where,
+        _count: { id: true },
+      }),
+      this.prisma.booking.count({
+        where: {
+          ...where,
+          checkIn: {
+            gte: now,
+            lte: in7Days,
+          },
+          status: { in: ['CONFIRMED', 'PENDING'] },
+        },
+      }),
+    ]);
+
+    let pendingCount = 0;
+    let confirmedCount = 0;
+    let cancelledCount = 0;
+
+    for (const group of statusGroups) {
+      if (group.status === 'PENDING') {
+        pendingCount = group._count.id;
+      } else if (group.status === 'CONFIRMED') {
+        confirmedCount = group._count.id;
+      } else if (group.status === 'CANCELLED') {
+        cancelledCount = group._count.id;
+      }
+    }
+
+    return {
+      total_bookings: aggregate._count.id ?? 0,
+      gross_booking_value: aggregate._sum.totalPrice ?? 0,
+      pending_count: pendingCount,
+      confirmed_count: confirmedCount,
+      cancelled_count: cancelledCount,
+      upcoming_checkins_count: upcomingCheckinsCount,
+    };
+  }
+
   async getBookingByIdOrCode(idOrCode: string, user: AuthenticatedUser) {
     if (!user) {
       throw new UnauthorizedException(
@@ -666,21 +770,9 @@ export class BookingsService {
       throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
     }
 
-    if (user.role === 'HOTEL_PARTNER') {
-      const partnerAccount = this.prisma.account
-        ? await this.prisma.account.findUnique({ where: { id: user.id } })
-        : null;
-      if (
-        !partnerAccount?.managedPropertyId ||
-        b.propertyId !== partnerAccount.managedPropertyId
-      ) {
-        throw new ForbiddenException(
-          'Tài khoản đối tác khách sạn chưa được hỗ trợ tra cứu booking do chưa có ánh xạ khách sạn quản lý',
-        );
-      }
-    } else if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+    if (user.managedPropertyId && b.propertyId !== user.managedPropertyId) {
       throw new ForbiddenException(
-        'Vai trò người dùng không có quyền truy cập thông tin đặt phòng',
+        'Không có quyền truy cập đơn đặt phòng của cơ sở khác',
       );
     }
 
@@ -729,12 +821,6 @@ export class BookingsService {
       );
     }
 
-    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.role !== 'HOTEL_PARTNER') {
-      throw new ForbiddenException(
-        'Vai trò người dùng không có quyền cập nhật trạng thái đặt phòng',
-      );
-    }
-
     const parsed = updateBookingStatusSchema.safeParse(rawDto);
     if (!parsed.success) {
       throw new BadRequestException({
@@ -753,34 +839,23 @@ export class BookingsService {
       throw new NotFoundException('Không tìm thấy đơn đặt phòng');
     }
 
-    if (user.role === 'HOTEL_PARTNER') {
-      const partnerAccount = this.prisma.account
-        ? await this.prisma.account.findUnique({ where: { id: user.id } })
-        : null;
-      if (
-        !partnerAccount?.managedPropertyId ||
-        existing.propertyId !== partnerAccount.managedPropertyId
-      ) {
-        throw new ForbiddenException(
-          'Tài khoản đối tác khách sạn chưa được hỗ trợ thay đổi trạng thái booking',
-        );
-      }
-    } else if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-      throw new ForbiddenException(
-        'Vai trò người dùng không có quyền cập nhật trạng thái đặt phòng',
-      );
+    if (
+      user.managedPropertyId &&
+      existing.propertyId !== user.managedPropertyId
+    ) {
+      throw new ForbiddenException('Không có quyền thao tác trên cơ sở này');
     }
 
-    // Only allow transition PENDING -> CANCELLED locally
-    if (existing.status !== 'PENDING') {
+    // Only allow transition to CANCELLED when status is PENDING and paymentStatus is UNPAID
+    if (existing.status !== 'PENDING' || existing.paymentStatus !== 'UNPAID') {
       throw new BadRequestException(
-        `Không thể hủy đơn đặt phòng ở trạng thái ${existing.status}. Chỉ đơn ở trạng thái PENDING mới có thể hủy.`,
+        `Không thể hủy đơn đặt phòng ở trạng thái ${existing.status} (thanh toán: ${existing.paymentStatus}). Chỉ đơn ở trạng thái PENDING và chưa thanh toán (UNPAID) mới có thể hủy.`,
       );
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.booking.updateMany({
-        where: { id, status: 'PENDING' },
+        where: { id, status: 'PENDING', paymentStatus: 'UNPAID' },
         data: { status },
       });
 

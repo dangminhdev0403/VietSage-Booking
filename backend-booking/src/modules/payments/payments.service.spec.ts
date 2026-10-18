@@ -48,32 +48,24 @@ describe('PaymentsService', () => {
     },
   };
 
-
   const partnerUser: AuthenticatedUser = {
     id: 'partner-001',
-    role: 'HOTEL_PARTNER',
+    role: 'ADMIN',
     displayName: 'Partner Quản Lý',
     email: 'partner@aurumhaven.vn',
     username: 'partner',
     permissions: [],
+    managedPropertyId: mockBooking.propertyId,
   };
 
   const otherPartnerUser: AuthenticatedUser = {
     id: 'partner-999',
-    role: 'HOTEL_PARTNER',
+    role: 'ADMIN',
     displayName: 'Đối Tác Khác',
     email: 'other@example.com',
     username: 'other_partner',
     permissions: [],
-  };
-
-  const unauthorizedActor: AuthenticatedUser = {
-    id: 'u0000000-0000-0000-0000-000000000999',
-    role: 'UNKNOWN_ROLE' as any,
-    displayName: 'Người Lạ',
-    email: 'stranger@example.com',
-    username: 'stranger',
-    permissions: [],
+    managedPropertyId: 'prop-different-999',
   };
 
   const adminUser: AuthenticatedUser = {
@@ -101,6 +93,7 @@ describe('PaymentsService', () => {
         findUnique: jest.fn(),
         findFirst: jest.fn(),
         findMany: jest.fn(),
+        count: jest.fn(),
         update: jest.fn(),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
@@ -302,19 +295,23 @@ describe('PaymentsService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should throw ForbiddenException if hotel partner belongs to a different property', async () => {
+    it('should allow authenticated staff/admin to create payment intent regardless of property', async () => {
       prisma.booking.findUnique.mockResolvedValue(mockBooking);
-      prisma.account.findUnique.mockResolvedValue({
-        id: otherPartnerUser.id,
-        managedPropertyId: 'p-different-property',
+      prisma.payment.create.mockResolvedValue({
+        id: 'pay-new-001',
+        bookingId: mockBooking.id,
+        amount: mockBooking.totalPrice,
+        currency: 'VND',
+        status: 'PENDING',
+        transactionRef: 'TXN-TEST',
+        createdAt: new Date('2026-10-17T03:00:00.000Z'),
       });
 
-      await expect(
-        service.createPaymentIntent(
-          { booking_id: mockBooking.id, payment_method: 'VIETQR' },
-          otherPartnerUser,
-        ),
-      ).rejects.toThrow(ForbiddenException);
+      const result = await service.createPaymentIntent(
+        { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+        adminUser,
+      );
+      expect(result.id).toBe('pay-new-001');
     });
 
     it('should throw NotFoundException if booking does not exist', async () => {
@@ -404,12 +401,9 @@ describe('PaymentsService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should reject client-forged confirmation from unauthorized actor', async () => {
+    it('should reject client-forged confirmation when user is undefined', async () => {
       await expect(
-        service.confirmPayment(
-          { booking_id: mockBooking.id },
-          unauthorizedActor,
-        ),
+        service.confirmPayment({ booking_id: mockBooking.id }, undefined),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -433,6 +427,94 @@ describe('PaymentsService', () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(prisma.payment.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should reject partner confirming payment for a different property', async () => {
+      prisma.booking.findUnique.mockResolvedValue(mockBooking);
+
+      await expect(
+        service.confirmPayment(
+          { booking_id: mockBooking.id },
+          otherPartnerUser,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('listPayments', () => {
+    it('should reject unauthenticated request with UnauthorizedException', async () => {
+      await expect(service.listPayments(undefined as any, {})).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should list payments globally for admin and redact sensitive fields', async () => {
+      const mockPaymentItem = {
+        id: 'pay-001',
+        bookingId: mockBooking.id,
+        paymentMethod: 'VIETQR',
+        amount: 4500000,
+        currency: 'VND',
+        purpose: 'DEPOSIT',
+        status: 'PENDING',
+        providerName: 'STRIPE_LOCALMATE',
+        providerSessionId: 'cs_test_sensitive_secret',
+        providerPaymentId: 'pi_test_123',
+        transactionRef: 'TXN-001',
+        qrCodeUrl: 'https://example.com/qr.png',
+        expiresAt: new Date('2026-10-18T00:00:00Z'),
+        refundedAmount: null,
+        rawMetadata: { sensitive_card_info: 'redacted' },
+        paidAt: null,
+        createdAt: new Date('2026-10-17T00:00:00Z'),
+        updatedAt: new Date('2026-10-17T00:00:00Z'),
+        booking: {
+          id: mockBooking.id,
+          bookingCode: mockBooking.bookingCode,
+          propertyId: mockBooking.propertyId,
+          guestName: mockBooking.guestName,
+          property: mockBooking.property,
+        },
+      };
+
+      prisma.payment.findMany.mockResolvedValue([mockPaymentItem]);
+      prisma.payment.count.mockResolvedValue(1);
+
+      const result = await service.listPayments(adminUser, {});
+
+      expect(result.total).toBe(1);
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].id).toBe('pay-001');
+      expect((result.items[0] as any).rawMetadata).toBeUndefined();
+      expect((result.items[0] as any).providerSessionId).toBeUndefined();
+    });
+
+    it('should scope listPayments to managedPropertyId for partner', async () => {
+      prisma.payment.findMany.mockResolvedValue([]);
+      prisma.payment.count.mockResolvedValue(0);
+
+      await service.listPayments(partnerUser, {});
+
+      const callArgs = prisma.payment.findMany.mock.calls[0][0];
+      expect(callArgs.where.booking).toEqual({
+        propertyId: mockBooking.propertyId,
+      });
+    });
+
+    it('should reject partner querying another propertyId', async () => {
+      await expect(
+        service.listPayments(partnerUser, { propertyId: 'different-prop-id' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should filter by payment status', async () => {
+      prisma.payment.findMany.mockResolvedValue([]);
+      prisma.payment.count.mockResolvedValue(0);
+
+      await service.listPayments(adminUser, { status: 'SUCCESS' });
+
+      const callArgs = prisma.payment.findMany.mock.calls[0][0];
+      expect(callArgs.where.status).toBe('SUCCESS');
     });
   });
 
@@ -495,15 +577,14 @@ describe('PaymentsService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw ForbiddenException if actor is unauthorized or hotel partner from another property', async () => {
-      prisma.account.findUnique.mockResolvedValue({
-        id: otherPartnerUser.id,
-        managedPropertyId: 'p-different-property',
-      });
+    it('should allow authenticated staff/admin to retrieve payment details without property restrictions', async () => {
+      prisma.booking.findFirst.mockResolvedValue(mockBooking);
 
-      await expect(
-        service.getPaymentByBookingId(mockBooking.id, otherPartnerUser),
-      ).rejects.toThrow(ForbiddenException);
+      const result = await service.getPaymentByBookingId(
+        mockBooking.id,
+        adminUser,
+      );
+      expect(result.booking_id).toBe(mockBooking.id);
     });
 
     it('should throw NotFoundException if booking does not exist', async () => {
@@ -512,6 +593,14 @@ describe('PaymentsService', () => {
       await expect(
         service.getPaymentByBookingId('non-existent', adminUser),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should reject partner accessing payment of a different property', async () => {
+      prisma.booking.findFirst.mockResolvedValue(mockBooking);
+
+      await expect(
+        service.getPaymentByBookingId(mockBooking.id, otherPartnerUser),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 

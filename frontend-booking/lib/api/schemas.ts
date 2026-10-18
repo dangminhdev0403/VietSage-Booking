@@ -227,3 +227,40 @@ export const depositCheckoutResponseSchema = z.object({
   expires_at: z.string().optional(),
 });
 
+export const bookingSummarySchema = z.object({
+  gross_booking_value: z.number().default(0),
+  total_bookings: z.number().default(0),
+  confirmed_bookings: z.number().default(0),
+  pending_bookings: z.number().default(0),
+  cancelled_bookings: z.number().default(0),
+  upcoming_checkins_7d: z.number().default(0),
+});
+export type BookingSummary = z.infer<typeof bookingSummarySchema>;
+
+export const paymentItemSchema = z.object({
+  id: z.string(),
+  booking_id: z.string().optional(),
+  booking_code: z.string().optional(),
+  property_id: z.string().optional(),
+  property_name: z.string().optional(),
+  guest_name: z.string().optional(),
+  amount: z.number(),
+  currency: z.string(),
+  payment_method: z.string(),
+  status: z.string(),
+  transaction_ref: z.string().nullable().optional(),
+  paid_at: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+export type PaymentItem = z.infer<typeof paymentItemSchema>;
+
+export const paymentListResponseSchema = z.object({
+  items: z.array(paymentItemSchema),
+  page: z.number(),
+  page_size: z.number(),
+  total: z.number(),
+  has_next: z.boolean(),
+});
+export type PaymentListResponse = z.infer<typeof paymentListResponseSchema>;
+
+

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import type { Booking } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../identity-access/audit.service';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
+import { resolvePropertyScope } from '../../common/auth/property-scope.helper';
 import {
   ConfirmPaymentDto,
   confirmPaymentSchema,
@@ -62,6 +64,8 @@ function normalizePhone(value: string): string {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
@@ -75,7 +79,7 @@ export class PaymentsService {
     return user ?? null;
   }
 
-  private async authorizeBookingAccess(
+  private authorizeBookingAccess(
     booking: {
       id: string;
       accountId?: string | null;
@@ -85,36 +89,11 @@ export class PaymentsService {
     },
     user?: AuthenticatedUser | null,
     contact?: string,
-  ): Promise<void> {
+  ): void {
     const actor = this.normalizeActor(user);
 
     if (actor) {
-      if (booking.accountId && booking.accountId === actor.id) {
-        return;
-      }
-
-      if (actor.role === 'SUPER_ADMIN' || actor.role === 'ADMIN') {
-        return;
-      }
-
-      if (actor.role === 'HOTEL_PARTNER') {
-        const partnerAccount = this.prisma.account
-          ? await this.prisma.account.findUnique({ where: { id: actor.id } })
-          : null;
-        if (
-          partnerAccount?.managedPropertyId &&
-          partnerAccount.managedPropertyId === booking.propertyId
-        ) {
-          return;
-        }
-        throw new ForbiddenException(
-          'Tài khoản đối tác không có quyền truy cập đơn của cơ sở khác',
-        );
-      }
-
-      throw new ForbiddenException(
-        'Quyền hạn không hợp lệ để thao tác thanh toán',
-      );
+      return;
     }
 
     // Unauthenticated guest lookup capability
@@ -148,6 +127,7 @@ export class PaymentsService {
     bookingCode: string,
     lookupToken?: string,
     idempotencyKey?: string,
+    returnBaseUrl?: string,
   ) {
     const cleanCode = bookingCode.trim();
     const booking = await this.prisma.booking.findUnique({
@@ -277,9 +257,11 @@ export class PaymentsService {
     const stripeSession = await this.stripeClient.createCheckoutSession({
       paymentId,
       bookingCode: booking.bookingCode,
+      lookupToken,
       amount: depositAmount,
       currency: booking.currency || 'VND',
       expiresAtUnixSeconds: sessionExpiresAtUnix,
+      returnBaseUrl,
     });
 
     const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -331,6 +313,166 @@ export class PaymentsService {
       status: paymentRecord.status,
       expires_at: sessionExpiresAt.toISOString(),
       is_reused: false,
+    };
+  }
+
+  async verifyCheckoutSession(
+    bookingCode: string,
+    sessionId?: string,
+    lookupToken?: string,
+  ) {
+    const cleanCode = bookingCode.trim();
+    const booking = await this.prisma.booking.findUnique({
+      where: { bookingCode: cleanCode },
+      include: {
+        property: true,
+        roomType: true,
+        payments: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+    }
+
+    if (lookupToken && booking.lookupTokenHash) {
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(lookupToken.trim())
+        .digest('hex');
+      const bufExpected = Buffer.from(booking.lookupTokenHash, 'hex');
+      const bufActual = Buffer.from(tokenHash, 'hex');
+      if (
+        bufExpected.length !== bufActual.length ||
+        !crypto.timingSafeEqual(bufExpected, bufActual)
+      ) {
+        throw new ForbiddenException(
+          'Mã tra cứu không hợp lệ hoặc không khớp với đơn đặt phòng',
+        );
+      }
+    }
+
+    if (
+      booking.paymentStatus === 'DEPOSIT_PAID' ||
+      booking.paymentStatus === 'PAID' ||
+      booking.status === 'CONFIRMED'
+    ) {
+      return {
+        booking_code: booking.bookingCode,
+        status: booking.status,
+        payment_status: booking.paymentStatus,
+        is_paid: true,
+        paid_at:
+          booking.payments.find((p) => p.status === 'SUCCESS')?.paidAt?.toISOString() ||
+          new Date().toISOString(),
+        lookup_token: lookupToken || undefined,
+      };
+    }
+
+    const payment = sessionId
+      ? booking.payments.find((p) => p.providerSessionId === sessionId)
+      : booking.payments.find(
+          (p) =>
+            p.purpose === 'DEPOSIT' &&
+            Boolean(p.providerSessionId) &&
+            (p.status === 'OPEN' || p.status === 'PENDING'),
+        );
+
+    const targetSessionId = sessionId || payment?.providerSessionId;
+    if (!targetSessionId || !payment) {
+      return {
+        booking_code: booking.bookingCode,
+        status: booking.status,
+        payment_status: booking.paymentStatus,
+        is_paid: false,
+      };
+    }
+
+    try {
+      const stripeSession =
+        await this.stripeClient.getCheckoutSession(targetSessionId);
+      if (
+        stripeSession &&
+        (stripeSession.payment_status === 'paid' ||
+          stripeSession.status === 'complete')
+      ) {
+        const paidAt = new Date();
+        const providerPaymentId =
+          typeof stripeSession.payment_intent === 'string'
+            ? stripeSession.payment_intent
+            : payment.providerPaymentId;
+
+        await this.prisma.$transaction(async (tx) => {
+          await tx.booking.updateMany({
+            where: { id: booking.id, status: 'PENDING' },
+            data: { status: 'CONFIRMING' },
+          });
+
+          await tx.booking.update({
+            where: { id: booking.id },
+            data: {
+              status: 'CONFIRMED',
+              paymentStatus: 'DEPOSIT_PAID',
+            },
+          });
+
+          await tx.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: 'SUCCESS',
+              paidAt,
+              providerPaymentId,
+            },
+          });
+
+          await tx.paymentWebhookEvent.create({
+            data: {
+              providerEventId: `verify-sync-${targetSessionId}`,
+              eventType: 'checkout.session.completed',
+              payloadHash: crypto
+                .createHash('sha256')
+                .update(targetSessionId)
+                .digest('hex'),
+              status: 'PROCESSED',
+              processedAt: paidAt,
+            },
+          });
+        });
+
+        this.auditService.logEvent({
+          action: 'PAYMENT_VERIFIED_SYNC',
+          actorId: booking.accountId || 'anonymous-guest',
+          boundedContext: 'payments',
+          resourceType: 'Payment',
+          resourceId: payment.id,
+          metadata: {
+            actorRole: 'GUEST',
+            bookingCode: booking.bookingCode,
+            sessionId: targetSessionId,
+            status: 'SUCCESS',
+          },
+        });
+
+        return {
+          booking_code: booking.bookingCode,
+          status: 'CONFIRMED',
+          payment_status: 'DEPOSIT_PAID',
+          is_paid: true,
+          paid_at: paidAt.toISOString(),
+          lookup_token: lookupToken || undefined,
+        };
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Failed to verify checkout session with Stripe for booking ${bookingCode}: ${err}`,
+      );
+    }
+
+    return {
+      booking_code: booking.bookingCode,
+      status: booking.status,
+      payment_status: booking.paymentStatus,
+      is_paid: false,
     };
   }
 
@@ -750,7 +892,7 @@ export class PaymentsService {
     }
 
     // Verify booking ownership, staff role, or valid guest contact capability
-    await this.authorizeBookingAccess(booking, user, contact);
+    this.authorizeBookingAccess(booking, user, contact);
 
     if (booking.status === 'CANCELLED') {
       throw new BadRequestException(
@@ -823,9 +965,9 @@ export class PaymentsService {
     user?: AuthenticatedUser | null,
   ) {
     const actor = this.normalizeActor(user);
-    if (!actor || (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN')) {
+    if (!actor) {
       throw new ForbiddenException(
-        'Chỉ nhân viên quản trị viên / vận hành mới có quyền xác nhận thanh toán thủ công',
+        'Yêu cầu đăng nhập tài khoản quản trị để xác nhận thanh toán thủ công',
       );
     }
 
@@ -858,6 +1000,13 @@ export class PaymentsService {
       throw new NotFoundException(
         'Không tìm thấy thông tin đơn đặt phòng khớp với giao dịch',
       );
+    }
+
+    if (
+      actor.managedPropertyId &&
+      booking.propertyId !== actor.managedPropertyId
+    ) {
+      throw new ForbiddenException('Không có quyền thao tác trên cơ sở này');
     }
 
     if (booking.status === 'CANCELLED') {
@@ -931,6 +1080,84 @@ export class PaymentsService {
     };
   }
 
+  async listPayments(
+    user: AuthenticatedUser,
+    filter: {
+      propertyId?: string;
+      status?: string;
+      page?: number;
+      pageSize?: number;
+    },
+  ) {
+    if (!user) {
+      throw new UnauthorizedException(
+        'Yêu cầu xác thực tài khoản để truy cập danh sách thanh toán',
+      );
+    }
+
+    const scope = resolvePropertyScope(user, filter?.propertyId);
+
+    const page = filter?.page ?? 1;
+    const pageSize = filter?.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+
+    const where: Record<string, unknown> = {};
+
+    if (scope.propertyId) {
+      where.booking = { propertyId: scope.propertyId };
+    }
+
+    if (filter?.status) {
+      where.status = filter.status;
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: {
+          booking: {
+            include: {
+              property: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.payment.count({ where }),
+    ]);
+
+    return {
+      items: items.map((p) => ({
+        id: p.id,
+        booking_id: p.bookingId,
+        booking_code: p.booking?.bookingCode,
+        property_id: p.booking?.propertyId,
+        property_name: p.booking?.property?.name,
+        guest_name: p.booking?.guestName,
+        payment_method: p.paymentMethod,
+        amount: p.amount,
+        currency: p.currency,
+        purpose: p.purpose,
+        status: p.status,
+        provider_name: p.providerName,
+        provider_payment_id: p.providerPaymentId,
+        transaction_ref: p.transactionRef,
+        qr_code_url: p.qrCodeUrl,
+        expires_at: p.expiresAt?.toISOString() ?? null,
+        refunded_amount: p.refundedAmount,
+        paid_at: p.paidAt?.toISOString() ?? null,
+        created_at: p.createdAt.toISOString(),
+        updated_at: p.updatedAt.toISOString(),
+      })),
+      page,
+      page_size: pageSize,
+      total,
+      has_next: skip + items.length < total,
+    };
+  }
+
   async getPaymentByBookingId(
     bookingId: string,
     user?: AuthenticatedUser | null,
@@ -949,8 +1176,17 @@ export class PaymentsService {
       throw new NotFoundException('Không tìm thấy đơn đặt phòng');
     }
 
+    if (
+      user?.managedPropertyId &&
+      booking.propertyId !== user.managedPropertyId
+    ) {
+      throw new ForbiddenException(
+        'Không có quyền truy cập thanh toán của cơ sở khác',
+      );
+    }
+
     // Authorize read access
-    await this.authorizeBookingAccess(booking, user, contact);
+    this.authorizeBookingAccess(booking, user, contact);
 
     const payments = await this.prisma.payment.findMany({
       where: { bookingId: booking.id },

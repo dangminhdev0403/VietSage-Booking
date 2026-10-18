@@ -77,17 +77,42 @@ export class BookingsController {
   async listBookings(
     @CurrentUser() user: AuthenticatedUser,
     @Query('status') status?: string,
+    @Query('payment_status') paymentStatus?: string,
+    @Query('search') search?: string,
+    @Query('check_in_from') checkInFrom?: string,
+    @Query('check_in_to') checkInTo?: string,
+    @Query('property_id') propertyId?: string,
     @Query('page') page?: string,
     @Query('page_size') pageSize?: string,
   ) {
     const data = await this.bookingsService.listBookings(
       {
         status,
+        paymentStatus,
+        search,
+        checkInFrom,
+        checkInTo,
+        propertyId,
         page: page ? parseInt(page, 10) : 1,
         pageSize: pageSize ? parseInt(pageSize, 10) : 10,
       },
       user,
     );
+    return ok(data);
+  }
+
+  @Get('summary')
+  async getBookingSummary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('property_id') propertyId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const data = await this.bookingsService.getBookingSummary(user, {
+      propertyId,
+      from,
+      to,
+    });
     return ok(data);
   }
 

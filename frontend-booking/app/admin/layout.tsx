@@ -1,9 +1,8 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { canAccessPathByRole, resolveSafeRedirect } from '@/lib/auth/rbac';
-
 import { AdminShell } from '@/components/layouts/admin-shell';
+import { canAccessPath } from '@/lib/auth/rbac';
 
 export const instant = false;
 
@@ -25,10 +24,12 @@ export default async function AdminLayout({
     redirect('/login?callbackUrl=/admin');
   }
 
-  const role = (session.user as { role?: string } | undefined)?.role;
-  if (!canAccessPathByRole(role, '/admin')) {
-    redirect(resolveSafeRedirect(role));
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const permissions = (session?.user as { permissions?: string[] } | undefined)?.permissions;
+  if (!canAccessPath(role, permissions, '/admin')) {
+    redirect('/login?error=forbidden&callbackUrl=/admin');
   }
 
   return <AdminShell sessionUser={session.user}>{children}</AdminShell>;
 }
+

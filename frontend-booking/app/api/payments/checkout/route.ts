@@ -18,6 +18,14 @@ export async function POST(req: NextRequest) {
     if (lookupToken) {
       headers['x-lookup-token'] = lookupToken;
     }
+    const origin = req.headers.get('origin') || req.nextUrl.origin;
+    if (origin) {
+      headers['origin'] = origin;
+    }
+    const referer = req.headers.get('referer');
+    if (referer) {
+      headers['referer'] = referer;
+    }
 
     const res = await backendFetch('api/v1/payments/checkout', {
       method: 'POST',

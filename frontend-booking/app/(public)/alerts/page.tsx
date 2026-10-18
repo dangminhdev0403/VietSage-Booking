@@ -122,7 +122,7 @@ export default function AlertsShowcasePage() {
             {/* Booking Error Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-rose-200/60 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-rose-700 bg-rose-100/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-rose-700 bg-rose-100/80 px-2.5 py-0.5 rounded-full">
                   Cảnh Báo Thông Tin
                 </span>
                 <h3 className="font-bold text-base text-on-surface mt-2">Cảnh Báo Lỗi Đặt Phòng</h3>
@@ -142,7 +142,7 @@ export default function AlertsShowcasePage() {
             {/* Confirm Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-amber-200/60 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
                   Xác Nhận Thao Tác
                 </span>
                 <h3 className="font-bold text-base text-on-surface mt-2">Hộp Thoại Xác Nhận Hủy Phòng</h3>
@@ -162,7 +162,7 @@ export default function AlertsShowcasePage() {
             {/* Success Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-emerald-200/60 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
                   Thành Công
                 </span>
                 <h3 className="font-bold text-base text-on-surface mt-2">Xác Nhận Giữ Chỗ 5 Sao</h3>
@@ -182,7 +182,7 @@ export default function AlertsShowcasePage() {
             {/* Privilege Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-[#c5a880]/40 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#725b38] bg-[#fedeb2] px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-[#725b38] bg-[#fedeb2] px-2.5 py-0.5 rounded-full">
                   VIP Privilege
                 </span>
                 <h3 className="font-bold text-base text-on-surface mt-2">Thông Báo Đặc Quyền Gold</h3>

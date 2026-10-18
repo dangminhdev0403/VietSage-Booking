@@ -256,5 +256,44 @@ describe('AuthService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('should return profile with managedPropertyId and accessible_properties for hotel partner', async () => {
+      const partnerAccountWithProperty = {
+        ...mockHotelPartnerAccount,
+        managedPropertyId: 'prop-123',
+      };
+      prisma.account.findUnique.mockResolvedValue(partnerAccountWithProperty);
+
+      const profile = await service.getProfile(partnerAccountWithProperty.id);
+
+      expect(profile.role).toBe('HOTEL_PARTNER');
+      expect(profile.permissions).toContain('allotments:manage');
+      expect(profile.permissions).toContain('catalog:read');
+      expect(profile.managedPropertyId).toBe('prop-123');
+      expect(profile.accessible_properties).toEqual([
+        { id: 'prop-123', name: 'Khách sạn liên kết' },
+      ]);
+    });
+
+    it('should normalize retired SUPER_ADMIN to ADMIN and grant platform permissions', async () => {
+      const legacySuperAdmin = {
+        id: 'u-legacy-super',
+        username: 'superadmin',
+        displayName: 'Legacy SuperAdmin',
+        email: 'superadmin@example.com',
+        role: 'SUPER_ADMIN',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        roleAssignments: [],
+      };
+      prisma.account.findUnique.mockResolvedValue(legacySuperAdmin);
+
+      const profile = await service.getProfile(legacySuperAdmin.id);
+
+      expect(profile.role).toBe('ADMIN');
+      expect(profile.permissions).toContain('sync:manage');
+      expect(profile.permissions).toContain('payments:manage');
+    });
   });
 });

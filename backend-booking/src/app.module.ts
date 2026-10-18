@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { GlobalExceptionFilter } from './common/http/global-exception.filter';
 import { HttpLoggerMiddleware } from './common/http/http-logger.middleware';
 import { JwtAuthenticationGuard } from './common/auth/jwt-authentication.guard';
+import { PermissionGuard } from './common/auth/permission.guard';
 import { IdentityAccessModule } from './modules/identity-access/identity-access.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
@@ -31,6 +32,10 @@ import { VietSageSyncModule } from './modules/vietsage-sync/vietsage-sync.module
     {
       provide: APP_GUARD,
       useClass: JwtAuthenticationGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionGuard,
     },
   ],
 })

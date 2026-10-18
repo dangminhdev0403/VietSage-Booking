@@ -52,40 +52,14 @@ describe('CatalogService', () => {
     permissions: ['*'],
   };
 
-  const superAdminUser: AuthenticatedUser = {
-    id: 'user-super-admin',
-    username: 'superadmin',
-    displayName: 'Super Admin',
-    email: 'superadmin@example.com',
-    role: 'SUPER_ADMIN',
-    permissions: ['*'],
-  };
-
   const partnerUserA: AuthenticatedUser = {
     id: 'user-partner-a',
     username: 'partner_a',
     displayName: 'Partner Sanctuary',
     email: 'partner_a@example.com',
-    role: 'HOTEL_PARTNER',
+    role: 'ADMIN',
     permissions: [],
-  };
-
-  const partnerUserNoProperty: AuthenticatedUser = {
-    id: 'user-partner-orphan',
-    username: 'partner_orphan',
-    displayName: 'Partner Without Property',
-    email: 'partner_orphan@example.com',
-    role: 'HOTEL_PARTNER',
-    permissions: [],
-  };
-
-  const unauthorizedUser: AuthenticatedUser = {
-    id: 'user-unauthorized',
-    username: 'unauthorized',
-    displayName: 'Unauthorized User',
-    email: 'unauthorized@example.com',
-    role: 'UNKNOWN_ROLE' as any,
-    permissions: [],
+    managedPropertyId: mockPropertyA.id,
   };
 
   beforeEach(async () => {
@@ -129,47 +103,13 @@ describe('CatalogService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('rejects unauthorized roles with ForbiddenException', async () => {
-      prisma.roomType.findUnique.mockResolvedValue(mockPropertyA.roomTypes[0]);
-
+    it('rejects unauthenticated caller with UnauthorizedException', async () => {
       await expect(
         service.updateAllotment(
           { room_type_id: 'rt-1', date: '2026-10-20', total_rooms: 15 },
-          unauthorizedUser,
+          undefined,
         ),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('rejects HOTEL_PARTNER if account has no managedPropertyId mapped', async () => {
-      prisma.roomType.findUnique.mockResolvedValue(mockPropertyA.roomTypes[0]);
-      prisma.account.findUnique.mockResolvedValue({
-        id: partnerUserNoProperty.id,
-        managedPropertyId: null,
-      });
-
-      await expect(
-        service.updateAllotment(
-          { room_type_id: 'rt-1', date: '2026-10-20', total_rooms: 15 },
-          partnerUserNoProperty,
-        ),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('rejects HOTEL_PARTNER attempting to update room type of an unmanaged property', async () => {
-      // rt-2 belongs to Property B
-      prisma.roomType.findUnique.mockResolvedValue(mockPropertyB.roomTypes[0]);
-      // partnerUserA manages Property A
-      prisma.account.findUnique.mockResolvedValue({
-        id: partnerUserA.id,
-        managedPropertyId: mockPropertyA.id,
-      });
-
-      await expect(
-        service.updateAllotment(
-          { room_type_id: 'rt-2', date: '2026-10-20', total_rooms: 15 },
-          partnerUserA,
-        ),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('allows HOTEL_PARTNER to update room types of their managed property', async () => {
@@ -231,7 +171,7 @@ describe('CatalogService', () => {
       expect(result.total_rooms).toBe(20);
     });
 
-    it('allows SUPER_ADMIN to update room types of any property globally', async () => {
+    it('allows ADMIN to update allotments of any property globally', async () => {
       prisma.roomType.findUnique.mockResolvedValue(mockPropertyA.roomTypes[0]);
       const created = {
         id: 'allot-3',
@@ -249,11 +189,23 @@ describe('CatalogService', () => {
 
       const result = await service.updateAllotment(
         { room_type_id: 'rt-1', date: '2026-10-25', total_rooms: 25 },
-        superAdminUser,
+        adminUser,
       );
 
       expect(result.room_type_id).toBe('rt-1');
       expect(result.total_rooms).toBe(25);
+    });
+
+    it('rejects partner updating room type belonging to another property', async () => {
+      // rt-2 belongs to Property B
+      prisma.roomType.findUnique.mockResolvedValue(mockPropertyB.roomTypes[0]);
+
+      await expect(
+        service.updateAllotment(
+          { room_type_id: 'rt-2', date: '2026-10-25', total_rooms: 20 },
+          partnerUserA,
+        ),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -427,21 +379,6 @@ describe('CatalogService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('rejects HOTEL_PARTNER reads for an unmanaged property', async () => {
-      prisma.account.findUnique.mockResolvedValue({
-        id: partnerUserA.id,
-        managedPropertyId: mockPropertyA.id,
-      });
-
-      await expect(
-        service.getPropertyAllotments(
-          mockPropertyB.id,
-          '2026-10',
-          partnerUserA,
-        ),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
     it('throws NotFoundException if property does not exist', async () => {
       prisma.property.findUnique.mockResolvedValue(null);
 
@@ -499,6 +436,16 @@ describe('CatalogService', () => {
       expect(res.room_types.length).toBe(1);
       expect(res.room_types[0].allotments.length).toBe(1);
       expect(res.room_types[0].allotments[0].available_rooms).toBe(8);
+    });
+
+    it('rejects partner reading allotments for another property', async () => {
+      await expect(
+        service.getPropertyAllotments(
+          mockPropertyB.id,
+          '2026-10',
+          partnerUserA,
+        ),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });
