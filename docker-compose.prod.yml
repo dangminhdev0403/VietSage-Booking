@@ -150,7 +150,6 @@ services:
 
 networks:
   edge:
-    internal: true
   egress:
   vietsage-db:
     external: true
