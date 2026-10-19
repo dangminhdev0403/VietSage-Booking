@@ -107,21 +107,53 @@ describe('UsersService', () => {
       ]);
       prisma.account.count
         .mockResolvedValueOnce(1) // filtered count
-        .mockResolvedValueOnce(10) // totalUsers
+        .mockResolvedValueOnce(9) // totalUsers (excluding admin)
         .mockResolvedValueOnce(4) // totalPartners
         .mockResolvedValueOnce(2) // totalAdmins
-        .mockResolvedValueOnce(1); // totalPending
+        .mockResolvedValueOnce(1) // totalPending
+        .mockResolvedValueOnce(5); // totalTravelers
 
-      const result = await service.listUsers({
-        status: 'pending',
-        page: 1,
-        page_size: 10,
-      });
+      const result = await service.listUsers(
+        {
+          status: 'pending',
+          page: 1,
+          page_size: 10,
+        },
+        mockAdminUser,
+      );
 
       expect(result.items).toHaveLength(1);
       expect(result.items[0].pending_approval).toBe(true);
       expect(result.summary.total_pending).toBe(1);
+      expect(result.summary.total_admins).toBe(0); // hidden for caller ADMIN
       expect(result.total).toBe(1);
+    });
+
+    it('should exclude peer ADMIN accounts when caller is ADMIN without specific role filter', async () => {
+      prisma.account.findMany.mockResolvedValue([]);
+      prisma.account.count
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(9)
+        .mockResolvedValueOnce(4)
+        .mockResolvedValueOnce(2)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(5);
+
+      await service.listUsers(
+        {
+          page: 1,
+          page_size: 10,
+        },
+        mockAdminUser,
+      );
+
+      expect(prisma.account.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            role: { not: 'ADMIN' },
+          }),
+        }),
+      );
     });
   });
 
@@ -191,6 +223,18 @@ describe('UsersService', () => {
         service.approvePartner('non-existent', {}, mockAdminUser),
       ).rejects.toThrow(NotFoundException);
     });
+
+    it('should throw BadRequestException when approving partner on an ADMIN account', async () => {
+      prisma.account.findUnique.mockResolvedValue({
+        id: 'admin-target',
+        username: 'otheradmin',
+        role: 'ADMIN',
+      });
+
+      await expect(
+        service.approvePartner('admin-target', {}, mockAdminUser),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('updateUserRole', () => {
@@ -199,6 +243,22 @@ describe('UsersService', () => {
         service.updateUserRole(
           mockAdminUser.id,
           { role: 'TRAVELER' },
+          mockAdminUser,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should prevent admin from modifying peer ADMIN accounts', async () => {
+      prisma.account.findUnique.mockResolvedValue({
+        id: 'peer-admin-id',
+        username: 'peeradmin',
+        role: 'ADMIN',
+      });
+
+      await expect(
+        service.updateUserRole(
+          'peer-admin-id',
+          { role: 'HOTEL_PARTNER' },
           mockAdminUser,
         ),
       ).rejects.toThrow(BadRequestException);

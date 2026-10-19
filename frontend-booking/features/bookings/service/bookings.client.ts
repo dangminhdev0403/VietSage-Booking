@@ -1,6 +1,7 @@
 import {
   bookingItemSchema,
   bookingListResponseSchema,
+  bookingLookupResponseSchema,
   bookingQuoteSchema,
   bookingSummarySchema,
   depositCheckoutResponseSchema,
@@ -228,23 +229,38 @@ export async function updateBookingStatus(id: string, status: string, reason?: s
   return data.data;
 }
 
-export async function lookupBooking(bookingCode: string, tokenOrContact: string) {
+export async function lookupBooking(codeOrPhone: string, tokenOrContact?: string) {
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   };
-  headers['x-lookup-token'] = tokenOrContact;
+  if (tokenOrContact) {
+    headers['x-lookup-token'] = tokenOrContact;
+  }
+
+  const isCode = codeOrPhone.trim().toUpperCase().startsWith('OTA-');
+  const payload: Record<string, any> = {};
+
+  if (isCode) {
+    payload.booking_code = codeOrPhone.trim();
+    if (tokenOrContact) {
+      payload.lookup_token = tokenOrContact.trim();
+      payload.contact = tokenOrContact.trim();
+    }
+  } else {
+    payload.phone = codeOrPhone.trim();
+    payload.contact = codeOrPhone.trim();
+    if (tokenOrContact) {
+      payload.lookup_token = tokenOrContact.trim();
+    }
+  }
 
   const res = await fetch('/api/bookings/lookup', {
     method: 'POST',
     headers,
-    body: JSON.stringify({
-      booking_code: bookingCode,
-      lookup_token: tokenOrContact,
-      contact: tokenOrContact,
-    }),
+    body: JSON.stringify(payload),
   });
-  const data = await parseApiResponse(res, successSchema(bookingItemSchema));
+  const data = await parseApiResponse(res, successSchema(bookingLookupResponseSchema));
   return data.data;
 }
 

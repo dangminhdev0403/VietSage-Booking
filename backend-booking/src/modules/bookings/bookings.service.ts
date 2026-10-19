@@ -86,6 +86,15 @@ function extractAssignedRoomNumber(
   return match ? match[1].trim() : null;
 }
 
+function normalizePhone(value: string): string {
+  const stripped = (value || '').trim().replace(/[\s().-]/g, '');
+  if (stripped.startsWith('+84')) return `0${stripped.slice(3)}`;
+  if (stripped.startsWith('84') && stripped.length >= 10) {
+    return `0${stripped.slice(2)}`;
+  }
+  return stripped;
+}
+
 interface BookingRecordForResponse {
   id: string;
   bookingCode: string;
@@ -923,12 +932,140 @@ export class BookingsService {
     };
   }
 
+  private mapBookingToLookupResult(booking: any) {
+    return {
+      id: booking.id,
+      booking_code: booking.bookingCode,
+      property_id: booking.propertyId,
+      property_name: booking.property?.name ?? '',
+      property_address: booking.property?.address ?? null,
+      property_city: booking.property?.city ?? null,
+      room_type_name: booking.roomType?.name ?? null,
+      guest_name: booking.guestName,
+      guest_email: booking.guestEmail,
+      guest_phone: booking.guestPhone,
+      check_in: dateToYmd(booking.checkIn),
+      check_out: dateToYmd(booking.checkOut),
+      nights: booking.nights,
+      room_subtotal: booking.roomSubtotal ?? booking.totalPrice,
+      addon_subtotal: booking.addonSubtotal ?? 0,
+      total_price: booking.totalPrice,
+      deposit_rate_bps: booking.depositRateBps ?? DEPOSIT_RATE_BPS,
+      deposit_amount:
+        booking.depositAmount ??
+        Math.round(
+          ((booking.totalPrice ?? 0) *
+            (booking.depositRateBps ?? DEPOSIT_RATE_BPS)) /
+            10000,
+        ),
+      balance_due:
+        booking.balanceDue ??
+        booking.totalPrice -
+          (booking.depositAmount ??
+            Math.round(
+              ((booking.totalPrice ?? 0) *
+                (booking.depositRateBps ?? DEPOSIT_RATE_BPS)) /
+                10000,
+            )),
+      currency: booking.currency ?? 'VND',
+      status: booking.status,
+      payment_status: booking.paymentStatus,
+      assigned_room_number: extractAssignedRoomNumber(booking.specialRequests),
+      special_requests: booking.specialRequests,
+      addons:
+        booking.addons?.map((a: any) => ({
+          service_name: a.addonService?.name ?? '',
+          price: a.totalPrice,
+        })) ?? [],
+      payments:
+        booking.payments?.map((p: any) => ({
+          id: p.id,
+          payment_method: p.paymentMethod,
+          amount: p.amount,
+          status: p.status,
+          transaction_ref: p.transactionRef,
+          qr_code_url: p.qrCodeUrl,
+        })) ?? [],
+      created_at: booking.createdAt.toISOString(),
+    };
+  }
+
+  async lookupBookingsByPhone(phoneInput: string, includePast = false) {
+    const cleanPhone = normalizePhone(phoneInput);
+    const digits = cleanPhone.replace(/\D/g, '');
+
+    if (digits.length < 8) {
+      throw new BadRequestException(
+        'Số điện thoại không hợp lệ (tối thiểu 8 chữ số)',
+      );
+    }
+
+    const prefix4 = digits.length >= 4 ? digits.slice(0, 4) : digits;
+    const suffix4 = digits.length >= 8 ? digits.slice(-4) : digits;
+
+    const candidates = await this.prisma.booking.findMany({
+      where: {
+        OR: [
+          { guestPhone: { contains: phoneInput.trim() } },
+          { guestPhone: { contains: cleanPhone } },
+          { guestPhone: { contains: digits } },
+          { guestPhone: { contains: prefix4 } },
+          { guestPhone: { contains: suffix4 } },
+        ],
+      },
+      include: {
+        property: true,
+        roomType: true,
+        addons: {
+          include: { addonService: true },
+        },
+        payments: true,
+      },
+      orderBy: [{ checkIn: 'asc' }, { createdAt: 'desc' }],
+    });
+
+    const matched = candidates.filter((b) => {
+      const bDigits = normalizePhone(b.guestPhone || '').replace(/\D/g, '');
+      if (!bDigits) return false;
+      return (
+        bDigits === digits ||
+        (digits.length >= 9 && bDigits.endsWith(digits.slice(-9)))
+      );
+    });
+
+    let activeBookings = matched;
+    if (!includePast) {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const todayStr = formatter.format(new Date());
+
+      activeBookings = matched.filter((b) => {
+        const checkOutStr = dateToYmd(b.checkOut);
+        return checkOutStr >= todayStr;
+      });
+    }
+
+    const items = activeBookings.map((b) => this.mapBookingToLookupResult(b));
+    return {
+      items,
+      total: items.length,
+      ...(items.length === 1 ? items[0] : {}),
+    };
+  }
+
   async lookupBooking(
     bookingCodeOrDto: string | LookupBookingDto,
     lookupTokenArg?: string,
   ) {
     let bookingCode = '';
     let lookupToken = '';
+    let contact = '';
+    let phone = '';
+    let includePast = false;
 
     if (typeof bookingCodeOrDto === 'string') {
       bookingCode = bookingCodeOrDto;
@@ -941,15 +1078,31 @@ export class BookingsService {
           details: parsed.error.issues,
         });
       }
-      bookingCode = parsed.data.booking_code;
+      bookingCode = parsed.data.booking_code ?? '';
       lookupToken =
         parsed.data.lookup_token || parsed.data.token || lookupTokenArg || '';
+      contact = parsed.data.contact ?? '';
+      phone = parsed.data.phone ?? '';
+      includePast = parsed.data.include_past ?? false;
     }
 
     const cleanCode = bookingCode.trim();
     const cleanToken = lookupToken.trim();
+    const cleanPhoneInput = (phone || (!cleanCode ? contact : '')).trim();
 
-    if (!cleanToken) {
+    // If only phone/contact is provided without booking code, search by phone
+    if (cleanPhoneInput && !cleanCode) {
+      return this.lookupBookingsByPhone(cleanPhoneInput, includePast);
+    }
+
+    if (!cleanCode) {
+      throw new BadRequestException(
+        'Vui lòng cung cấp số điện thoại hoặc mã đơn đặt phòng',
+      );
+    }
+
+    // Require token or phone capability
+    if (!cleanToken && !cleanPhoneInput) {
       throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
     }
 
@@ -965,70 +1118,41 @@ export class BookingsService {
       },
     });
 
-    if (!booking || !booking.lookupTokenHash) {
+    if (!booking) {
       throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
     }
 
-    const inputHash = crypto.createHash('sha256').update(cleanToken).digest();
-    let storedHash: Buffer;
-    try {
-      storedHash = Buffer.from(booking.lookupTokenHash, 'hex');
-    } catch {
-      throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+    // Capability check: phone match OR constant-time hash check
+    const guestPhone = normalizePhone(booking.guestPhone || '');
+    const inputPhone = normalizePhone(cleanPhoneInput || cleanToken);
+    const isPhoneMatch = inputPhone.length >= 8 && guestPhone === inputPhone;
+
+    if (!isPhoneMatch) {
+      if (!cleanToken || !booking.lookupTokenHash) {
+        throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+      }
+
+      const inputHash = crypto.createHash('sha256').update(cleanToken).digest();
+      let storedHash: Buffer;
+      try {
+        storedHash = Buffer.from(booking.lookupTokenHash, 'hex');
+      } catch {
+        throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+      }
+
+      if (
+        storedHash.length !== inputHash.length ||
+        !crypto.timingSafeEqual(storedHash, inputHash)
+      ) {
+        throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+      }
     }
 
-    if (
-      storedHash.length !== inputHash.length ||
-      !crypto.timingSafeEqual(storedHash, inputHash)
-    ) {
-      throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
-    }
-
+    const mapped = this.mapBookingToLookupResult(booking);
     return {
-      id: booking.id,
-      booking_code: booking.bookingCode,
-      property_id: booking.propertyId,
-      property_name: booking.property.name,
-      property_address: booking.property.address,
-      room_type_name: booking.roomType?.name,
-      guest_name: booking.guestName,
-      guest_email: booking.guestEmail,
-      guest_phone: booking.guestPhone,
-      check_in: dateToYmd(booking.checkIn),
-      check_out: dateToYmd(booking.checkOut),
-      nights: booking.nights,
-      room_subtotal: booking.roomSubtotal ?? booking.totalPrice,
-      addon_subtotal: booking.addonSubtotal ?? 0,
-      total_price: booking.totalPrice,
-      deposit_rate_bps: booking.depositRateBps ?? DEPOSIT_RATE_BPS,
-      deposit_amount:
-        booking.depositAmount ??
-        Math.round(((booking.totalPrice ?? 0) * DEPOSIT_RATE_BPS) / 10000),
-      balance_due:
-        booking.balanceDue ??
-        booking.totalPrice -
-          (booking.depositAmount ??
-            Math.round(((booking.totalPrice ?? 0) * DEPOSIT_RATE_BPS) / 10000)),
-      currency: booking.currency ?? 'VND',
-      status: booking.status,
-      payment_status: booking.paymentStatus,
-      assigned_room_number: extractAssignedRoomNumber(booking.specialRequests),
-      special_requests: booking.specialRequests,
-      addons:
-        booking.addons?.map((a) => ({
-          service_name: a.addonService?.name ?? '',
-          price: a.totalPrice,
-        })) ?? [],
-      payments:
-        booking.payments?.map((p) => ({
-          id: p.id,
-          payment_method: p.paymentMethod,
-          amount: p.amount,
-          status: p.status,
-          transaction_ref: p.transactionRef,
-          qr_code_url: p.qrCodeUrl,
-        })) ?? [],
-      created_at: booking.createdAt.toISOString(),
+      ...mapped,
+      items: [mapped],
+      total: 1,
     };
   }
 
@@ -1048,23 +1172,33 @@ export class BookingsService {
       where: { bookingCode: cleanCode },
     });
 
-    if (!booking || !booking.lookupTokenHash) {
+    if (!booking) {
       throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
     }
 
-    const inputHash = crypto.createHash('sha256').update(cleanToken).digest();
-    let storedHash: Buffer;
-    try {
-      storedHash = Buffer.from(booking.lookupTokenHash, 'hex');
-    } catch {
-      throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
-    }
+    // Verify phone match OR constant-time hash check
+    const guestPhone = normalizePhone(booking.guestPhone || '');
+    const inputPhone = normalizePhone(cleanToken);
+    const isPhoneMatch = inputPhone.length >= 8 && guestPhone === inputPhone;
 
-    if (
-      storedHash.length !== inputHash.length ||
-      !crypto.timingSafeEqual(storedHash, inputHash)
-    ) {
-      throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+    if (!isPhoneMatch) {
+      if (!booking.lookupTokenHash) {
+        throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+      }
+      const inputHash = crypto.createHash('sha256').update(cleanToken).digest();
+      let storedHash: Buffer;
+      try {
+        storedHash = Buffer.from(booking.lookupTokenHash, 'hex');
+      } catch {
+        throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+      }
+
+      if (
+        storedHash.length !== inputHash.length ||
+        !crypto.timingSafeEqual(storedHash, inputHash)
+      ) {
+        throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
+      }
     }
 
     if (booking.status !== 'PENDING') {

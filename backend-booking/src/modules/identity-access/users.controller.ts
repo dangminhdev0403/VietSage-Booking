@@ -29,8 +29,11 @@ export class UsersController {
 
   @Get()
   @RateLimit({ points: 30, duration: 60, keyPrefix: 'admin:users:list' })
-  async listUsers(@Query() query: ListUsersQueryDto) {
-    const data = await this.usersService.listUsers(query);
+  async listUsers(
+    @Query() query: ListUsersQueryDto,
+    @CurrentUser() adminUser: AuthenticatedUser,
+  ) {
+    const data = await this.usersService.listUsers(query, adminUser);
     return ok(data);
   }
 

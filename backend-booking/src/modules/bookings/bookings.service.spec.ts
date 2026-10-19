@@ -1070,6 +1070,43 @@ describe('BookingsService', () => {
       );
       expect(result.assigned_room_number).toBe('302');
     });
+
+    it('looks up list of active bookings by phone and filters out past bookings', async () => {
+      const activeBooking = {
+        ...bookingInDb,
+        id: 'b-active',
+        bookingCode: 'OTA-202611-ACTIVE',
+        guestPhone: '0912 345 678',
+        checkIn: new Date('2026-11-05T00:00:00.000Z'),
+        checkOut: new Date('2026-11-07T00:00:00.000Z'),
+      };
+      const pastBooking = {
+        ...bookingInDb,
+        id: 'b-past',
+        bookingCode: 'OTA-202610-PAST',
+        guestPhone: '0912345678',
+        checkIn: new Date('2026-10-01T00:00:00.000Z'),
+        checkOut: new Date('2026-10-03T00:00:00.000Z'),
+      };
+
+      prisma.booking.findMany.mockResolvedValue([activeBooking, pastBooking]);
+
+      const result = await service.lookupBooking({
+        phone: '0912345678',
+      });
+
+      expect(result.items).toBeDefined();
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].booking_code).toBe('OTA-202611-ACTIVE');
+    });
+
+    it('rejects phone search if phone number has fewer than 8 digits', async () => {
+      await expect(
+        service.lookupBooking({
+          phone: '12345',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('cancelBooking - Pre-payment cancellation and allotment release', () => {

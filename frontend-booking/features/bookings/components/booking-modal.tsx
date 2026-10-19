@@ -58,6 +58,16 @@ function diffDaysYMD(checkInStr: string, checkOutStr: string): number {
   return Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
 }
 
+function formatYMDToDMY(ymd: string): string {
+  if (!ymd) return '';
+  const parts = ymd.split('-');
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    return `${d}/${m}/${y}`;
+  }
+  return ymd;
+}
+
 export function BookingModal({
   property,
   initialRoomId,
@@ -230,21 +240,21 @@ export function BookingModal({
               payment_status: verifyRes.payment_status || 'DEPOSIT_PAID',
               paid_at: verifyRes.paid_at || new Date().toISOString(),
             }));
-            await luxuryAlert.success({
-              title: 'Thanh Toán Cọc Thành Công',
-              message: 'Thanh toán cọc thành công! Hóa đơn xác nhận kỳ nghỉ của quý khách đã sẵn sàng.',
-              confirmText: 'Xem Hóa Đơn',
-            });
+            luxuryAlert.toast('Thanh toán cọc 30% thành công!', 'success');
             return;
           }
         } catch {}
 
         // 2. Fallback to booking lookup if verify didn't resolve or on manual check
         if (isManual) {
-          const refreshed = await lookupBooking(
+          const raw: any = await lookupBooking(
             confirmedBooking.booking_code,
             confirmedBooking.lookup_token,
           );
+          const refreshed =
+            raw && Array.isArray(raw.items) && raw.items.length > 0
+              ? raw.items[0]
+              : raw;
 
           if (
             refreshed &&
@@ -258,11 +268,7 @@ export function BookingModal({
               payment_status: refreshed.payment_status || 'DEPOSIT_PAID',
               paid_at: (refreshed as { paid_at?: string }).paid_at || new Date().toISOString(),
             }));
-            await luxuryAlert.success({
-              title: 'Thanh Toán Cọc Thành Công',
-              message: 'Thanh toán cọc thành công! Hóa đơn xác nhận kỳ nghỉ của quý khách đã sẵn sàng.',
-              confirmText: 'Xem Hóa Đơn',
-            });
+            luxuryAlert.toast('Thanh toán cọc 30% thành công!', 'success');
           } else {
             await luxuryAlert.info({
               title: 'Đang Chờ Đối Soát',
@@ -388,10 +394,6 @@ export function BookingModal({
         });
         if (checkoutRes?.checkout_url) {
           checkoutUrl = checkoutRes.checkout_url;
-          setOpenedPaymentTab(true);
-          if (typeof window !== 'undefined') {
-            window.open(checkoutRes.checkout_url, '_blank');
-          }
         }
       } catch (checkoutErr) {
         console.warn('[Checkout Init Note]', checkoutErr);
@@ -420,7 +422,7 @@ export function BookingModal({
         addons: [],
       });
 
-      luxuryAlert.toast('Đang mở cổng thanh toán bảo mật Stripe...', 'info');
+      luxuryAlert.toast('Đã khởi tạo đơn đặt phòng! Vui lòng quét mã QR để thanh toán cọc.', 'info');
     } catch (err: unknown) {
       const formatted = luxuryAlert.formatApiError(err);
       setErrorMessage(formatted.message);
@@ -458,15 +460,15 @@ export function BookingModal({
           <div className="space-y-5 overflow-y-auto flex-1 p-1">
             {/* Header Status */}
             <div className="text-center space-y-1.5 border-b border-outline-variant/40 pb-4">
-              <span className="text-xs uppercase tracking-wider text-amber-900 font-bold inline-flex items-center gap-1.5 bg-amber-100/90 px-3.5 py-1 rounded-full border border-amber-200">
+              <span className="text-sm uppercase tracking-wider text-amber-900 font-bold inline-flex items-center gap-1.5 bg-amber-100/90 px-3.5 py-1 rounded-full border border-amber-200">
                 <Sparkles className="w-3.5 h-3.5 text-amber-700" />
                 Đang Chờ Thanh Toán Tiền Cọc 30%
               </span>
-              <h3 className="text-xl sm:text-2xl font-bold text-on-surface">
+              <h3 className="text-xl sm:text-2xl font-bold text-on-surface text-balance">
                 Thanh Toán Cọc 30% Để Xác Nhận Đặt Phòng
               </h3>
-              <p className="text-xs text-outline max-w-xl mx-auto">
-                Vui lòng quét mã QR hoặc hoàn tất thanh toán trên cổng Stripe. Đơn đặt phòng sẽ được tự động tạo và xuất hóa đơn xác nhận ngay khi nhận được thanh toán.
+              <p className="text-sm text-outline max-w-xl mx-auto font-medium text-pretty">
+                Quét mã QR hoặc hoàn tất thanh toán trên cổng Stripe. Hóa đơn xác nhận kỳ nghỉ sẽ tự động xuất ngay khi nhận được thanh toán.
               </p>
             </div>
 
@@ -474,7 +476,7 @@ export function BookingModal({
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
               {/* Left Column (5 cols): Dynamic QR Code */}
               <div className="md:col-span-5 p-5 rounded-2xl bg-surface-container-low border border-outline-variant/40 flex flex-col items-center justify-center text-center space-y-3">
-                <div className="flex items-center gap-1.5 text-primary font-bold text-xs uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-primary font-bold text-sm uppercase tracking-wider">
                   <QrCode className="w-4 h-4" />
                   <span>Quét Mã QR Thanh Toán Nhanh</span>
                 </div>
@@ -489,12 +491,12 @@ export function BookingModal({
                     />
                   </div>
                 ) : (
-                  <div className="w-44 h-44 rounded-xl bg-surface-container flex items-center justify-center text-outline text-xs">
+                  <div className="w-44 h-44 rounded-xl bg-surface-container flex items-center justify-center text-outline text-sm">
                     Đang tải mã QR...
                   </div>
                 )}
 
-                <p className="text-xs text-outline max-w-xs leading-relaxed">
+                <p className="text-sm text-outline max-w-xs leading-relaxed font-medium">
                   Mở camera điện thoại quét mã để thanh toán trực tiếp qua <strong>Apple Pay, Google Pay hoặc Thẻ Quốc Tế</strong>.
                 </p>
               </div>
@@ -504,16 +506,16 @@ export function BookingModal({
                 <div className="space-y-3">
                   {/* Property & Stay Summary */}
                   <div className="space-y-1 border-b border-outline-variant/30 pb-3">
-                    <div className="text-xs font-bold uppercase tracking-wider text-primary">
+                    <div className="text-sm font-bold uppercase tracking-wider text-primary">
                       Khu Nghỉ Dưỡng &amp; Hạng Phòng
                     </div>
-                    <div className="font-bold text-sm text-on-surface">
+                    <div className="font-bold text-base text-on-surface">
                       {confirmedBooking.property_name}
                     </div>
-                    <div className="text-xs text-outline flex items-center gap-2 flex-wrap">
+                    <div className="text-sm text-outline flex items-center gap-2 flex-wrap font-medium">
                       <span>{confirmedBooking.room_type_name}</span>
                       <span>•</span>
-                      <span>{confirmedBooking.nights} đêm ({confirmedBooking.check_in} → {confirmedBooking.check_out})</span>
+                      <span>{confirmedBooking.nights} đêm ({formatYMDToDMY(confirmedBooking.check_in)} → {formatYMDToDMY(confirmedBooking.check_out)})</span>
                     </div>
                   </div>
 
@@ -521,14 +523,14 @@ export function BookingModal({
                   <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/80 border border-amber-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-xs font-bold text-amber-900 uppercase block">
+                        <span className="text-sm font-bold text-amber-900 uppercase block">
                           Tiền Cọc 30% Cần Thanh Toán:
                         </span>
-                        <span className="text-xs text-amber-800">
+                        <span className="text-sm text-amber-800 font-medium">
                           70% còn lại thanh toán tại quầy khi nhận phòng
                         </span>
                       </div>
-                      <span className="text-xl sm:text-2xl font-black text-amber-950">
+                      <span className="text-2xl sm:text-3xl font-black text-amber-950">
                         {formatVND(confirmedBooking.deposit_amount ?? 0)}
                       </span>
                     </div>
@@ -536,11 +538,11 @@ export function BookingModal({
 
                   {/* Card Badges */}
                   <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                    <span className="px-2 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs font-semibold text-on-surface">Visa</span>
-                    <span className="px-2 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs font-semibold text-on-surface">MasterCard</span>
-                    <span className="px-2 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs font-semibold text-on-surface">JCB</span>
-                    <span className="px-2 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs font-semibold text-on-surface">Amex</span>
-                    <span className="px-2 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs font-semibold text-on-surface">Apple Pay</span>
+                    <span className="px-2.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs sm:text-sm font-semibold text-on-surface whitespace-nowrap">Visa</span>
+                    <span className="px-2.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs sm:text-sm font-semibold text-on-surface whitespace-nowrap">MasterCard</span>
+                    <span className="px-2.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs sm:text-sm font-semibold text-on-surface whitespace-nowrap">JCB</span>
+                    <span className="px-2.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs sm:text-sm font-semibold text-on-surface whitespace-nowrap">Amex</span>
+                    <span className="px-2.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40 text-xs sm:text-sm font-semibold text-on-surface whitespace-nowrap">Apple Pay</span>
                   </div>
 
                   {/* Open Stripe Tab Button */}
@@ -550,7 +552,7 @@ export function BookingModal({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setOpenedPaymentTab(true)}
-                      className="w-full py-3.5 px-4 rounded-xl bg-primary text-on-primary hover:bg-[#584323] font-bold text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer"
+                      className="w-full py-3.5 px-4 rounded-xl bg-primary text-on-primary hover:bg-[#584323] font-bold text-sm uppercase tracking-wider text-center flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer"
                     >
                       <CreditCard className="w-4 h-4" />
                       <span>Mở Lại Cổng Thanh Toán Stripe (Tab Mới)</span>
@@ -559,7 +561,7 @@ export function BookingModal({
                   )}
 
                   {openedPaymentTab && (
-                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2 animate-in fade-in">
+                    <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2 animate-in fade-in">
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>Cổng Stripe đã được mở ở tab mới. Vui lòng hoàn tất thanh toán và quay lại tab này.</span>
                     </div>
@@ -569,11 +571,11 @@ export function BookingModal({
                 {/* Real-time Listening Indicator */}
                 <div className="p-3 rounded-xl bg-primary-container/15 border border-primary/20 flex items-center gap-2.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  <div className="text-xs">
+                  <div className="text-sm">
                     <span className="font-bold text-primary block">
                       Hệ thống đang tự động lắng nghe giao dịch...
                     </span>
-                    <span className="text-xs text-outline">
+                    <span className="text-sm text-outline font-medium">
                       Đơn đặt phòng sẽ được tự động tạo và xuất hóa đơn ngay khi thanh toán thành công.
                     </span>
                   </div>
@@ -587,7 +589,7 @@ export function BookingModal({
                 type="button"
                 onClick={() => checkPaymentStatus(true)}
                 disabled={checkingStatus}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer border border-outline-variant/40"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer border border-outline-variant/40"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-primary ${checkingStatus ? 'animate-spin' : ''}`} />
                 <span>{checkingStatus ? 'Đang kiểm tra...' : 'Kiểm Tra Thanh Toán Ngay'}</span>
@@ -596,7 +598,7 @@ export function BookingModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-outline hover:text-on-surface text-xs font-semibold transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-outline hover:text-on-surface text-sm font-semibold transition-colors cursor-pointer"
               >
                 Đóng &amp; Hoàn Tất Sau
               </button>
@@ -609,17 +611,17 @@ export function BookingModal({
             <div className="border-b border-outline-variant/40 pb-3 mb-3 shrink-0 pr-8">
               <div className="flex items-center gap-2 text-primary mb-1">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-xs uppercase tracking-wider font-bold">Đặt Phòng Trực Tuyến</span>
+                <span className="text-sm uppercase tracking-wider font-bold">Đặt Phòng Trực Tuyến</span>
                 <span className="text-xs text-outline">•</span>
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                  Xác nhận tức thì &amp; Giữ Allotment
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
+                  Xác nhận tức thì • Giữ Allotment
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-on-surface leading-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-on-surface leading-tight text-balance">
                 {property.name}
               </h2>
-              <p className="text-xs text-outline mt-0.5 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+              <p className="text-sm text-outline mt-1 flex items-center gap-1.5 font-medium">
+                <MapPin className="w-4 h-4 text-primary shrink-0" />
                 <span>{property.address}, {property.city}</span>
               </p>
             </div>
@@ -656,16 +658,16 @@ export function BookingModal({
                   {/* Row A: Stay Dates */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
+                      <span className="text-sm uppercase tracking-wider font-bold text-primary flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" />
                         Thời Gian Lưu Trú
                       </span>
                       {isValidDateRange ? (
-                        <span className="text-xs text-outline font-medium">
+                        <span className="text-sm text-outline font-medium">
                           Tổng <strong className="text-primary font-bold">{nights} đêm</strong> nghỉ
                         </span>
                       ) : (
-                        <span className="text-xs text-rose-600 font-semibold">
+                        <span className="text-sm text-rose-600 font-semibold">
                           Ngày trả phòng chưa hợp lệ
                         </span>
                       )}
@@ -673,25 +675,25 @@ export function BookingModal({
 
                     {/* Quick Duration Selection Buttons (1 đêm, 2 đêm, 3 đêm, 5 đêm, 7 đêm + stepper) */}
                     <div className="mb-3 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs text-outline">
+                      <div className="flex items-center justify-between text-sm text-outline">
                         <span className="font-semibold text-on-surface-variant">Chọn nhanh số đêm:</span>
                         <div className="flex items-center gap-1 bg-surface-container rounded-lg p-0.5 border border-outline-variant/40">
                           <button
                             type="button"
                             onClick={() => handleSelectNights(Math.max(1, nights - 1))}
                             disabled={nights <= 1}
-                            className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                            className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                             title="Giảm 1 đêm"
                           >
                             -
                           </button>
-                          <span className="px-2 text-xs font-bold text-primary whitespace-nowrap min-w-14 text-center">
+                          <span className="px-2 text-sm font-bold text-primary whitespace-nowrap min-w-16 text-center">
                             {isValidDateRange ? `${nights} đêm` : 'Tùy chọn'}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleSelectNights(nights + 1)}
-                            className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+                            className="w-6 h-6 rounded flex items-center justify-center text-sm font-bold text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
                             title="Tăng 1 đêm"
                           >
                             +
@@ -707,7 +709,7 @@ export function BookingModal({
                               key={num}
                               type="button"
                               onClick={() => handleSelectNights(num)}
-                              className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+                              className={`px-3 py-1 text-sm font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
                                 isActive
                                   ? 'bg-primary text-on-primary border-primary shadow-xs'
                                   : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/50 hover:border-primary/60 hover:text-primary'
@@ -722,7 +724,7 @@ export function BookingModal({
 
                     <div className="grid grid-cols-2 gap-2.5">
                       <div className="space-y-1">
-                        <label className="text-xs uppercase tracking-wider font-bold text-outline block">
+                        <label className="text-sm uppercase tracking-wider font-bold text-outline block">
                           Nhận phòng
                         </label>
                         <input
@@ -730,7 +732,7 @@ export function BookingModal({
                           min={todayYMD}
                           value={checkIn}
                           onChange={(e) => handleCheckInChange(e.target.value)}
-                          className={`w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
+                          className={`w-full px-3 py-2 text-sm font-semibold rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.dates
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
                               : 'border-outline-variant/60 focus:border-primary'
@@ -738,7 +740,7 @@ export function BookingModal({
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs uppercase tracking-wider font-bold text-outline block">
+                        <label className="text-sm uppercase tracking-wider font-bold text-outline block">
                           Trả phòng {isValidDateRange ? `(${nights} đêm)` : '(chưa hợp lệ)'}
                         </label>
                         <input
@@ -746,7 +748,7 @@ export function BookingModal({
                           min={addDaysToYMD(checkIn, 1)}
                           value={checkOut}
                           onChange={(e) => handleCheckOutChange(e.target.value)}
-                          className={`w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
+                          className={`w-full px-3 py-2 text-sm font-semibold rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.dates
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
                               : 'border-outline-variant/60 focus:border-primary'
@@ -754,7 +756,7 @@ export function BookingModal({
                         />
                       </div>
                       {fieldErrors.dates && (
-                        <div className="col-span-2 text-xs text-rose-600 font-medium">
+                        <div className="col-span-2 text-sm text-rose-600 font-medium">
                           {fieldErrors.dates}
                         </div>
                       )}
@@ -764,23 +766,20 @@ export function BookingModal({
                   {/* Row B: Guest Information (Cùng khối với trường ngày đặt) */}
                   <div className="border-t border-outline-variant/30 pt-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" />
+                      <span className="text-sm uppercase tracking-wider font-bold text-primary flex items-center gap-1.5">
+                        <Users className="w-4 h-4" />
                         Thông Tin Khách Liên Hệ
-                      </span>
-                      <span className="text-xs text-outline">
-                        Nhận mã tra cứu &amp; xác nhận
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <div className="space-y-1">
-                        <label className="text-xs uppercase tracking-wider font-bold text-outline block">
+                        <label className="text-sm uppercase tracking-wider font-bold text-outline block">
                           Họ &amp; Tên khách
                         </label>
                         <input
                           type="text"
-                          placeholder="Nguyễn Văn A"
+                          placeholder="Họ và tên khách"
                           value={guestName}
                           onChange={(e) => {
                             setGuestName(e.target.value);
@@ -792,26 +791,26 @@ export function BookingModal({
                               });
                             }
                           }}
-                          className={`w-full px-3 py-1.5 text-xs rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
+                          className={`w-full px-3 py-2 text-sm rounded-xl bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.guestName
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
                               : 'border-outline-variant/60 focus:border-primary'
                           }`}
                         />
                         {fieldErrors.guestName && (
-                          <p className="text-xs text-rose-600 font-medium mt-0.5">
+                          <p className="text-sm text-rose-600 font-medium mt-0.5">
                             {fieldErrors.guestName}
                           </p>
                         )}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs uppercase tracking-wider font-bold text-outline block">
+                        <label className="text-sm uppercase tracking-wider font-bold text-outline block">
                           Email nhận xác nhận
                         </label>
                         <input
                           type="email"
-                          placeholder="guest@example.com"
+                          placeholder="email@example.com"
                           value={guestEmail}
                           onChange={(e) => {
                             setGuestEmail(e.target.value);
@@ -823,26 +822,26 @@ export function BookingModal({
                               });
                             }
                           }}
-                          className={`w-full px-3 py-1.5 text-xs rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
+                          className={`w-full px-3 py-2 text-sm rounded-xl bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.guestEmail
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
                               : 'border-outline-variant/60 focus:border-primary'
                           }`}
                         />
                         {fieldErrors.guestEmail && (
-                          <p className="text-xs text-rose-600 font-medium mt-0.5">
+                          <p className="text-sm text-rose-600 font-medium mt-0.5">
                             {fieldErrors.guestEmail}
                           </p>
                         )}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-xs uppercase tracking-wider font-bold text-outline block">
+                        <label className="text-sm uppercase tracking-wider font-bold text-outline block">
                           Số điện thoại
                         </label>
                         <input
                           type="tel"
-                          placeholder="0912 345 678"
+                          placeholder="09xx xxx xxx"
                           value={guestPhone}
                           onChange={(e) => {
                             setGuestPhone(e.target.value);
@@ -854,14 +853,14 @@ export function BookingModal({
                               });
                             }
                           }}
-                          className={`w-full px-3 py-1.5 text-xs rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
+                          className={`w-full px-3 py-2 text-sm rounded-xl bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.guestPhone
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
                               : 'border-outline-variant/60 focus:border-primary'
                           }`}
                         />
                         {fieldErrors.guestPhone && (
-                          <p className="text-xs text-rose-600 font-medium mt-0.5">
+                          <p className="text-sm text-rose-600 font-medium mt-0.5">
                             {fieldErrors.guestPhone}
                           </p>
                         )}
@@ -873,16 +872,16 @@ export function BookingModal({
                 {/* 2. Room Selection */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs uppercase tracking-wider font-bold text-primary block">
+                    <label className="text-sm uppercase tracking-wider font-bold text-primary block">
                       Chọn Hạng Phòng
                     </label>
-                    <span className="text-xs text-outline">
-                      {roomTypes.length} hạng phòng có sẵn
+                    <span className="text-sm text-outline font-medium">
+                      {roomTypes.length} hạng phòng
                     </span>
                   </div>
 
                   {fieldErrors.room && (
-                    <div className="text-xs text-rose-600 font-medium">
+                    <div className="text-sm text-rose-600 font-medium">
                       {fieldErrors.room}
                     </div>
                   )}
@@ -942,33 +941,33 @@ export function BookingModal({
                                     name="room_selection"
                                     checked={isSelected}
                                     onChange={() => setSelectedRoomId(room.id)}
-                                    className="w-3.5 h-3.5 text-primary accent-primary cursor-pointer shrink-0"
+                                    className="w-4 h-4 text-primary accent-primary cursor-pointer shrink-0"
                                   />
-                                  <span className="text-sm font-bold text-on-surface leading-tight truncate">
+                                  <span className="text-base font-bold text-on-surface leading-tight truncate">
                                     {room.name}
                                   </span>
                                   {isSelected && (
-                                    <span className="text-xs font-bold text-primary bg-primary-container/30 px-1.5 py-0.5 rounded uppercase whitespace-nowrap">
+                                    <span className="text-xs font-bold text-primary bg-primary-container/30 px-2 py-0.5 rounded uppercase whitespace-nowrap">
                                       Đang chọn
                                     </span>
                                   )}
                                 </div>
 
                                 {/* Prominent Core Room Attributes */}
-                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-on-surface-variant">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                    <Users className="w-3 h-3 text-primary" />
+                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-sm text-on-surface-variant font-medium">
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                    <Users className="w-3.5 h-3.5 text-primary" />
                                     Tối đa {guestsCount} khách
                                   </span>
                                   {room.bed_type && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                      <Bed className="w-3 h-3 text-primary" />
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                      <Bed className="w-3.5 h-3.5 text-primary" />
                                       {room.bed_type}
                                     </span>
                                   )}
                                   {room.area_sqm && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                      <Maximize2 className="w-3 h-3 text-primary" />
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                      <Maximize2 className="w-3.5 h-3.5 text-primary" />
                                       {room.area_sqm}m²
                                     </span>
                                   )}
@@ -978,8 +977,8 @@ export function BookingModal({
 
                             {/* Right Price */}
                             <div className="text-right shrink-0 sm:border-l sm:border-outline-variant/30 sm:pl-3">
-                              <span className="text-xs text-outline block">Mỗi đêm</span>
-                              <span className="text-sm font-bold text-primary">
+                              <span className="text-xs sm:text-sm text-outline block font-medium">Mỗi đêm</span>
+                              <span className="text-base font-bold text-primary">
                                 {formatVND(room.base_price)}
                               </span>
                             </div>
@@ -1008,54 +1007,54 @@ export function BookingModal({
                         <div className="w-full h-full bg-gradient-to-br from-[#12241e] via-[#1a382f] to-[#254d42] flex flex-col items-center justify-center p-3 text-center relative overflow-hidden">
                           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(197,168,128,0.15),transparent_70%)] pointer-events-none" />
                           <Building2 className="w-6 h-6 text-[#d4af37] mb-1" />
-                          <span className="text-white text-xs font-bold truncate max-w-[85%]">{property.name}</span>
+                          <span className="text-white text-sm font-bold truncate max-w-[85%]">{property.name}</span>
                           <span className="text-xs text-[#d4af37] font-medium whitespace-nowrap mt-0.5">
                             Cơ sở lưu trú đã xác thực
                           </span>
                         </div>
                       )}
-                      <div className="absolute top-2 left-2 flex items-center gap-1 bg-surface-bright/90 backdrop-blur-xs px-2 py-0.5 rounded-full text-xs font-bold text-on-surface">
-                        <Star className="w-3 h-3 fill-primary text-primary" />
+                      <div className="absolute top-2 left-2 flex items-center gap-1 bg-surface-bright/90 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-xs font-bold text-on-surface">
+                        <Star className="w-3.5 h-3.5 fill-primary text-primary" />
                         <span>{property.star_rating >= 5 ? '5.0 Luxury' : `${property.star_rating} Sao`}</span>
                       </div>
-                      <div className="absolute top-2 right-2 bg-primary text-on-primary px-2 py-0.5 rounded-full text-xs font-bold">
+                      <div className="absolute top-2 right-2 bg-primary text-on-primary px-2.5 py-0.5 rounded-full text-xs font-bold">
                         {property.city}
                       </div>
                     </div>
 
-                    <h3 className="font-serif text-base font-bold text-on-surface line-clamp-1">
+                    <h3 className="text-lg font-bold text-on-surface line-clamp-1 text-balance">
                       {property.name}
                     </h3>
-                    <p className="text-xs text-outline truncate mt-0.5">
-                      {selectedRoom?.name || 'Phòng nghỉ dưỡng'} • {isValidDateRange ? `${nights} đêm (${checkIn} → ${checkOut})` : 'Khoảng ngày chưa hợp lệ'}
+                    <p className="text-sm text-outline truncate mt-1 font-medium">
+                      {selectedRoom?.name || 'Phòng nghỉ dưỡng'} • {isValidDateRange ? `${nights} đêm (${formatYMDToDMY(checkIn)} → ${formatYMDToDMY(checkOut)})` : 'Khoảng ngày chưa hợp lệ'}
                     </p>
                   </div>
 
                   {/* Price breakdown */}
-                  <div className="space-y-2 text-xs pt-1 border-t border-outline-variant/30">
-                    <div className="flex justify-between text-xs font-bold text-on-surface pt-1">
+                  <div className="space-y-2.5 text-sm pt-1 border-t border-outline-variant/30">
+                    <div className="flex justify-between text-sm font-bold text-on-surface pt-1">
                       <span>Tổng tiền phòng {isValidDateRange ? `(${nights} đêm):` : ':'}</span>
-                      <span className="text-sm font-extrabold">
+                      <span className="text-base sm:text-lg font-extrabold">
                         {isValidDateRange ? formatVND(totalPrice) : '---'}
                       </span>
                     </div>
 
                     {/* 30% Deposit Prominent Highlight */}
-                    <div className="mt-2 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/70 border border-amber-200/90 shadow-xs">
+                    <div className="mt-2 p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/70 border border-amber-200/90 shadow-xs">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1">
-                            <ShieldCheck className="w-3.5 h-3.5 text-amber-800" />
+                          <span className="text-sm font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1">
+                            <ShieldCheck className="w-4 h-4 text-amber-800" />
                             Cọc 30% thanh toán ngay
                           </span>
-                          <span className="text-xs text-amber-800 block mt-0.5">
+                          <span className="text-sm text-amber-800 font-medium block mt-0.5">
                             {isValidDateRange
                               ? `(70% còn lại ${formatVND(balanceDue)} trả khi check-in)`
                               : 'Vui lòng chọn ngày trả phòng hợp lệ'}
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-lg sm:text-xl font-black text-amber-950">
+                          <span className="text-xl sm:text-2xl font-black text-amber-950">
                             {isValidDateRange ? formatVND(depositAmount) : '---'}
                           </span>
                         </div>
@@ -1068,7 +1067,7 @@ export function BookingModal({
                     <button
                       type="submit"
                       disabled={isSubmitDisabled}
-                      className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-[#584323] text-on-primary font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                      className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-[#584323] text-on-primary font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                     >
                       {isQuoteFetching ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1088,8 +1087,8 @@ export function BookingModal({
                       </span>
                     </button>
 
-                    <div className="text-xs text-outline flex items-center justify-center gap-1.5 text-center">
-                      <Lock className="w-3 h-3 text-emerald-700 shrink-0" />
+                    <div className="text-sm text-outline flex items-center justify-center gap-1.5 text-center font-medium">
+                      <Lock className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                       <span>Không cần tạo tài khoản. Cấp mã tra cứu tức thì.</span>
                     </div>
                   </div>

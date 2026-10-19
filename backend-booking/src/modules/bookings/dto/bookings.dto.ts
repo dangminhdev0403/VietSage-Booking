@@ -72,10 +72,12 @@ export const updateBookingStatusSchema = z.object({
 export type UpdateBookingStatusDto = z.infer<typeof updateBookingStatusSchema>;
 
 export const lookupBookingSchema = z.object({
-  booking_code: z.string().min(3),
+  booking_code: z.string().min(3).optional(),
   lookup_token: z.string().min(1).optional(),
   token: z.string().min(1).optional(),
   contact: z.string().optional(),
+  phone: z.string().optional(),
+  include_past: z.boolean().optional().default(false),
 });
 export type LookupBookingDto = z.infer<typeof lookupBookingSchema>;
 

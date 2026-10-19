@@ -90,7 +90,7 @@ export function AdminBookingDetailDrawer({
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-slate-500">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+              <span className="text-sm font-bold uppercase tracking-wider text-slate-500">
                 Chi Tiết Đơn Đặt Phòng
               </span>
             </div>
@@ -102,20 +102,20 @@ export function AdminBookingDetailDrawer({
 
               <button
                 onClick={handleCopyCode}
-                className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors text-sm font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 title="Sao chép mã đơn"
               >
                 {copiedCode ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-slate-400" />
+                  <Copy className="w-4 h-4 text-slate-400" />
                 )}
                 <span>{copiedCode ? 'Đã sao chép' : 'Sao chép'}</span>
               </button>
 
               {/* Status Badges */}
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border whitespace-nowrap ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider border whitespace-nowrap ${
                   booking.status === 'CONFIRMED'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : booking.status === 'PENDING'
@@ -144,7 +144,7 @@ export function AdminBookingDetailDrawer({
               </span>
 
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold whitespace-nowrap border ${
                   booking.payment_status === 'PAID'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : booking.payment_status === 'REFUNDED'
@@ -186,7 +186,7 @@ export function AdminBookingDetailDrawer({
             {/* Box 1: Financial Highlight */}
             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                <span className="text-sm font-bold uppercase tracking-wider text-slate-500">
                   Tổng Chi Phí Lưu Trú
                 </span>
                 <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs">
@@ -199,14 +199,14 @@ export function AdminBookingDetailDrawer({
                   {formattedTotalPrice}
                 </div>
                 {(formattedDeposit || formattedBalance) && (
-                  <div className="flex items-center gap-4 mt-2 text-xs">
+                  <div className="flex items-center gap-4 mt-2 text-sm">
                     {formattedDeposit && (
-                      <span className="text-slate-600">
+                      <span className="text-slate-600 font-medium">
                         Đặt cọc: <strong className="font-mono text-emerald-700">{formattedDeposit}</strong>
                       </span>
                     )}
                     {formattedBalance && (
-                      <span className="text-slate-600">
+                      <span className="text-slate-600 font-medium">
                         Tại quầy: <strong className="font-mono text-slate-900">{formattedBalance}</strong>
                       </span>
                     )}
@@ -214,9 +214,9 @@ export function AdminBookingDetailDrawer({
                 )}
               </div>
 
-              <div className="pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-500">
+              <div className="pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-sm text-slate-500 font-medium">
                 <span>Cổng đối soát: Chuyển khoản trực tuyến</span>
-                <span className="font-medium">
+                <span className="font-semibold text-slate-700">
                   {new Date(booking.created_at).toLocaleDateString('vi-VN')}
                 </span>
               </div>
@@ -225,7 +225,7 @@ export function AdminBookingDetailDrawer({
             {/* Box 2: Stay Schedule */}
             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                <span className="text-sm font-bold uppercase tracking-wider text-slate-500">
                   Lịch Trình Lưu Trú
                 </span>
                 <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-700 shadow-2xs">
@@ -235,22 +235,22 @@ export function AdminBookingDetailDrawer({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-xs text-slate-500 font-medium">Nhận phòng (Check-in)</span>
-                  <div className="text-sm sm:text-base font-bold text-slate-900 font-mono mt-0.5">
+                  <span className="text-sm text-slate-500 font-medium">Nhận phòng (Check-in)</span>
+                  <div className="text-base sm:text-lg font-bold text-slate-900 font-mono mt-0.5">
                     {booking.check_in}
                   </div>
-                  <span className="text-xs text-slate-400">Từ 14:00</span>
+                  <span className="text-sm text-slate-400">Từ 14:00</span>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-500 font-medium">Trả phòng (Check-out)</span>
-                  <div className="text-sm sm:text-base font-bold text-slate-900 font-mono mt-0.5">
+                  <span className="text-sm text-slate-500 font-medium">Trả phòng (Check-out)</span>
+                  <div className="text-base sm:text-lg font-bold text-slate-900 font-mono mt-0.5">
                     {booking.check_out}
                   </div>
-                  <span className="text-xs text-slate-400">Trước 12:00</span>
+                  <span className="text-sm text-slate-400">Trước 12:00</span>
                 </div>
               </div>
 
-              <div className="pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-xs">
+              <div className="pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-sm font-medium">
                 <span className="text-slate-500">Thời lượng nghỉ dưỡng</span>
                 <span className="font-extrabold text-blue-700 font-mono">
                   {booking.nights} đêm lưu trú
@@ -263,36 +263,36 @@ export function AdminBookingDetailDrawer({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Column 1: Property & Room */}
             <div className="p-5 rounded-2xl bg-white border border-slate-200/80 space-y-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-base border-b border-slate-100 pb-2.5">
                 <Building2 className="w-4.5 h-4.5 text-blue-600" />
                 <span>Cơ Sở Lưu Trú &amp; Hạng Phòng</span>
               </div>
 
-              <div className="space-y-2.5 text-xs sm:text-sm">
+              <div className="space-y-2.5 text-sm sm:text-base">
                 <div>
-                  <span className="text-xs text-slate-500 font-medium">Tên khách sạn &amp; Resort:</span>
-                  <div className="text-sm sm:text-base font-bold text-slate-900 mt-0.5 text-balance">
+                  <span className="text-sm text-slate-500 font-medium">Tên khách sạn &amp; Resort:</span>
+                  <div className="text-base sm:text-lg font-bold text-slate-900 mt-0.5 text-balance">
                     {booking.property_name || 'Khách sạn đối tác OTA'}
                   </div>
                   {booking.property_address && (
-                    <div className="flex items-start gap-1 text-xs text-slate-500 mt-1">
-                      <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400 mt-0.5" />
+                    <div className="flex items-start gap-1 text-sm text-slate-500 mt-1 font-medium">
+                      <MapPin className="w-4 h-4 shrink-0 text-slate-400 mt-0.5" />
                       <span>{booking.property_address}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-100">
-                  <span className="text-xs text-slate-500 font-medium">Hạng phòng:</span>
-                  <div className="text-sm font-bold text-slate-800 mt-0.5">
+                  <span className="text-sm text-slate-500 font-medium">Hạng phòng:</span>
+                  <div className="text-base font-bold text-slate-800 mt-0.5">
                     {booking.room_type_name || 'Hạng phòng tiêu chuẩn'}
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-sm text-slate-600 font-medium">
                   <span>Trạng thái phòng</span>
                   <span className="font-bold text-emerald-700 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Đã phân bổ allotment</span>
                   </span>
                 </div>
@@ -301,45 +301,45 @@ export function AdminBookingDetailDrawer({
 
             {/* Column 2: Guest Details */}
             <div className="p-5 rounded-2xl bg-white border border-slate-200/80 space-y-3.5 shadow-2xs">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-base border-b border-slate-100 pb-2.5">
                 <User className="w-4.5 h-4.5 text-slate-700" />
                 <span>Thông Tin Khách Hàng</span>
               </div>
 
-              <div className="space-y-2.5 text-xs sm:text-sm">
+              <div className="space-y-2.5 text-sm sm:text-base">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 font-medium">Họ và tên:</span>
-                  <span className="font-bold text-slate-900 text-sm sm:text-base">{booking.guest_name}</span>
+                  <span className="text-sm text-slate-500 font-medium">Họ và tên:</span>
+                  <span className="font-bold text-slate-900 text-base sm:text-lg">{booking.guest_name}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 font-medium">Số điện thoại:</span>
+                  <span className="text-sm text-slate-500 font-medium">Số điện thoại:</span>
                   <a
                     href={`tel:${booking.guest_phone}`}
                     className="font-mono font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5"
                   >
-                    <Phone className="w-3.5 h-3.5" />
+                    <Phone className="w-4 h-4" />
                     <span>{booking.guest_phone}</span>
                   </a>
                 </div>
 
                 {booking.guest_email && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500 font-medium">Email:</span>
+                    <span className="text-sm text-slate-500 font-medium">Email:</span>
                     <a
                       href={`mailto:${booking.guest_email}`}
                       className="font-medium text-slate-700 hover:text-blue-600 flex items-center gap-1.5 truncate max-w-[200px]"
                     >
-                      <Mail className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                      <Mail className="w-4 h-4 shrink-0 text-slate-400" />
                       <span className="truncate">{booking.guest_email}</span>
                     </a>
                   </div>
                 )}
 
                 {booking.special_requests && (
-                  <div className="pt-2 border-t border-slate-100 text-xs">
+                  <div className="pt-2 border-t border-slate-100 text-sm">
                     <span className="text-slate-500 font-medium">Yêu cầu đặc biệt:</span>
-                    <p className="mt-1 p-2.5 bg-amber-50/80 border border-amber-200/70 rounded-xl text-amber-900 font-medium">
+                    <p className="mt-1 p-3 bg-amber-50/80 border border-amber-200/70 rounded-xl text-amber-900 font-medium">
                       {booking.special_requests}
                     </p>
                   </div>
@@ -354,7 +354,7 @@ export function AdminBookingDetailDrawer({
         <div className="p-4 sm:p-5 border-t border-slate-200/80 bg-slate-50/80 flex items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-sm sm:text-base font-bold transition-colors cursor-pointer"
           >
             Đóng cửa sổ
           </button>
@@ -363,7 +363,7 @@ export function AdminBookingDetailDrawer({
             {canCancel && onCancelRequest && (
               <button
                 onClick={() => onCancelRequest(booking)}
-                className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 text-sm sm:text-base font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <AlertTriangle className="w-4 h-4" />
                 <span>Hủy đơn</span>
@@ -372,7 +372,7 @@ export function AdminBookingDetailDrawer({
 
             <button
               onClick={handleCopyCode}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
             >
               <span>{copiedCode ? 'Đã sao chép' : 'Sao chép mã đơn'}</span>
               <ArrowRight className="w-4 h-4" />

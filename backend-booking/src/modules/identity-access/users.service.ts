@@ -23,7 +23,10 @@ export class UsersService {
     private readonly auditService: AuditService,
   ) {}
 
-  async listUsers(rawQuery: ListUsersQueryDto) {
+  async listUsers(
+    rawQuery: ListUsersQueryDto,
+    adminUser?: AuthenticatedUser,
+  ) {
     const parsed = listUsersQuerySchema.safeParse(rawQuery);
     if (!parsed.success) {
       throw new BadRequestException({
@@ -36,7 +39,17 @@ export class UsersService {
 
     const where: Prisma.AccountWhereInput = {};
 
-    if (role && role !== 'ALL') {
+    const isCallerAdmin = adminUser?.role === 'ADMIN';
+
+    if (isCallerAdmin) {
+      if (role === 'ADMIN') {
+        where.role = { in: [] };
+      } else if (!role || role === 'ALL') {
+        where.role = { not: 'ADMIN' };
+      } else {
+        where.role = role;
+      }
+    } else if (role && role !== 'ALL') {
       where.role = role;
     }
 
@@ -61,8 +74,15 @@ export class UsersService {
 
     const skip = (page - 1) * pageSize;
 
-    const [items, total, totalUsers, totalPartners, totalAdmins, totalPending] =
-      await Promise.all([
+    const [
+      items,
+      total,
+      totalUsers,
+      totalPartners,
+      totalAdmins,
+      totalPending,
+      totalTravelers,
+    ] = await Promise.all([
         this.prisma.account.findMany({
           where,
           skip,
@@ -104,12 +124,15 @@ export class UsersService {
           },
         }),
         this.prisma.account.count({ where }),
-        this.prisma.account.count(),
+        this.prisma.account.count(
+          isCallerAdmin ? { where: { role: { not: 'ADMIN' } } } : undefined,
+        ),
         this.prisma.account.count({ where: { role: 'HOTEL_PARTNER' } }),
         this.prisma.account.count({ where: { role: 'ADMIN' } }),
         this.prisma.account.count({
           where: { role: 'TRAVELER', managedPropertyId: { not: null } },
         }),
+        this.prisma.account.count({ where: { role: 'TRAVELER' } }),
       ]);
 
     return {
@@ -148,8 +171,9 @@ export class UsersService {
       summary: {
         total_users: totalUsers,
         total_partners: totalPartners,
-        total_admins: totalAdmins,
+        total_admins: isCallerAdmin ? 0 : totalAdmins,
         total_pending: totalPending,
+        total_travelers: totalTravelers,
       },
     };
   }
@@ -174,6 +198,12 @@ export class UsersService {
 
     if (!account) {
       throw new NotFoundException('Không tìm thấy tài khoản người dùng');
+    }
+
+    if (account.role === 'ADMIN') {
+      throw new BadRequestException(
+        'Không thể phê duyệt đối tác cho tài khoản Quản trị viên (ADMIN)',
+      );
     }
 
     const partnerRole = await this.prisma.role.findUnique({
@@ -309,6 +339,19 @@ export class UsersService {
 
     if (!account) {
       throw new NotFoundException('Không tìm thấy tài khoản người dùng');
+    }
+
+    // STRICT PEER-ISOLATION: Block any action/modification on peer admin accounts
+    if (adminUser.role === 'ADMIN' && account.role === 'ADMIN') {
+      throw new BadRequestException(
+        'Không thể thao tác hoặc thay đổi vai trò trên tài khoản cùng cấp Quản trị viên (ADMIN)',
+      );
+    }
+
+    if (adminUser.role && account.role === adminUser.role) {
+      throw new BadRequestException(
+        'Không có quyền thao tác trên tài khoản cùng cấp',
+      );
     }
 
     const { role, managed_property_id, is_active } = parsed.data;

@@ -144,26 +144,35 @@ export class PaymentsService {
       throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
     }
 
-    // Capability check: If booking has lookupTokenHash, verify it strictly
+    // Capability check: If booking has lookupTokenHash, verify via phone, email or token hash
     if (booking.lookupTokenHash) {
       if (!lookupToken || !lookupToken.trim()) {
         throw new UnauthorizedException(
-          'Yêu cầu mã tra cứu (lookup capability) để thực hiện thanh toán',
+          'Yêu cầu mã tra cứu hoặc số điện thoại để thực hiện thanh toán',
         );
       }
-      const tokenHash = crypto
-        .createHash('sha256')
-        .update(lookupToken.trim())
-        .digest('hex');
-      const bufExpected = Buffer.from(booking.lookupTokenHash, 'hex');
-      const bufActual = Buffer.from(tokenHash, 'hex');
-      if (
-        bufExpected.length !== bufActual.length ||
-        !crypto.timingSafeEqual(bufExpected, bufActual)
-      ) {
-        throw new ForbiddenException(
-          'Mã tra cứu không hợp lệ hoặc không khớp với đơn đặt phòng',
-        );
+      const cleanInput = lookupToken.trim();
+      const guestPhone = normalizePhone(booking.guestPhone || '');
+      const inputPhone = normalizePhone(cleanInput);
+      const isPhoneMatch = inputPhone.length >= 8 && guestPhone === inputPhone;
+      const isEmailMatch =
+        (booking.guestEmail || '').toLowerCase() === cleanInput.toLowerCase();
+
+      if (!isPhoneMatch && !isEmailMatch) {
+        const tokenHash = crypto
+          .createHash('sha256')
+          .update(cleanInput)
+          .digest('hex');
+        const bufExpected = Buffer.from(booking.lookupTokenHash, 'hex');
+        const bufActual = Buffer.from(tokenHash, 'hex');
+        if (
+          bufExpected.length !== bufActual.length ||
+          !crypto.timingSafeEqual(bufExpected, bufActual)
+        ) {
+          throw new ForbiddenException(
+            'Mã tra cứu hoặc số điện thoại không khớp với đơn đặt phòng',
+          );
+        }
       }
     }
 

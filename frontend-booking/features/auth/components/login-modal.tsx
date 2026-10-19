@@ -99,12 +99,9 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Cổng Quản Trị &amp; Đối Tác</span>
           </div>
-          <h2 className="text-2xl font-extrabold text-on-surface">
-            Đăng Nhập Quản Trị &amp; Đối Tác
+          <h2 className="text-2xl font-extrabold text-on-surface text-balance">
+            Đăng Nhập Hệ Thống
           </h2>
-          <p className="text-xs text-outline mt-1 leading-relaxed">
-            Dành cho Quản trị viên hệ thống VietSage và các Đối tác vận hành khách sạn.
-          </p>
         </div>
 
         {/* Alerts */}
@@ -120,7 +117,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
         {/* LOGIN FORM */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-outline mb-1">
+            <label className="block text-sm font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">
               Tên Đăng Nhập Hoặc Email
             </label>
             <div className="relative">
@@ -130,14 +127,14 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 required
                 value={loginUsername}
                 onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder="Nhập tên đăng nhập hoặc email..."
+                placeholder="admin@vietsage.vn hoặc tên đăng nhập"
                 className="w-full pl-10 pr-4 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-outline mb-1">
+            <label className="block text-sm font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">
               Mật Khẩu
             </label>
             <div className="relative">
@@ -147,7 +144,7 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="Nhập mật khẩu bảo mật..."
+                placeholder="Mật khẩu bảo mật"
                 className="w-full pl-10 pr-10 py-2.5 bg-surface-container rounded-xl border border-transparent focus:border-primary text-base font-medium text-on-surface placeholder:text-outline/60 focus:outline-none transition-all"
               />
               <button
@@ -181,13 +178,13 @@ export function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
 
         {/* Guest Self-Service Redirect Box */}
         <div className="mt-6 pt-4 border-t border-outline-variant/20 text-center">
-          <p className="text-xs text-outline mb-2">
+          <p className="text-sm text-outline mb-2">
             Quý khách là du khách muốn tra cứu đơn phòng?
           </p>
           <Link
             href="/booking/lookup"
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 text-xs text-primary font-bold hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm text-primary font-bold hover:underline"
           >
             <span>Tra cứu đơn đặt phòng không cần tài khoản</span>
             <ArrowRight className="w-3.5 h-3.5" />

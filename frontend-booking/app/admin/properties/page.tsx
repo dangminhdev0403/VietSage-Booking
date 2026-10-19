@@ -831,8 +831,8 @@ export default function AdminPropertiesPage() {
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-on-surface">Đăng Cơ Sở Lưu Trú Mới</h3>
-                  <p className="text-xs text-outline">Thêm khách sạn hoặc resort vào hệ sinh thái phân phối OTA</p>
+                  <h3 className="text-xl font-bold text-on-surface">Đăng Cơ Sở Lưu Trú Mới</h3>
+                  <p className="text-sm text-outline">Thêm khách sạn hoặc khu nghỉ dưỡng vào hệ sinh thái phân phối OTA</p>
                 </div>
               </div>
               <button
@@ -849,36 +849,36 @@ export default function AdminPropertiesPage() {
                 {/* Left Column: Identifiers, location & classification */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">Tên Khách Sạn / Resort *</label>
+                    <label className="text-sm font-semibold text-on-surface">Tên Khách Sạn / Resort *</label>
                     <input
                       type="text"
                       required
-                      placeholder="Ví dụ: Sunset Sanato Resort & Villas"
+                      placeholder="Nhập tên cơ sở lưu trú"
                       value={newPropName}
                       onChange={(e) => setNewPropName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-on-surface">Tỉnh / Thành Phố *</label>
+                      <label className="text-sm font-semibold text-on-surface">Tỉnh / Thành Phố *</label>
                       <input
                         type="text"
                         required
-                        placeholder="Ví dụ: Phú Quốc"
+                        placeholder="Tỉnh hoặc thành phố trực thuộc"
                         value={newPropCity}
                         onChange={(e) => setNewPropCity(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-on-surface">Hạng Sao</label>
+                      <label className="text-sm font-semibold text-on-surface">Hạng Sao</label>
                       <select
                         value={newPropStarRating}
                         onChange={(e) => setNewPropStarRating(parseFloat(e.target.value))}
-                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary cursor-pointer"
                       >
                         <option value={5.0}>5 Sao (Luxury Resort)</option>
                         <option value={4.5}>4.5 Sao (Premium)</option>
@@ -890,31 +890,31 @@ export default function AdminPropertiesPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">Địa Chỉ Chi Tiết *</label>
+                    <label className="text-sm font-semibold text-on-surface">Địa Chỉ Chi Tiết *</label>
                     <input
                       type="text"
                       required
-                      placeholder="Ví dụ: Bãi Trường, Xã Dương Tơ, TP. Phú Quốc, Kiên Giang"
+                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện"
                       value={newPropAddress}
                       onChange={(e) => setNewPropAddress(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                     />
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
-                    <label className="text-xs font-bold text-primary flex items-center justify-between">
+                    <label className="text-sm font-semibold text-primary flex items-center justify-between">
                       <span>Email Đối Tác / Quản Trị VietSage PMS</span>
                       <span className="text-xs text-outline font-normal">Tùy chọn</span>
                     </label>
                     <input
                       type="email"
-                      placeholder="Ví dụ: partner.minh123@vietsage.vn"
+                      placeholder="partner@vietsage.vn"
                       value={newPropVietSageHotelId}
                       onChange={(e) => setNewPropVietSageHotelId(e.target.value)}
-                      className="w-full px-4 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary font-medium"
                     />
                     <p className="text-xs text-outline text-pretty">
-                      Định danh duy nhất và liên kết an toàn qua email quản trị PMS của đối tác.
+                      Liên kết tài khoản PMS của cơ sở lưu trú để tự động đồng bộ tồn kho và giá phòng.
                     </p>
                   </div>
                 </div>
@@ -922,13 +922,13 @@ export default function AdminPropertiesPage() {
                 {/* Right Column: Visuals & Narrative */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">URL Hình Ảnh Đại Diện (Thumbnail)</label>
+                    <label className="text-sm font-semibold text-on-surface">URL Hình Ảnh Đại Diện (Thumbnail)</label>
                     <input
                       type="url"
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://domain.com/photo.jpg"
                       value={newPropThumbnail}
                       onChange={(e) => setNewPropThumbnail(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                     />
                     {newPropThumbnail && (
                       <div className="relative aspect-video rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container">
@@ -945,13 +945,13 @@ export default function AdminPropertiesPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">Mô Tả Giới Thiệu Cơ Sở</label>
+                    <label className="text-sm font-semibold text-on-surface">Mô Tả Giới Thiệu Cơ Sở</label>
                     <textarea
                       rows={newPropThumbnail ? 4 : 8}
-                      placeholder="Khu nghỉ dưỡng 5 sao tiêu chuẩn quốc tế tọa lạc bên bờ biển nguyên sơ..."
+                      placeholder="Mô tả tổng quan về vị trí địa lý, quy mô và dịch vụ tiện ích chính của khách sạn..."
                       value={newPropDescription}
                       onChange={(e) => setNewPropDescription(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary resize-none"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary resize-none"
                     />
                   </div>
                 </div>
@@ -961,14 +961,14 @@ export default function AdminPropertiesPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-xs font-bold text-on-surface hover:bg-surface-container cursor-pointer transition-colors"
+                  className="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-sm font-semibold text-on-surface hover:bg-surface-container cursor-pointer transition-colors"
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-sm font-semibold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isSubmitting ? 'Đang Lưu...' : 'Xác Nhận Đăng Khách Sạn'}</span>
@@ -989,8 +989,8 @@ export default function AdminPropertiesPage() {
                   <Link2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-on-surface">Kết Nối VietSage PMS & Chỉnh Sửa</h3>
-                  <p className="text-xs text-outline">Liên kết mã khách sạn PMS hoặc cập nhật thông tin hiển thị</p>
+                  <h3 className="text-xl font-bold text-on-surface">Kết Nối VietSage PMS & Chỉnh Sửa</h3>
+                  <p className="text-sm text-outline">Liên kết tài khoản quản trị PMS hoặc cập nhật hồ sơ khách sạn</p>
                 </div>
               </div>
               <button
@@ -1009,7 +1009,7 @@ export default function AdminPropertiesPage() {
                   {/* VietSage Connection Section */}
                   <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-primary flex items-center gap-1.5">
+                      <label className="text-sm font-semibold text-primary flex items-center gap-1.5">
                         <Link2 className="w-4 h-4" />
                         <span>Email Đối Tác / Quản Trị VietSage PMS</span>
                       </label>
@@ -1025,47 +1025,49 @@ export default function AdminPropertiesPage() {
                     </div>
                     <input
                       type="email"
-                      placeholder="Ví dụ: partner.minh123@vietsage.vn"
+                      placeholder="partner@vietsage.vn"
                       value={editPropVietSageHotelId}
                       onChange={(e) => setEditPropVietSageHotelId(e.target.value)}
-                      className="w-full px-4 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary font-medium"
                     />
                     <p className="text-xs text-outline text-pretty">
                       {editPropVietSageHotelId
                         ? 'Đang liên kết bảo mật với VietSage PMS. Đơn đặt phòng OTA sẽ tự động đồng bộ.'
-                        : 'Chưa có email liên kết. Nhập Email quản trị VietSage để kích hoạt kết nối.'}
+                        : 'Chưa có email liên kết. Nhập Email quản trị VietSage để kích hoạt kết nối tự động.'}
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">Tên Khách Sạn / Resort *</label>
+                    <label className="text-sm font-semibold text-on-surface">Tên Khách Sạn / Resort *</label>
                     <input
                       type="text"
                       required
+                      placeholder="Nhập tên cơ sở lưu trú"
                       value={editPropName}
                       onChange={(e) => setEditPropName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-on-surface">Tỉnh / Thành Phố *</label>
+                      <label className="text-sm font-semibold text-on-surface">Tỉnh / Thành Phố *</label>
                       <input
                         type="text"
                         required
+                        placeholder="Tỉnh hoặc thành phố trực thuộc"
                         value={editPropCity}
                         onChange={(e) => setEditPropCity(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-on-surface">Hạng Sao</label>
+                      <label className="text-sm font-semibold text-on-surface">Hạng Sao</label>
                       <select
                         value={editPropStarRating}
                         onChange={(e) => setEditPropStarRating(parseFloat(e.target.value))}
-                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary cursor-pointer"
+                        className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary cursor-pointer"
                       >
                         <option value={5.0}>5 Sao (Luxury Resort)</option>
                         <option value={4.5}>4.5 Sao (Premium)</option>
@@ -1077,13 +1079,14 @@ export default function AdminPropertiesPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">Địa Chỉ Chi Tiết *</label>
+                    <label className="text-sm font-semibold text-on-surface">Địa Chỉ Chi Tiết *</label>
                     <input
                       type="text"
                       required
+                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện"
                       value={editPropAddress}
                       onChange={(e) => setEditPropAddress(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                     />
                   </div>
                 </div>
@@ -1091,13 +1094,13 @@ export default function AdminPropertiesPage() {
                 {/* Right Column: Visuals & Narrative */}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">URL Hình Ảnh Đại Diện (Thumbnail)</label>
+                    <label className="text-sm font-semibold text-on-surface">URL Hình Ảnh Đại Diện (Thumbnail)</label>
                     <input
                       type="url"
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://domain.com/photo.jpg"
                       value={editPropThumbnail}
                       onChange={(e) => setEditPropThumbnail(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary"
                     />
                     {editPropThumbnail && (
                       <div className="relative aspect-video rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container">
@@ -1114,12 +1117,13 @@ export default function AdminPropertiesPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface">Mô Tả Giới Thiệu</label>
+                    <label className="text-sm font-semibold text-on-surface">Mô Tả Giới Thiệu</label>
                     <textarea
                       rows={editPropThumbnail ? 4 : 8}
+                      placeholder="Mô tả tổng quan về khách sạn..."
                       value={editPropDescription}
                       onChange={(e) => setEditPropDescription(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary resize-none"
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-sm text-on-surface focus:outline-hidden focus:border-primary resize-none"
                     />
                   </div>
                 </div>
@@ -1129,14 +1133,14 @@ export default function AdminPropertiesPage() {
                 <button
                   type="button"
                   onClick={() => setEditingProperty(null)}
-                  className="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-xs font-bold text-on-surface hover:bg-surface-container cursor-pointer transition-colors"
+                  className="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-sm font-semibold text-on-surface hover:bg-surface-container cursor-pointer transition-colors"
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={isEditSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-sm font-semibold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isEditSubmitting ? 'Đang Lưu...' : 'Lưu Thay Đổi & Kết Nối'}</span>

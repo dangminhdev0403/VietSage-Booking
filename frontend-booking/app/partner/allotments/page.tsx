@@ -607,13 +607,10 @@ export default function PartnerAllotmentsPage() {
           <div className="bg-surface-container-lowest rounded-3xl max-w-3xl lg:max-w-4xl w-full p-6 sm:p-8 border border-outline-variant/40 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex justify-between items-start border-b border-outline-variant/20 pb-4">
               <div>
-                <span className="text-xs uppercase tracking-wider text-stone-500 font-bold block">
-                  Cập Nhật Lịch &amp; Giá Động
-                </span>
-                <h3 className="text-xl font-extrabold text-on-surface mt-0.5 text-balance">
-                  Ngày {editingDay.date}
+                <h3 className="text-xl sm:text-2xl font-bold text-on-surface text-balance">
+                  Cập Nhật Allotment Ngày {editingDay.date}
                 </h3>
-                <p className="text-xs text-emerald-800 font-bold mt-0.5">
+                <p className="text-sm font-semibold text-emerald-800 mt-1">
                   Hạng phòng: {activeRoomType.name}
                 </p>
               </div>
@@ -630,7 +627,7 @@ export default function PartnerAllotmentsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
                 {/* Price Input */}
                 <div>
-                  <label className="block text-xs font-bold text-on-surface mb-1.5">
+                  <label className="block text-sm font-semibold text-on-surface mb-1.5">
                     Giá Phòng Đêm Này (VND)
                   </label>
                   <input
@@ -642,14 +639,14 @@ export default function PartnerAllotmentsPage() {
                     className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-emerald-700 text-base font-bold text-on-surface bg-surface-container-low"
                     required
                   />
-                  <span className="text-xs text-stone-500 mt-1 block">
-                    Giá hiển thị: {currencyFormatter.format(editPrice || 0)} / đêm
+                  <span className="text-xs text-stone-500 mt-1.5 block">
+                    Giá áp dụng: {currencyFormatter.format(editPrice || 0)} / đêm
                   </span>
                 </div>
 
                 {/* Total Quota Rooms */}
                 <div>
-                  <label className="block text-xs font-bold text-on-surface mb-1.5">
+                  <label className="block text-sm font-semibold text-on-surface mb-1.5">
                     Hạn Mức Phân Phối (Tổng Quota Phòng)
                   </label>
                   <input
@@ -661,7 +658,7 @@ export default function PartnerAllotmentsPage() {
                     className="w-full h-11 px-4 rounded-xl border border-outline-variant/50 focus:border-emerald-700 text-base font-bold text-on-surface bg-surface-container-low"
                     required
                   />
-                  <div className="flex items-center justify-between text-xs text-stone-500 mt-1">
+                  <div className="flex items-center justify-between text-xs text-stone-500 mt-1.5">
                     <span>Đã đặt: {editingDay.booked_rooms} phòng</span>
                     <span>Còn trống: {Math.max(0, editTotalRooms - editingDay.booked_rooms)} phòng</span>
                   </div>
@@ -671,8 +668,8 @@ export default function PartnerAllotmentsPage() {
               {/* Stop-Sell Toggle */}
               <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-on-surface flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="text-sm font-semibold text-on-surface flex items-center gap-1.5">
+                    <Lock className="w-4 h-4 text-rose-600" />
                     <span>Chặn Bán Phòng (Stop-Sell)</span>
                   </span>
                   <p className="text-xs text-stone-500 mt-0.5 text-pretty">
@@ -692,14 +689,14 @@ export default function PartnerAllotmentsPage() {
                 <button
                   type="button"
                   onClick={handleCloseEdit}
-                  className="px-5 h-11 rounded-2xl bg-surface-container text-on-surface text-xs font-bold hover:bg-surface-container-high transition-colors cursor-pointer whitespace-nowrap"
+                  className="px-5 h-11 rounded-2xl bg-surface-container text-on-surface text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer whitespace-nowrap"
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 h-11 rounded-2xl text-white text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50 bg-emerald-700 hover:bg-emerald-800 whitespace-nowrap"
+                  className="px-6 h-11 rounded-2xl text-white text-sm font-semibold transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50 bg-emerald-700 hover:bg-emerald-800 whitespace-nowrap"
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? 'Đang Lưu...' : 'Lưu Thay Đổi'}</span>

@@ -128,14 +128,14 @@ export function PropertyCard({
 
           {/* Amenities & Highlights chips */}
           <div className="flex flex-wrap gap-2 pt-1">
-            <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold">
+            <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold whitespace-nowrap">
               Xác nhận tức thì
             </span>
-            <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold">
+            <span className="text-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-semibold whitespace-nowrap">
               Cam kết giá tốt
             </span>
             {roomTypes.length > 0 && (
-              <span className="text-xs px-3 py-1.5 rounded-lg bg-primary-container/20 text-primary font-bold flex items-center gap-1">
+              <span className="text-xs px-3 py-1.5 rounded-lg bg-primary-container/20 text-primary font-bold flex items-center gap-1 whitespace-nowrap">
                 <BedDouble className="w-3.5 h-3.5" />
                 {roomTypes.length} hạng phòng
               </span>
@@ -146,9 +146,10 @@ export function PropertyCard({
         {/* Price & Action Bottom */}
         <div className="flex items-end justify-between pt-5 mt-5 border-t border-outline-variant/30">
           <div className="flex flex-col">
-            <span className="text-xs text-outline uppercase font-bold tracking-wider">Giá mỗi đêm</span>
-            <div className="text-2xl font-black text-primary tracking-tight">
+            <span className="text-xs text-outline uppercase font-bold tracking-wider">Giá chỉ từ</span>
+            <div className="text-2xl font-black text-primary tracking-tight whitespace-nowrap">
               {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(lowestPrice)}
+              <span className="text-xs font-normal text-outline"> / đêm</span>
             </div>
           </div>
 

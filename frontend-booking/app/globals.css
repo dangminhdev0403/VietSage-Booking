@@ -92,20 +92,20 @@ body {
 
 .aurum-swal-title {
   font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
-  font-size: 1.15rem !important;
-  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
   color: #0f172a !important;
   letter-spacing: -0.015em !important;
   padding: 0 !important;
-  margin-bottom: 0.35rem !important;
+  margin-bottom: 0.4rem !important;
   line-height: 1.4 !important;
   text-wrap: balance !important;
 }
 
 .aurum-swal-html {
   font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
-  font-size: 0.875rem !important;
-  line-height: 1.55 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.6 !important;
   color: #475569 !important;
   margin: 0.25rem 0 1rem 0 !important;
   padding: 0 !important;
@@ -125,8 +125,8 @@ body {
   color: #ffffff !important;
   padding: 0.625rem 1.25rem !important;
   border-radius: 0.75rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
   letter-spacing: normal !important;
   text-transform: none !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -151,8 +151,8 @@ body {
   color: #ffffff !important;
   padding: 0.625rem 1.25rem !important;
   border-radius: 0.75rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
   letter-spacing: normal !important;
   text-transform: none !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -177,8 +177,8 @@ body {
   color: #475569 !important;
   padding: 0.625rem 1.25rem !important;
   border-radius: 0.75rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
   letter-spacing: normal !important;
   text-transform: none !important;
   border: 1px solid #e2e8f0 !important;

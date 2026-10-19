@@ -204,6 +204,17 @@ export const bookingItemSchema = z.object({
   created_at: z.string(),
 });
 
+export const bookingLookupResponseSchema = z.union([
+  bookingItemSchema.extend({
+    items: z.array(bookingItemSchema).optional(),
+    total: z.number().optional(),
+  }),
+  z.object({
+    items: z.array(bookingItemSchema),
+    total: z.number().optional(),
+  }),
+]);
+
 export const bookingListResponseSchema = z.object({
   items: z.array(bookingItemSchema),
   page: z.number(),

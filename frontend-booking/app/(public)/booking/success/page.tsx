@@ -24,30 +24,30 @@ function BookingSuccessContent() {
     const fetchInvoice = () => {
       if (!lookupToken) return Promise.resolve();
       return lookupBooking(bookingCode, lookupToken)
-        .then((res) => {
-          if (active && res) {
-            setBookingData({
-              booking_code: res.booking_code,
-              lookup_token: lookupToken,
-              property_name: res.property_name || 'Khu nghỉ dưỡng cao cấp',
-              property_address: res.property_address,
-              room_type_name: res.room_type_name,
-              guest_name: res.guest_name,
-              guest_email: res.guest_email,
-              guest_phone: res.guest_phone,
-              check_in: res.check_in,
-              check_out: res.check_out,
-              nights: res.nights,
-              total_price: res.total_price,
-              deposit_amount: res.deposit_amount,
-              balance_due: res.balance_due,
-              status: res.status,
-              payment_status: res.payment_status || 'DEPOSIT_PAID',
-              assigned_room_number: (res as any).assigned_room_number ?? null,
-              addons: res.addons,
-              created_at: res.created_at,
-            });
-          }
+        .then((raw: any) => {
+          const res = Array.isArray(raw?.items) && raw.items.length > 0 ? raw.items[0] : raw;
+          if (!res) return;
+          setBookingData({
+            booking_code: res.booking_code,
+            lookup_token: lookupToken,
+            property_name: res.property_name || 'Khu nghỉ dưỡng cao cấp',
+            property_address: res.property_address,
+            room_type_name: res.room_type_name,
+            guest_name: res.guest_name,
+            guest_email: res.guest_email,
+            guest_phone: res.guest_phone,
+            check_in: res.check_in,
+            check_out: res.check_out,
+            nights: res.nights,
+            total_price: res.total_price,
+            deposit_amount: res.deposit_amount,
+            balance_due: res.balance_due,
+            status: res.status,
+            payment_status: res.payment_status || 'DEPOSIT_PAID',
+            assigned_room_number: (res as any).assigned_room_number ?? null,
+            addons: res.addons,
+            created_at: res.created_at,
+          });
         })
         .catch(() => {});
     };
@@ -61,7 +61,19 @@ function BookingSuccessContent() {
       session_id: sessionId || undefined,
       lookup_token: lookupToken || undefined,
     })
-      .then(() => {
+      .then((verifyRes) => {
+        if (verifyRes?.is_paid) {
+          setBookingData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: verifyRes.status || 'CONFIRMED',
+                  payment_status: verifyRes.payment_status || 'DEPOSIT_PAID',
+                  paid_at: verifyRes.paid_at || new Date().toISOString(),
+                }
+              : prev,
+          );
+        }
         // Broadcast across tabs
         if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
           try {
@@ -92,12 +104,14 @@ function BookingSuccessContent() {
     if (typeof window !== 'undefined') {
       window.close();
       // Fallback if browser blocks script close
-      router.push('/');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-12 flex-1">
+    <div className="w-full max-w-5xl xl:max-w-6xl mx-auto px-4 py-8 sm:py-12 flex-1">
       {bookingData ? (
         <BookingInvoice data={bookingData} onClose={handleCloseTab} />
       ) : (

@@ -68,6 +68,7 @@ export const userListResponseSchema = z.object({
     total_partners: z.number(),
     total_admins: z.number(),
     total_pending: z.number(),
+    total_travelers: z.number().optional(),
   }),
 });
 export type UserListResponse = z.infer<typeof userListResponseSchema>;
