@@ -114,6 +114,8 @@ export const propertyItemSchema = z.object({
   thumbnail_url: z.string().nullable().optional(),
   images: z.array(z.string()).default([]),
   vietsage_hotel_id: z.string().nullable().optional(),
+  partner_email: z.string().nullable().optional(),
+  vietsage_hotel_email: z.string().nullable().optional(),
   room_types: z.array(roomTypeSummarySchema).default([]),
   created_at: z.string(),
 });

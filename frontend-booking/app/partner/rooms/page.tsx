@@ -779,8 +779,8 @@ export default function PartnerRoomsPage() {
                                 {hasSeaView ? 'View Biển' : 'View Vườn'}
                               </span>
                               {room.vietsage_room_type_id ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap font-mono">
-                                  PMS: {room.vietsage_room_type_id}
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                                  Đồng bộ PMS: {room.vietsage_room_type_id.length > 20 ? 'Đã liên kết bảo mật' : room.vietsage_room_type_id}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
@@ -1018,8 +1018,8 @@ export default function PartnerRoomsPage() {
                               <span>{isRoomActive ? 'Đang mở bán' : 'Tạm dừng bán'}</span>
                             </span>
                             {room.vietsage_room_type_id ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap font-mono">
-                                PMS: {room.vietsage_room_type_id}
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                                Đồng bộ PMS: {room.vietsage_room_type_id.length > 20 ? 'Đã liên kết bảo mật' : room.vietsage_room_type_id}
                               </span>
                             ) : (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
@@ -1487,18 +1487,18 @@ export default function PartnerRoomsPage() {
 
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                  <span>Mã Hạng Phòng VietSage PMS (Room Type ID)</span>
+                  <span>Tên / Ký Hiệu Hạng Phòng VietSage PMS (Đồng Bộ)</span>
                   <span className="text-xs text-slate-400 font-normal">Tùy chọn</span>
                 </label>
                 <input
                   type="text"
                   value={createVietSageRoomTypeId}
                   onChange={(e) => setCreateVietSageRoomTypeId(e.target.value)}
-                  placeholder="Ví dụ: 60abcf94-a596-4540-8c0b-d6a270a4bfbf"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                  placeholder="Ví dụ: Suite, Deluxe, hoặc Standard"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
                 />
                 <p className="text-xs text-slate-500 pt-0.5">
-                  Nhập mã ID hạng phòng từ VietSage PMS để liên kết tồn kho và đồng bộ đơn đặt phòng.
+                  Nhập tên hoặc ký hiệu loại phòng trên VietSage PMS để hệ thống tự động ánh xạ tồn kho và phân phòng an toàn (không cần nhập mã ID dài).
                 </p>
               </div>
 
@@ -1675,7 +1675,7 @@ export default function PartnerRoomsPage() {
               <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
-                    <span>Mã Hạng Phòng VietSage PMS (Room Type ID)</span>
+                    <span>Tên / Ký Hiệu Hạng Phòng VietSage PMS (Đồng Bộ Bảo Mật)</span>
                   </label>
                   {editVietSageRoomTypeId && (
                     <button
@@ -1691,13 +1691,13 @@ export default function PartnerRoomsPage() {
                   type="text"
                   value={editVietSageRoomTypeId}
                   onChange={(e) => setEditVietSageRoomTypeId(e.target.value)}
-                  placeholder="Ví dụ: 60abcf94-a596-4540-8c0b-d6a270a4bfbf"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-white border border-slate-200 font-mono text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                  placeholder="Ví dụ: Suite, Deluxe, hoặc Standard"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-white border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
                 />
                 <p className="text-xs text-slate-600">
                   {editVietSageRoomTypeId
-                    ? 'Hạng phòng này đang liên kết với VietSage PMS. Đơn đặt phòng sẽ tự động gửi hold và phân phòng.'
-                    : 'Chưa liên kết PMS. Hạng phòng bán trên OTA dựa trên tồn kho cục bộ.'}
+                    ? 'Hạng phòng này đang liên kết bảo mật với VietSage PMS. Đơn đặt phòng sẽ tự động gửi hold và phân phòng.'
+                    : 'Chưa liên kết PMS. Nhập tên/ký hiệu hạng phòng VietSage để kích hoạt đồng bộ tự động.'}
                 </p>
               </div>
 

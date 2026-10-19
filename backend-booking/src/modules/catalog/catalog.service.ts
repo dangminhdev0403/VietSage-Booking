@@ -97,6 +97,13 @@ export class CatalogService {
           images: true,
           vietSageHotelId: true,
           createdAt: true,
+          partnerAccounts: {
+            select: {
+              id: true,
+              email: true,
+              displayName: true,
+            },
+          },
           roomTypes: {
             where: { isActive: true },
             select: {
@@ -127,6 +134,11 @@ export class CatalogService {
         thumbnail_url: p.thumbnailUrl,
         images: p.images ?? [],
         vietsage_hotel_id: p.vietSageHotelId,
+        partner_email: p.partnerAccounts?.[0]?.email ?? null,
+        vietsage_hotel_email:
+          p.vietSageHotelId && p.vietSageHotelId.includes('@')
+            ? p.vietSageHotelId
+            : (p.partnerAccounts?.[0]?.email ?? null),
         room_types: p.roomTypes.map((rt) => ({
           id: rt.id,
           name: rt.name,
@@ -160,6 +172,13 @@ export class CatalogService {
         images: true,
         vietSageHotelId: true,
         createdAt: true,
+        partnerAccounts: {
+          select: {
+            id: true,
+            email: true,
+            displayName: true,
+          },
+        },
         roomTypes: {
           select: {
             id: true,
@@ -211,6 +230,11 @@ export class CatalogService {
       thumbnail_url: p.thumbnailUrl,
       images: p.images ?? [],
       vietsage_hotel_id: p.vietSageHotelId,
+      partner_email: p.partnerAccounts?.[0]?.email ?? null,
+      vietsage_hotel_email:
+        p.vietSageHotelId && p.vietSageHotelId.includes('@')
+          ? p.vietSageHotelId
+          : (p.partnerAccounts?.[0]?.email ?? null),
       room_types: p.roomTypes.map((rt) => ({
         id: rt.id,
         name: rt.name,
@@ -547,6 +571,19 @@ export class CatalogService {
       },
     });
 
+    if (
+      dto.vietsage_hotel_id !== undefined &&
+      dto.vietsage_hotel_id &&
+      dto.vietsage_hotel_id.includes('@')
+    ) {
+      await this.prisma.account.updateMany({
+        where: {
+          email: { equals: dto.vietsage_hotel_id.trim(), mode: 'insensitive' },
+        },
+        data: { managedPropertyId: id },
+      });
+    }
+
     return {
       id: updated.id,
       name: updated.name,
@@ -559,6 +596,10 @@ export class CatalogService {
       images: updated.images,
       is_active: updated.isActive,
       vietsage_hotel_id: updated.vietSageHotelId,
+      vietsage_hotel_email:
+        updated.vietSageHotelId && updated.vietSageHotelId.includes('@')
+          ? updated.vietSageHotelId
+          : null,
       updated_at: updated.updatedAt.toISOString(),
     };
   }

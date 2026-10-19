@@ -414,13 +414,18 @@ export default function AdminPropertiesPage() {
                         {prop.vietsage_hotel_id ? (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold whitespace-nowrap">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Đã kết nối VietSage PMS:</span>
-                            <code className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 font-mono text-xs">{prop.vietsage_hotel_id}</code>
+                            <span>Đã liên kết VietSage:</span>
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 font-medium text-xs">
+                              {prop.vietsage_hotel_email ||
+                                (prop.vietsage_hotel_id?.includes('@')
+                                  ? prop.vietsage_hotel_id
+                                  : (prop.partner_email || 'Đã liên kết bảo mật'))}
+                            </span>
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold whitespace-nowrap">
                             <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Chưa liên kết VietSage PMS</span>
+                            <span>Chưa liên kết email đối tác VietSage</span>
                           </div>
                         )}
                       </div>
@@ -600,18 +605,18 @@ export default function AdminPropertiesPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-on-surface flex items-center justify-between">
-                  <span>Mã Khách Sạn VietSage PMS (Hotel ID)</span>
+                  <span>Email Đối Tác / Quản Trị VietSage PMS</span>
                   <span className="text-xs text-outline font-normal">Tùy chọn</span>
                 </label>
                 <input
-                  type="text"
-                  placeholder="Ví dụ: cmq2k2lm0003f2oui3ifqp808"
+                  type="email"
+                  placeholder="Ví dụ: partner.minh123@vietsage.vn hoặc tenant@vietsage.vn"
                   value={newPropVietSageHotelId}
                   onChange={(e) => setNewPropVietSageHotelId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-mono"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-medium"
                 />
                 <p className="text-xs text-outline">
-                  Nhập mã ID khách sạn từ VietSage PMS để kích hoạt cơ chế đồng bộ và gán phòng tự động.
+                  Nhập Email tài khoản quản trị VietSage PMS của đối tác để định danh duy nhất và liên kết an toàn, bảo vệ dữ liệu cơ sở dữ liệu nội bộ.
                 </p>
               </div>
 
@@ -677,7 +682,7 @@ export default function AdminPropertiesPage() {
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-primary flex items-center gap-1.5">
                     <Link2 className="w-4 h-4" />
-                    <span>Mã Khách Sạn VietSage PMS (vietsage_hotel_id)</span>
+                    <span>Email Đối Tác / Quản Trị VietSage PMS (Liên Kết Bảo Mật)</span>
                   </label>
                   {editPropVietSageHotelId && (
                     <button
@@ -690,16 +695,16 @@ export default function AdminPropertiesPage() {
                   )}
                 </div>
                 <input
-                  type="text"
-                  placeholder="Ví dụ: cmq2k2lm0003f2oui3ifqp808"
+                  type="email"
+                  placeholder="Ví dụ: partner.minh123@vietsage.vn hoặc tenant@vietsage.vn"
                   value={editPropVietSageHotelId}
                   onChange={(e) => setEditPropVietSageHotelId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-mono"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-medium"
                 />
                 <p className="text-xs text-outline">
                   {editPropVietSageHotelId
-                    ? 'Hệ thống đang liên kết với khách sạn này trên VietSage PMS. Đơn đặt phòng OTA sẽ tự động gửi hold và phân phòng.'
-                    : 'Chưa có mã liên kết. Khách sạn này hoạt động độc lập trên sàn OTA cho đến khi được gán Hotel ID từ VietSage.'}
+                    ? 'Khách sạn đang được liên kết bảo mật qua Email đối tác VietSage PMS. Đơn đặt phòng OTA sẽ tự động đồng bộ và gán phòng an toàn.'
+                    : 'Chưa có email liên kết. Nhập Email tài khoản quản trị VietSage để kích hoạt kết nối bảo mật (không dùng ID tránh lộ bảo mật).'}
                 </p>
               </div>
 
