@@ -3,6 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
+import {
+  resolveEffectivePermissions,
+  resolveEffectiveRole,
+} from '../../common/auth/permission-resolver.helper';
 
 type JwtPayload = {
   sub: string;
@@ -42,14 +46,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    const assignedPermissions = account.roleAssignments?.flatMap((assignment) =>
-      assignment.role?.rolePermissions?.map((rp) => rp.permissionKey) ?? [],
-    ) ?? [];
-
-    const effectiveRole = account.role === 'SUPER_ADMIN' ? 'ADMIN' : account.role;
-    const permissions = assignedPermissions.length > 0
-      ? Array.from(new Set(assignedPermissions))
-      : this.resolvePermissionsForRole(effectiveRole);
+    const effectiveRole = resolveEffectiveRole(account.role);
+    const permissions = resolveEffectivePermissions(account.roleAssignments);
 
     return {
       id: account.id,
@@ -60,36 +58,5 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       permissions,
       managedPropertyId: account.managedPropertyId ?? null,
     };
-  }
-
-  private resolvePermissionsForRole(role: string): string[] {
-    switch (role.toUpperCase()) {
-      case 'ADMIN':
-        return [
-          'admin:access',
-          'catalog:read',
-          'catalog:manage',
-          'allotments:read',
-          'allotments:manage',
-          'bookings:read',
-          'bookings:manage',
-          'payments:read',
-          'payments:manage',
-          'sync:manage',
-        ];
-      case 'HOTEL_PARTNER':
-        return [
-          'admin:access',
-          'catalog:read',
-          'catalog:manage',
-          'allotments:read',
-          'allotments:manage',
-          'bookings:read',
-          'bookings:manage',
-          'payments:read',
-        ];
-      default:
-        return [];
-    }
   }
 }

@@ -203,13 +203,13 @@ describe('BookingsService', () => {
       );
     });
 
-    it('calculates server total price accurately: basePrice * nights + addons (ignores client-supplied price)', async () => {
+    it('calculates server total price accurately: basePrice * nights (prunes addons, ignores client-supplied price)', async () => {
       prisma.property.findUnique.mockResolvedValue(mockProperty);
       prisma.roomType.findUnique.mockResolvedValue(mockRoomType);
       prisma.addonService.findMany.mockResolvedValue([mockAddon]);
 
-      // 2 nights: 5,000,000 * 2 = 10,000,000 + 800,000 addon = 10,800,000
-      const expectedTotal = 10800000;
+      // 2 nights: 5,000,000 * 2 = 10,000,000 (addons pruned to 0)
+      const expectedTotal = 10000000;
 
       prisma.booking.create.mockImplementation(({ data }: any) => {
         return Promise.resolve({
@@ -235,12 +235,13 @@ describe('BookingsService', () => {
 
       const result = await service.createBooking(dto);
       expect(result.total_price).toBe(expectedTotal);
+      expect(result.addon_subtotal).toBe(0);
       expect(result.nights).toBe(2);
       expect(result.status).toBe('PENDING');
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
-    it('sums authoritative daily allotment prices with documented base-price fallback plus addons', async () => {
+    it('sums authoritative daily allotment prices with documented base-price fallback (prunes addons)', async () => {
       prisma.property.findUnique.mockResolvedValue(mockProperty);
       prisma.roomType.findUnique.mockResolvedValue(mockRoomType); // basePrice = 5,000,000
       prisma.addonService.findMany.mockResolvedValue([mockAddon]); // 800,000
@@ -249,8 +250,7 @@ describe('BookingsService', () => {
       // 2026-11-01: allotment price 6,500,000
       // 2026-11-02: allotment price 7,000,000
       // 2026-11-03: no allotment record (documented base-price fallback: 5,000,000)
-      // Addon: 800,000
-      // Total expected: 6,500,000 + 7,000,000 + 5,000,000 + 800,000 = 19,300,000
+      // Total expected: 6,500,000 + 7,000,000 + 5,000,000 = 18,500,000 (addons pruned)
       prisma.roomAllotment.findMany.mockResolvedValue([
         {
           id: 'allot-1',
@@ -295,7 +295,8 @@ describe('BookingsService', () => {
       };
 
       const result = await service.createBooking(dto);
-      expect(result.total_price).toBe(19300000);
+      expect(result.total_price).toBe(18500000);
+      expect(result.addon_subtotal).toBe(0);
       expect(result.nights).toBe(3);
     });
   });
@@ -742,10 +743,10 @@ describe('BookingsService', () => {
 
       const result = await service.createBooking(dto);
 
-      expect(result.total_price).toBe(10800000);
+      expect(result.total_price).toBe(10000000);
       expect(result.deposit_rate_bps).toBe(3000);
-      expect(result.deposit_amount).toBe(3240000);
-      expect(result.balance_due).toBe(7560000);
+      expect(result.deposit_amount).toBe(3000000);
+      expect(result.balance_due).toBe(7000000);
       expect(result.currency).toBe('VND');
       expect(result.status).toBe('PENDING');
       expect(result.payment_status).toBe('UNPAID');
@@ -760,8 +761,8 @@ describe('BookingsService', () => {
           data: expect.objectContaining({
             accountId: null,
             depositRateBps: 3000,
-            depositAmount: 3240000,
-            balanceDue: 7560000,
+            depositAmount: 3000000,
+            balanceDue: 7000000,
             lookupTokenHash: expect.any(String),
           }),
         }),
@@ -866,7 +867,7 @@ describe('BookingsService', () => {
   });
 
   describe('getQuote - Authoritative quote calculation', () => {
-    it('calculates quote with daily allotment prices, base-price fallback, addons, 30% deposit and 15-minute expiry', async () => {
+    it('calculates quote with daily allotment prices, base-price fallback, pruned addons, 30% deposit and 15-minute expiry', async () => {
       prisma.property.findUnique.mockResolvedValue(mockProperty);
       prisma.roomType.findUnique.mockResolvedValue(mockRoomType); // basePrice = 5,000,000
       prisma.addonService.findMany.mockResolvedValue([mockAddon]); // 800,000
@@ -905,11 +906,11 @@ describe('BookingsService', () => {
         { date: '2026-11-06', price: 5000000 },
       ]);
       expect(quote.room_subtotal).toBe(11000000);
-      expect(quote.addon_subtotal).toBe(800000);
-      expect(quote.total_price).toBe(11800000);
+      expect(quote.addon_subtotal).toBe(0);
+      expect(quote.total_price).toBe(11000000);
       expect(quote.deposit_rate_bps).toBe(3000);
-      expect(quote.deposit_amount).toBe(3540000); // 11,800,000 * 0.3
-      expect(quote.balance_due).toBe(8260000); // 11,800,000 - 3,540,000
+      expect(quote.deposit_amount).toBe(3300000); // 11,000,000 * 0.3
+      expect(quote.balance_due).toBe(7700000); // 11,000,000 - 3,300,000
       expect(quote.currency).toBe('VND');
       expect(quote.is_available).toBe(true);
       expect(quote.expires_at).toBeDefined();
@@ -1055,6 +1056,19 @@ describe('BookingsService', () => {
         rawSecretToken,
       );
       expect(result.booking_code).toBe('OTA-202611-TEST');
+    });
+
+    it('returns assigned_room_number when present in booking specialRequests', async () => {
+      prisma.booking.findFirst.mockResolvedValue({
+        ...bookingInDb,
+        specialRequests: 'Yêu cầu phòng không hút thuốc [Phòng gán: 302]',
+      });
+
+      const result = await service.lookupBooking(
+        'OTA-202611-TEST',
+        rawSecretToken,
+      );
+      expect(result.assigned_room_number).toBe('302');
     });
   });
 

@@ -9,7 +9,6 @@ import {
   Search,
   MapPin,
   Star,
-  CalendarDays,
   ExternalLink,
   BedDouble,
   Users,
@@ -68,7 +67,11 @@ export default function AdminPropertiesPage() {
         star_rating: Number(newPropStarRating),
         thumbnail_url: newPropThumbnail.trim() || undefined,
       });
-      luxuryAlert.toast('Đăng cơ sở lưu trú thành công!', 'success');
+      await luxuryAlert.success({
+        title: 'Đăng Cơ Sở Thành Công',
+        message: 'Đăng cơ sở lưu trú mới thành công vào hệ thống!',
+        confirmText: 'Hoàn Tất',
+      });
       setIsCreateModalOpen(false);
       setNewPropName('');
       setNewPropAddress('');
@@ -131,18 +134,16 @@ export default function AdminPropertiesPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-outline text-xs font-bold uppercase tracking-widest">
-            <span>OTA Management</span>
+            <span>{managedPropertyId ? 'Đối Tác Cơ Sở' : 'Quản Trị Hệ Thống'}</span>
             <ChevronRight className="w-3.5 h-3.5 text-outline-variant" />
-            <span className="text-primary font-extrabold">Properties &amp; Room Catalog</span>
+            <span className={managedPropertyId ? 'text-emerald-700 font-extrabold' : 'text-primary font-extrabold'}>
+              {managedPropertyId ? 'Hồ Sơ Cơ Sở & Phòng' : 'Mạng Lưới Khách Sạn'}
+            </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight">
-            Danh Mục Khách Sạn &amp; Resort
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight text-balance">
+            {managedPropertyId ? (managedPropertyName || 'Hồ Sơ Cơ Sở') : 'Danh Mục Khách Sạn Đối Tác'}
           </h1>
-
-          <p className="text-xs sm:text-base text-on-surface-variant max-w-2xl leading-relaxed">
-            Quản lý danh sách cơ sở lưu trú, các phân hạng phòng và chính sách giá phân phối trên hệ thống VietSageBooking OTA.
-          </p>
         </div>
 
         {/* Action Cluster */}
@@ -163,26 +164,18 @@ export default function AdminPropertiesPage() {
             className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container text-on-surface rounded-2xl transition-all shadow-2xs text-xs font-bold cursor-pointer"
           >
             <RefreshCw className="w-4 h-4 text-primary" />
-            <span>Làm Mới Danh Mục</span>
+            <span>{managedPropertyId ? 'Làm Mới Hồ Sơ' : 'Làm Mới Danh Mục'}</span>
           </button>
-
-          <Link
-            href="/admin/allotments"
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl transition-all shadow-xs text-xs font-bold cursor-pointer"
-          >
-            <CalendarDays className="w-4 h-4" />
-            <span>Lịch Tồn Kho &amp; Giá Bán</span>
-          </Link>
         </div>
       </div>
 
       {managedPropertyId && (
-        <div className="p-4 rounded-2xl bg-primary-container/20 border border-primary/30 flex items-center gap-3">
-          <Hotel className="w-5 h-5 text-primary shrink-0" />
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center gap-3">
+          <Hotel className="w-5 h-5 text-emerald-700 shrink-0" />
           <div className="text-xs">
-            <span className="font-bold text-on-surface">Phạm vi đối tác khách sạn: </span>
-            <span className="text-on-surface-variant">
-              Tài khoản đang quản lý cơ sở <strong>{managedPropertyName}</strong> ({managedPropertyId}). Dữ liệu phòng bên dưới là bản chiếu phân phối trực tiếp trên hệ thống OTA.
+            <span className="font-bold text-emerald-950">Phạm vi cơ sở của đối tác: </span>
+            <span className="text-emerald-900">
+              Bạn đang quản lý trực tiếp cơ sở <strong>{managedPropertyName}</strong> ({managedPropertyId}). Mọi thay đổi về phân hạng phòng dưới đây sẽ đồng bộ lập tức sang kênh đặt phòng OTA của khách hàng.
             </span>
           </div>
         </div>
@@ -192,16 +185,20 @@ export default function AdminPropertiesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <div className="flex items-center justify-between text-outline text-xs uppercase font-bold tracking-wider mb-2">
-            <span>Tổng Khách Sạn / Resort</span>
+            <span>{managedPropertyId ? 'Cơ Sở Quản Lý' : 'Tổng Đối Tác Khách Sạn'}</span>
             <Building2 className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-2xl font-black text-on-surface">{properties.length}</div>
-          <div className="text-xs text-tertiary font-medium mt-1">Đang phân phối trên OTA</div>
+          <div className="text-2xl font-black text-on-surface">
+            {managedPropertyId ? (managedPropertyName || '1 Cơ sở') : properties.length}
+          </div>
+          <div className="text-xs text-tertiary font-medium mt-1">
+            {managedPropertyId ? 'Trực thuộc tài khoản đối tác' : 'Đang phân phối trên OTA'}
+          </div>
         </div>
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <div className="flex items-center justify-between text-outline text-xs uppercase font-bold tracking-wider mb-2">
-            <span>Tổng Hạng Phòng</span>
+            <span>{managedPropertyId ? 'Hạng Phòng Cơ Sở' : 'Tổng Hạng Phòng Sàn'}</span>
             <BedDouble className="w-4 h-4 text-primary" />
           </div>
           <div className="text-2xl font-black text-on-surface">{totalRoomTypes}</div>
@@ -210,11 +207,15 @@ export default function AdminPropertiesPage() {
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <div className="flex items-center justify-between text-outline text-xs uppercase font-bold tracking-wider mb-2">
-            <span>Địa Điểm Phủ Sóng</span>
+            <span>{managedPropertyId ? 'Tiêu Chuẩn Cơ Sở' : 'Địa Điểm Phủ Sóng'}</span>
             <MapPin className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-2xl font-black text-on-surface">{cities.length || 1}</div>
-          <div className="text-xs text-outline font-medium mt-1">Thành phố trọng điểm</div>
+          <div className="text-2xl font-black text-on-surface">
+            {managedPropertyId ? '5 Sao Luxury' : (cities.length || 1)}
+          </div>
+          <div className="text-xs text-outline font-medium mt-1">
+            {managedPropertyId ? 'Chứng nhận cao cấp' : 'Thành phố trọng điểm'}
+          </div>
         </div>
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
@@ -227,38 +228,47 @@ export default function AdminPropertiesPage() {
               ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(minPrice)
               : '—'}
           </div>
-          <div className="text-xs text-primary font-medium mt-1">Giá tốt nhất trên hệ thống</div>
+          <div className="text-xs text-primary font-medium mt-1">
+            {managedPropertyId ? 'Giá phòng thấp nhất của cơ sở' : 'Giá tốt nhất trên hệ thống'}
+          </div>
         </div>
       </div>
 
       {/* 3. FILTER & SEARCH BAR */}
       <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-outline-variant/30 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* City Filter Pills */}
-        <div className="flex items-center flex-wrap gap-2 text-xs font-bold">
-          <button
-            onClick={() => setSelectedCity('ALL')}
-            className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-              selectedCity === 'ALL'
-                ? 'bg-primary text-on-primary shadow-xs font-extrabold'
-                : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-            }`}
-          >
-            Tất Cả Địa Điểm ({properties.length})
-          </button>
-          {cities.map((city) => (
+        {/* City Filter Pills (Only for Platform Admin) */}
+        {!managedPropertyId ? (
+          <div className="flex items-center flex-wrap gap-2 text-xs font-bold">
             <button
-              key={city}
-              onClick={() => setSelectedCity(city)}
+              onClick={() => setSelectedCity('ALL')}
               className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
-                selectedCity === city
+                selectedCity === 'ALL'
                   ? 'bg-primary text-on-primary shadow-xs font-extrabold'
                   : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
               }`}
             >
-              {city}
+              Tất Cả Địa Điểm ({properties.length})
             </button>
-          ))}
-        </div>
+            {cities.map((city) => (
+              <button
+                key={city}
+                onClick={() => setSelectedCity(city)}
+                className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                  selectedCity === city
+                    ? 'bg-primary text-on-primary shadow-xs font-extrabold'
+                    : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
+                }`}
+              >
+                {city}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs font-bold text-outline">
+            <Building2 className="w-4 h-4 text-primary" />
+            <span>Phân hạng phòng và tiện ích chi tiết của cơ sở</span>
+          </div>
+        )}
 
         {/* Keyword Search */}
         <div className="relative flex items-center w-full md:w-72 bg-surface-container rounded-2xl px-3.5 py-2.5 border border-outline-variant/30 focus-within:border-primary/50 transition-colors">
@@ -344,14 +354,6 @@ export default function AdminPropertiesPage() {
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-primary" />
                         <span>Xem Trên OTA</span>
-                      </Link>
-
-                      <Link
-                        href={`/admin/allotments?property_id=${prop.id}`}
-                        className="px-3.5 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1.5 shadow-2xs hover:bg-primary/90 transition-colors"
-                      >
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        <span>Quản Lý Quỹ Phòng</span>
                       </Link>
                     </div>
                   </div>
@@ -523,7 +525,7 @@ export default function AdminPropertiesPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-primary text-on-primary text-xs font-bold hover:bg-primary/90 flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isSubmitting ? 'Đang Lưu...' : 'Xác Nhận Đăng Cơ Sở'}</span>

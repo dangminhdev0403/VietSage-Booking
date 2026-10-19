@@ -40,3 +40,45 @@ export const updateAllotmentSchema = z
     { message: 'Cần cung cấp ít nhất một trường tồn kho để cập nhật' },
   );
 export type UpdateAllotmentDto = z.infer<typeof updateAllotmentSchema>;
+
+export const createRoomTypeSchema = z.object({
+  property_id: z.string().optional(),
+  name: z.string().min(2, 'Tên hạng phòng phải từ 2 ký tự trở lên'),
+  description: z.string().optional(),
+  max_guests: z.number().int().min(1, 'Số khách tối đa ít nhất là 1').optional().default(2),
+  base_price: z.number().int().min(1000, 'Giá phòng tối thiểu 1.000 VND'),
+  area_sqm: z.number().min(5, 'Diện tích phòng tối thiểu 5m²').optional(),
+  bed_type: z.string().optional(),
+  bed_count: z.number().int().min(1).optional(),
+  has_sea_view: z.boolean().optional().default(false),
+  amenities: z.array(z.string()).optional(),
+  is_active: z.boolean().optional().default(true),
+});
+export type CreateRoomTypeDto = z.input<typeof createRoomTypeSchema>;
+
+export const updateRoomTypeSchema = z.object({
+  name: z.string().min(2, 'Tên hạng phòng phải từ 2 ký tự trở lên').optional(),
+  description: z.string().optional(),
+  max_guests: z.number().int().min(1, 'Số khách tối đa ít nhất là 1').optional(),
+  base_price: z.number().int().min(1000, 'Giá phòng tối thiểu 1.000 VND').optional(),
+  area_sqm: z.number().min(5, 'Diện tích phòng tối thiểu 5m²').optional(),
+  bed_type: z.string().optional(),
+  bed_count: z.number().int().min(1).optional(),
+  has_sea_view: z.boolean().optional(),
+  amenities: z.array(z.string()).optional(),
+  is_active: z.boolean().optional(),
+});
+export type UpdateRoomTypeDto = z.input<typeof updateRoomTypeSchema>;
+
+export const updatePropertySchema = z.object({
+  name: z.string().min(2, 'Tên khách sạn phải từ 2 ký tự trở lên').optional(),
+  city: z.string().min(2, 'Tỉnh/Thành phố phải từ 2 ký tự trở lên').optional(),
+  address: z.string().min(5, 'Địa chỉ cụ thể phải từ 5 ký tự trở lên').optional(),
+  description: z.string().optional(),
+  star_rating: z.number().min(1).max(5).optional(),
+  thumbnail_url: z.string().url().optional().or(z.literal('')),
+  images: z.array(z.string()).optional(),
+  is_active: z.boolean().optional(),
+});
+export type UpdatePropertyDto = z.input<typeof updatePropertySchema>;
+

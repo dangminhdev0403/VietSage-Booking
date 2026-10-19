@@ -68,10 +68,15 @@ describe('CatalogService', () => {
         findUnique: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
       },
       roomType: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
       },
       roomAllotment: {
         findUnique: jest.fn(),
@@ -448,4 +453,180 @@ describe('CatalogService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
   });
+
+  describe('createRoomType / updateRoomType / deleteRoomType - Partner & Admin Room CRUD', () => {
+    it('allows HOTEL_PARTNER to create a room type for their managed property', async () => {
+      prisma.property.findUnique.mockResolvedValue(mockPropertyA);
+      prisma.roomType.create.mockResolvedValue({
+        id: 'rt-new',
+        propertyId: mockPropertyA.id,
+        name: 'Deluxe Suite Sea View',
+        description: 'Phòng hướng biển cao cấp',
+        maxGuests: 3,
+        basePrice: 2500000,
+        areaSqm: 55,
+        bedType: '1 Giường King-size',
+        bedCount: 1,
+        hasSeaView: true,
+        amenities: ['wifi', 'breakfast'],
+        isActive: true,
+        createdAt: new Date('2026-10-19T00:00:00Z'),
+        updatedAt: new Date('2026-10-19T00:00:00Z'),
+      });
+
+      const res = await service.createRoomType(
+        {
+          property_id: mockPropertyA.id,
+          name: 'Deluxe Suite Sea View',
+          base_price: 2500000,
+          max_guests: 3,
+          area_sqm: 55,
+          bed_type: '1 Giường King-size',
+          has_sea_view: true,
+        },
+        partnerUserA,
+      );
+
+      expect(res.id).toBe('rt-new');
+      expect(res.name).toBe('Deluxe Suite Sea View');
+      expect(res.base_price).toBe(2500000);
+      expect(prisma.roomType.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            propertyId: mockPropertyA.id,
+            name: 'Deluxe Suite Sea View',
+            basePrice: 2500000,
+          }),
+        }),
+      );
+    });
+
+    it('rejects partner creating a room type for another property', async () => {
+      await expect(
+        service.createRoomType(
+          {
+            property_id: mockPropertyB.id,
+            name: 'Illegal Room',
+            base_price: 1500000,
+          },
+          partnerUserA,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows partner to update an existing room type in their property', async () => {
+      prisma.roomType.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        propertyId: mockPropertyA.id,
+        name: 'Deluxe Ocean',
+        basePrice: 2000000,
+      });
+      prisma.roomType.update.mockResolvedValue({
+        id: 'rt-1',
+        propertyId: mockPropertyA.id,
+        name: 'Deluxe Ocean Premier',
+        description: null,
+        maxGuests: 2,
+        basePrice: 2800000,
+        areaSqm: 48,
+        bedType: '1 Giường King-size',
+        bedCount: 1,
+        hasSeaView: true,
+        amenities: [],
+        isActive: true,
+        createdAt: new Date('2026-10-19T00:00:00Z'),
+        updatedAt: new Date('2026-10-19T00:00:00Z'),
+      });
+
+      const res = await service.updateRoomType(
+        'rt-1',
+        {
+          name: 'Deluxe Ocean Premier',
+          base_price: 2800000,
+        },
+        partnerUserA,
+      );
+
+      expect(res.name).toBe('Deluxe Ocean Premier');
+      expect(res.base_price).toBe(2800000);
+    });
+
+    it('allows partner to delete a room type with no bookings', async () => {
+      prisma.roomType.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        propertyId: mockPropertyA.id,
+        _count: { bookings: 0 },
+      });
+      prisma.roomType.delete.mockResolvedValue({});
+
+      const res = await service.deleteRoomType('rt-1', partnerUserA);
+      expect(res.deleted).toBe(true);
+      expect(res.soft_deleted).toBe(false);
+      expect(prisma.roomType.delete).toHaveBeenCalledWith({ where: { id: 'rt-1' } });
+    });
+
+    it('soft-deletes room type if bookings exist', async () => {
+      prisma.roomType.findUnique.mockResolvedValue({
+        id: 'rt-1',
+        propertyId: mockPropertyA.id,
+        _count: { bookings: 3 },
+      });
+      prisma.roomType.update.mockResolvedValue({});
+
+      const res = await service.deleteRoomType('rt-1', partnerUserA);
+      expect(res.deleted).toBe(true);
+      expect(res.soft_deleted).toBe(true);
+      expect(prisma.roomType.update).toHaveBeenCalledWith({
+        where: { id: 'rt-1' },
+        data: { isActive: false },
+      });
+    });
+  });
+
+  describe('updateProperty - Scope and data validation', () => {
+    it('throws ForbiddenException if partner tries to update another property', async () => {
+      await expect(
+        service.updateProperty(mockPropertyB.id, { name: 'Hacked Hotel' }, partnerUserA),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException if property does not exist', async () => {
+      prisma.property.findUnique.mockResolvedValue(null);
+      await expect(
+        service.updateProperty(mockPropertyA.id, { name: 'New Name' }, adminUser),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('allows partner to update their own property', async () => {
+      prisma.property.findUnique.mockResolvedValue(mockPropertyA);
+      prisma.property.update.mockResolvedValue({
+        ...mockPropertyA,
+        name: 'Sanctuary Grand Luxury Resort & Spa',
+        starRating: 5.0,
+        updatedAt: new Date(),
+      });
+
+      const res = await service.updateProperty(
+        mockPropertyA.id,
+        {
+          name: 'Sanctuary Grand Luxury Resort & Spa',
+          star_rating: 5.0,
+        },
+        partnerUserA,
+      );
+
+      expect(res.name).toBe('Sanctuary Grand Luxury Resort & Spa');
+      expect(res.star_rating).toBe(5.0);
+      expect(prisma.property.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockPropertyA.id },
+          data: expect.objectContaining({
+            name: 'Sanctuary Grand Luxury Resort & Spa',
+            starRating: 5.0,
+          }),
+        }),
+      );
+    });
+  });
 });
+

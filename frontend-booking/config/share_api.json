@@ -39,6 +39,12 @@
       "description": "Get detailed property information by ID"
     },
     {
+      "method": "PUT",
+      "path": "/api/v1/properties/{id}",
+      "implementation_status": "implemented",
+      "description": "Update property information (Hotel Partner or Admin)"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/services",
       "implementation_status": "implemented",
@@ -139,6 +145,24 @@
       "path": "/api/v1/payments/booking/{bookingId}",
       "implementation_status": "implemented",
       "description": "Get payment details for the booking owner or verified guest contact"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/room-types",
+      "implementation_status": "implemented",
+      "description": "Create a new room type for partner or admin property"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/room-types/{id}",
+      "implementation_status": "implemented",
+      "description": "Update room type specifications and base price"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/room-types/{id}",
+      "implementation_status": "implemented",
+      "description": "Delete or deactivate room type"
     }
   ]
 }

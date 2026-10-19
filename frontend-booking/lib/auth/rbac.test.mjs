@@ -31,7 +31,7 @@ test('isAdminRole identifies valid admin roles and explicitly rejects retired SU
 
 test('getDefaultPathForRole returns appropriate workspace home', () => {
   assert.equal(getDefaultPathForRole('ADMIN'), '/admin');
-  assert.equal(getDefaultPathForRole('HOTEL_PARTNER'), '/admin');
+  assert.equal(getDefaultPathForRole('HOTEL_PARTNER'), '/partner');
   assert.equal(getDefaultPathForRole('TRAVELER'), '/');
   assert.equal(getDefaultPathForRole('SUPER_ADMIN'), '/');
   assert.equal(getDefaultPathForRole(null), '/');
@@ -94,20 +94,28 @@ test('canAccessPathByPermissions enforces granular capabilities on routes', () =
   assert.equal(canAccessPathByPermissions([], '/properties'), true);
 });
 
-test('canAccessPath evaluates explicit permissions or falls back to role capabilities', () => {
-  // Evaluates explicit permissions when provided
-  assert.equal(canAccessPath('HOTEL_PARTNER', ['admin:access', 'allotments:read'], '/admin/allotments'), true);
-  assert.equal(canAccessPath('HOTEL_PARTNER', ['admin:access'], '/admin/allotments'), false);
+test('canAccessPath evaluates explicit permissions or falls back to role capabilities with portal separation', () => {
+  // Evaluates explicit permissions when provided for allowed portal
+  assert.equal(canAccessPath('HOTEL_PARTNER', ['admin:access', 'allotments:read'], '/partner/allotments'), true);
+  assert.equal(canAccessPath('HOTEL_PARTNER', ['admin:access'], '/partner/allotments'), false);
+
+  // Physical portal boundary separation: Partner denied from /admin, Admin denied from /partner
+  assert.equal(canAccessPath('HOTEL_PARTNER', ['admin:access', 'allotments:read'], '/admin/allotments'), false);
+  assert.equal(canAccessPath('ADMIN', ['admin:access', 'allotments:read'], '/partner/allotments'), false);
 
   // Falls back to role default permissions
   assert.equal(canAccessPath('ADMIN', null, '/admin/allotments'), true);
-  assert.equal(canAccessPath('HOTEL_PARTNER', null, '/admin/allotments'), true);
+  assert.equal(canAccessPath('HOTEL_PARTNER', null, '/partner/allotments'), true);
+  assert.equal(canAccessPath('HOTEL_PARTNER', null, '/admin'), false);
   assert.equal(canAccessPath('TRAVELER', null, '/admin'), false);
+  assert.equal(canAccessPath('TRAVELER', null, '/partner'), false);
   assert.equal(canAccessPath(null, null, '/admin'), false);
 
   // Backward compatibility alias: canAccessPathByRole
   assert.equal(canAccessPathByRole('ADMIN', '/admin'), true);
-  assert.equal(canAccessPathByRole('HOTEL_PARTNER', '/admin'), true);
+  assert.equal(canAccessPathByRole('HOTEL_PARTNER', '/partner'), true);
+  assert.equal(canAccessPathByRole('HOTEL_PARTNER', '/admin'), false);
+  assert.equal(canAccessPathByRole('ADMIN', '/partner'), false);
   assert.equal(canAccessPathByRole('TRAVELER', '/admin'), false);
   assert.equal(canAccessPathByRole('SUPER_ADMIN', '/admin'), false);
   assert.equal(canAccessPathByRole(null, '/admin'), false);

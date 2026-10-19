@@ -28,7 +28,7 @@ export default function AlertsShowcasePage() {
       title: 'Thông Tin Đặt Phòng Cần Điều Chỉnh',
       message: 'Hệ thống nhận thấy thông tin lưu trú chưa hoàn toàn khớp với lịch công suất phòng thực tế. Quý khách vui lòng kiểm tra lại ngày nhận phòng và thông tin liên hệ.',
       details: [
-        'Khoảng thời gian: 01/11/2026 → 03/11/2026 (2 đêm)',
+        'Khoảng thời gian: 01/11 → 03/11 (2 đêm)',
         'Số điện thoại người liên hệ: 03439213331',
         'Lưu ý: Quý khách vui lòng chọn phòng còn trống và kiểm tra hạn giữ chỗ',
       ],
@@ -39,7 +39,7 @@ export default function AlertsShowcasePage() {
   const handleTestConfirmDialog = async () => {
     const confirmed = await luxuryAlert.confirm({
       title: 'Xác Nhận Hủy Kỳ Nghỉ?',
-      message: 'Đơn phòng OTA-202610-8839 áp dụng chính sách miễn phí hủy trước 48 giờ. Toàn bộ tiền cọc sẽ được hoàn lại vào tài khoản ban đầu trong 3-5 ngày làm việc.',
+      message: 'Đơn phòng OTA-8839 áp dụng chính sách miễn phí hủy trước 48 giờ. Toàn bộ tiền cọc sẽ được hoàn lại vào tài khoản ban đầu trong 3-5 ngày làm việc.',
       confirmText: 'Xác Nhận Hủy Phòng',
       cancelText: 'Giữ Lại Đặt Phòng',
       isDangerous: true,
@@ -55,7 +55,7 @@ export default function AlertsShowcasePage() {
   const handleTestSuccessDialog = () => {
     luxuryAlert.success({
       title: 'Tiếp Nhận Đặt Phòng Thành Công',
-      message: 'Hệ thống đã khóa giữ phòng Biệt thự Biển lúc hoàng hôn trong 30 phút. Mã đặt phòng OTA-202610-7712 đã được gửi về email của bạn.',
+      message: 'Hệ thống đã khóa giữ phòng Biệt thự Biển lúc hoàng hôn trong 30 phút. Mã đặt phòng OTA-7712 đã được gửi về email của bạn.',
       confirmText: 'Xem Đơn Đặt Chỗ',
     });
   };
@@ -201,16 +201,16 @@ export default function AlertsShowcasePage() {
           </div>
         </section>
 
-        {/* SECTION 2: Floating Toasts */}
+        {/* SECTION 2: Custom SweetAlert2 Dialogs */}
         <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-3xl border border-outline-variant/30 shadow-sm space-y-6">
           <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-4">
             <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-on-surface">2. Floating Toast Notifications (Thông Báo Nổi Góc Màn Hình)</h2>
-              <p className="text-xs text-outline">
-                Thông báo nhanh không cản trở thao tác với thanh đếm giờ tự động biến mất
+              <h2 className="text-lg font-bold text-on-surface text-balance">2. SweetAlert2 Custom Notifications (Hộp Thoại Tùy Biến)</h2>
+              <p className="text-xs text-outline text-pretty">
+                Hộp thoại SweetAlert2 phong cách Quiet Luxury với biểu tượng tinh tế, hỗ trợ tự động đếm giờ hoặc xác nhận tức thì
               </p>
             </div>
           </div>
@@ -219,30 +219,30 @@ export default function AlertsShowcasePage() {
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Đã thêm phòng nghỉ vào danh sách yêu thích!', 'luxury')}
-              className="py-3 px-3 rounded-2xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all text-center border border-slate-700 cursor-pointer"
+              className="py-3 px-3 rounded-2xl bg-amber-50 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-all text-center border border-amber-300 cursor-pointer whitespace-nowrap"
             >
-              Toast Luxury
+              SweetAlert2 Luxury
             </button>
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Đã lưu thông tin xác nhận thanh toán thành công!', 'success')}
-              className="py-3 px-3 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-all text-center border border-emerald-200 cursor-pointer"
+              className="py-3 px-3 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-all text-center border border-emerald-200 cursor-pointer whitespace-nowrap"
             >
-              Toast Success
+              SweetAlert2 Success
             </button>
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Chỉ còn 1 phòng duy nhất cho kỳ nghỉ của bạn!', 'warning')}
-              className="py-3 px-3 rounded-2xl bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-all text-center border border-amber-200 cursor-pointer"
+              className="py-3 px-3 rounded-2xl bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-all text-center border border-amber-200 cursor-pointer whitespace-nowrap"
             >
-              Toast Warning
+              SweetAlert2 Warning
             </button>
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Không thể kết nối ngân hàng đối soát lúc này.', 'error')}
-              className="py-3 px-3 rounded-2xl bg-rose-50 text-rose-800 text-xs font-bold hover:bg-rose-100 transition-all text-center border border-rose-200 cursor-pointer"
+              className="py-3 px-3 rounded-2xl bg-rose-50 text-rose-800 text-xs font-bold hover:bg-rose-100 transition-all text-center border border-rose-200 cursor-pointer whitespace-nowrap"
             >
-              Toast Error
+              SweetAlert2 Error
             </button>
           </div>
         </section>
@@ -294,7 +294,7 @@ export default function AlertsShowcasePage() {
               <LuxuryAlertBanner
                 variant="success"
                 title="Xác Nhận Giữ Phòng Thành Công"
-                code="OTA-202610-7712"
+                code="OTA-7712"
                 description="Hệ thống đã khóa giữ phòng Biệt thự Biển lúc hoàng hôn trong 30 phút. Thông tin đơn đã được gửi về email của quý khách."
                 actionText="Chi Tiết Đơn"
                 onAction={() => luxuryAlert.toast('Đang mở chi tiết đơn đặt...', 'info')}
@@ -319,7 +319,7 @@ export default function AlertsShowcasePage() {
             {showInlineError && (
               <LuxuryAlertBanner
                 variant="error"
-                title="Giao Dịch VietQR Chưa Được Ghi Nhận"
+                title="Giao Dịch Chuyển Khoản Chưa Được Ghi Nhận"
                 description="Hệ thống ngân hàng chưa hoàn tất đối soát mã giao dịch. Quý khách vui lòng kiểm tra lại nội dung chuyển khoản hoặc liên hệ trực tiếp Quản gia trực 24/7."
                 actionText="Thử Lại"
                 onAction={() => luxuryAlert.toast('Đang kích hoạt đối soát tự động...', 'info')}

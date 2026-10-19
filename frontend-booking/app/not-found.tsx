@@ -76,11 +76,11 @@ export default function NotFoundPage() {
             </span>
           </div>
 
-          <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight max-w-lg">
+          <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight max-w-lg text-balance">
             Trang không tồn tại hoặc đã thay đổi địa chỉ
           </h1>
 
-          <p className="text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-md mt-4">
+          <p className="text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-md mt-4 text-pretty">
             Địa chỉ liên kết bạn truy cập hiện không khả dụng. Quý khách vui lòng trở lại trang chủ để tìm kiếm khách sạn hoặc kiểm tra lại thông tin đơn đặt phòng.
           </p>
 
@@ -163,7 +163,7 @@ export default function NotFoundPage() {
           </div>
 
           <div className="mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-outline-variant/20 text-xs text-on-surface-variant">
-            <p>© 2026 VietSage Booking OTA Platform. Bản quyền đã được bảo hộ.</p>
+            <p>© VietSage Booking OTA Platform. Bản quyền đã được bảo hộ.</p>
             <div className="flex items-center gap-6">
               <Link href="#" className="hover:text-on-surface transition-colors">
                 Chính sách Bảo mật

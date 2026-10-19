@@ -112,7 +112,29 @@ Tất cả giao diện khách (guest-facing) và đối tác/quản trị (admin
   - **Cấm hiệu ứng hào quang mờ ảo tràn lan**: Hạn chế tối đa các khối blur trang trí (`blur-[160px]`, glowing orbs) làm giảm độ tương phản và gây sao nhãng thao tác người dùng.
   - **Cấm fake statistics / decorative badges**: Chỉ render component, nút bấm hoặc badge khi có dữ liệu thật hoặc tính năng khả dụng. Không tạo badge trang trí vô nghĩa trên từng dòng chữ.
 
-### 4.4. Kiểm tra tự động & Miễn trừ lệnh thừa (Zero-Waste UI Gate)
+### 4.4. Quy chuẩn chống gãy dòng chữ mồ côi & Phân cấp cấu trúc đầu đề (Typographic Balance, Anti-Widow/Orphan & Header Hierarchy)
+- **Chống gãy dòng chữ mồ côi (Anti-Widow / Anti-Orphan Layout Standard)**:
+  - **Headings (`h1`, `h2`, `h3`, `h4`, card titles, modal titles)**: Bắt buộc áp dụng class `text-balance` (tương đương CSS `text-wrap: balance`). Trình duyệt sẽ tự động phân bổ độ dài giữa các dòng cân xứng, triệt tiêu hoàn toàn tình trạng 1-2 từ cuối cùng (như *"Khách Sạn"*, *"Hệ Thống"*, *"Nghỉ Dưỡng"*) bị rớt xuống dòng thứ 2 một cách trơ trọi, cộc lốc ("gãy dòng ngứa mắt").
+  - **Đoạn văn mô tả (Body copy, Subtitles, Descriptions)**: Áp dụng class `text-pretty` (CSS `text-wrap: pretty`) cho các đoạn văn từ 2 dòng trở lên để ngăn chặn từ đơn rơi vào dòng cuối.
+  - **Badges, Tags, Status Pills, Action Buttons**: Bắt buộc gắn `whitespace-nowrap` để chống tình trạng chữ trong badge/pill bị bẻ đôi sang dòng mới khi co giãn màn hình responsive.
+  - **Độ cô đọng của tiêu đề (Headline Conciseness)**: Giữ tiêu đề súc tích, nằm trọn trong chiều ngang tự nhiên của khung chứa. Thay vì nhồi nhét tiêu đề dài 40 ký tự, hãy chọn từ ngữ dứt khoát: ví dụ dùng *"Đăng nhập hệ thống"* thay vì *"Đăng nhập Quản trị & Đối tác Khách sạn"*.
+
+- **Cấm hội chứng "Bánh kẹp 3 tầng lặp ý" (Anti-Triple-Stacking & Semantic Partitioning)**:
+  - **Hiện tượng cấm**: Cùng một cụm header xếp chồng 3 dòng liên tiếp nói lại cùng một nội dung (ví dụ: Badge nói *"CỔNG DÀNH CHO CÁN BỘ & ĐỐI TÁC"*, H1 nói *"ĐĂNG NHẬP QUẢN TRỊ & ĐỐI TÁC KHÁCH SẠN"*, Subtitle lại nói *"Dành riêng cho Quản trị viên và Đối tác vận hành khách sạn, resort..."*).
+  - **Quy tắc phân tầng ngữ nghĩa độc lập (Single Source of Intent)**:
+    - **Eyebrow / Badge**: Chỉ định vị Khu vực / Vai trò / Danh mục (ví dụ: `Cổng Quản Trị & Đối Tác`).
+    - **H1 / Primary Heading**: Chỉ định Hành động chính hoặc Thực thể cốt lõi (ví dụ: `Đăng Nhập Hệ Thống`). Không lặp lại danh từ của Eyebrow.
+    - **Subtitle / Description**: Chỉ cung cấp Hướng dẫn hành động hoặc Phạm vi giá trị cụ thể. Tuyệt đối không lặp lại tiêu đề. Nếu không có thông tin mới -> BỎ HẲN SUBTITLE.
+
+- **Chuẩn tỷ lệ khung chứa & chiều rộng dòng chữ (Container-Scale & Reading Ergonomics)**:
+  - Các form đơn như Auth / Đăng nhập / Khôi phục mật khẩu / Hộp thoại xác nhận: Chiều rộng khung thẻ tối đa chỉ từ `max-w-md` (448px) đến `max-w-lg` (512px). Tuyệt đối không kéo rộng `max-w-2xl` cho form đơn lẻ khiến bố cục bị bè ngang, khoảng cách các trường bị loãng và tiêu đề dễ gãy dòng.
+  - Các đoạn văn bản đọc: Giới hạn độ rộng tối đa `max-w-prose` hoặc `max-w-xl` (~65-75 ký tự/dòng) để người đọc không phải đảo mắt quá rộng.
+
+- **Chuẩn hóa nhãn nhập liệu & Placeholder (Form Ergonomics)**:
+  - CẤM nhãn viết hoa toàn bộ (ALL-CAPS screaming labels như `TÊN ĐĂNG NHẬP HOẶC EMAIL CÔNG TÁC`). Dùng Title Case hoặc Sentence Case gọn gàng (`Tài khoản hoặc email công tác`).
+  - Placeholder chỉ là gợi ý định dạng ngắn gọn (ví dụ: `admin@vietsage.vn hoặc tên đăng nhập`), không viết thành câu văn dài lòng thòng (`Nhập tên đăng nhập quản trị hoặc đối tác...`).
+
+### 4.5. Kiểm tra tự động & Miễn trừ lệnh thừa (Zero-Waste UI Gate)
 - **Quy tắc miễn trừ kiểm thử khi sửa UI**:
   - Khi chỉnh sửa UI, CSS, Tailwind classes, khoảng cách, màu sắc, JSX layout, copy/text hoặc thêm presentation components:
     - **CẤM CHẠY**: Test suites (`pnpm test`, `jest`, `vitest`, `playwright`), full-repo lint (`eslint .`), hoặc build bundling (`next build`).
@@ -121,10 +143,25 @@ Tất cả giao diện khách (guest-facing) và đối tác/quản trị (admin
       node scripts/verify-ui-rules.cjs
       ```
       Nếu có thêm imports/types mới, chạy thêm scoped `pnpm --dir frontend-booking exec tsc --noEmit`.
-- **Tự động sửa lỗi sàn font**:
-  ```bash
-  node scripts/verify-ui-rules.cjs --fix
-  ```
+### 4.6. In-Place Focused Tab Isolation & Zero-Disruptive Redirect Standard
+
+- **Core Invariant: 1 Tab = 1 Autonomous Workspace**:
+  - Each tab in Admin or Partner portals serves a dedicated domain workflow.
+  - **STRICTLY FORBIDDEN**: Buttons or actions (edit, create, configure, save, cancel) triggering cross-tab or cross-page redirects (e.g. editing a room redirecting back to inventory list).
+  - Disruptive redirects destroy user state: wipes scroll position, active filters, search keywords, and pagination index, causing severe cognitive friction.
+
+- **Banned Anti-Patterns**:
+  1. **Action-Button-Redirect**: Table row actions (Edit, Configure, Details) using `<Link>` or `router.push()` to route across pages instead of opening in-place.
+  2. **Save-Redirect**: Redirecting to another page upon mutation completion. Must stay in active tab context, update cache in-place (optimistic update/refetch), and dismiss overlay smoothly.
+  3. **Cancel-Redirect**: Dismiss buttons calling `router.back()` or routing away instead of closing the in-place editor.
+
+- **Approved In-Place Architectural Patterns**:
+  1. **Contextual Slide-Over Drawer / Sheet**: Best for medium-to-large forms (room editing, rate policies, booking audit). Slides smoothly from right (`w-full sm:max-w-xl lg:max-w-2xl`), preserving background table, scroll, and filters 100%. Closes on save with toast and in-place refetch.
+  2. **Focused In-Place Modal**: For quick dialogs, status toggles, or confirmations (e.g. single-date allotment adjustment).
+  3. **Inline Table & Collapsible Row Editing**: For direct cell/row edits (base prices, quota allotments, active switches).
+  4. **Master-Detail Split Pane**: Left list (35%), right active editor (65%). Selecting entities switches editor instantly without page navigation.
+  5. **Shallow URL Query Sub-State**: Synchronize active entity (`?tab=rooms&edit=room_123`) strictly via shallow params (`window.history.replaceState`), preserving deep links across reloads without route teardown.
+  6. **Unsaved Changes Guard**: Prompt in-place confirmation before tab switches or drawer dismissals when form is dirty.
 
 ## 5. Progressive extraction
 

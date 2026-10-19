@@ -70,10 +70,16 @@
 - Không raw `fetch`/`useQuery`/`useMutation` trong presentation component hoặc feature hook.
 - Shared/persistent client state dùng Zustand safe storage; không gọi `localStorage`/`sessionStorage` trực tiếp trong component.
 - Route `app/**/page.tsx` là composition shell mỏng.
-- Tuân thủ nghiêm ngặt chuẩn Typography & UI Pruning tại `FRONTEND_GUIDE.md`:
+- Tuân thủ nghiêm ngặt chuẩn Typography, Anti-Widow/Orphan & UI Pruning tại `FRONTEND_GUIDE.md`:
   - Sàn font tối thiểu: Cấm font size < 12px (`text-xs`). Tuyệt đối cấm micro-font tuỳ tiện (`text-[10px]`, `text-[11px]`).
+  - Cân bằng dòng chữ (Anti-Widow/Orphan): Cấm gãy dòng cộc lốc/rớt từ đơn lẻ (`text-balance` cho tiêu đề, `text-pretty` cho đoạn văn, `whitespace-nowrap` cho badge/pill).
+  - Cấu trúc tiêu đề (Anti-Stacking): Cấm chồng 3 tầng lặp ý (Eyebrow, Title, Subtitle cùng nói một nội dung). Form đơn lẻ giới hạn `max-w-md` đến `max-w-lg`.
   - Cấm văn bản sáo rỗng, hoa mỹ, hoặc mô tả một dòng thừa thãi dưới tiêu đề rõ nghĩa.
   - Cấm lạm dụng card lồng card (nested cards), banner trang trí chiếm diện tích không có giá trị thông tin, và các nút thao tác trùng lặp.
+  - **In-Place Tab Isolation & Zero-Disruptive Redirect**:
+    - 1 tab = 1 autonomous workspace.
+    - STRICTLY FORBIDDEN: Action buttons (edit, save, cancel) triggering cross-tab/cross-page redirects (e.g. room edit redirecting to inventory list).
+    - All edits/details must execute in-place (Slide-over Drawer, Modal, Inline edit, Split-view). Preserve scroll, filters, and tab state upon save/cancel with in-place refetch/optimistic update.
 
 ## 9. Contract
 
@@ -110,5 +116,5 @@
 | **Sửa Database Schema / Migration** | `npx prisma validate` | CẤM: `db:reset`, seed production, frontend test suite. |
 | **Sửa Docs / Markdown / Quy tắc** | Đọc lại Git diff | CẤM: Mọi lệnh test, lint, build, tsc. |
 
-- **Chế độ rà soát (Audit Mode)**: Bắt buộc Silent Execution (thực thi ngầm, không spam tiến trình). Khi rà soát UI, đối chiếu nghiêm ngặt tiêu chuẩn Typography Floor >= 12px, Zero-Fluff Copy, Ruthless Pruning, và kiểm tra bằng `node scripts/verify-ui-rules.cjs`.
+- **Audit Mode**: Silent Execution mandatory. When auditing UI, strictly enforce Typography Floor >= 12px, Zero-Fluff Copy, Ruthless Pruning, In-Place Tab Isolation (zero disruptive redirects), verified via `node scripts/verify-ui-rules.cjs`.
 Migration/apply, dependency, provider write, deploy/cutover và commit/push là protected steps cần phê duyệt riêng.

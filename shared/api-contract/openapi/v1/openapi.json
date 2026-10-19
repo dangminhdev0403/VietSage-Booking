@@ -211,6 +211,70 @@
           }
         },
         "security": []
+      },
+      "put": {
+        "summary": "Update property information (Hotel Partner or Admin)",
+        "operationId": "updateProperty",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "star_rating": {
+                    "type": "number"
+                  },
+                  "thumbnail_url": {
+                    "type": "string"
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/services": {
@@ -816,7 +880,6 @@
                   "payment_method": {
                     "type": "string",
                     "enum": [
-                      "VIETQR",
                       "BANK_TRANSFER",
                       "PAY_AT_HOTEL"
                     ]
@@ -930,6 +993,175 @@
             "bearerAuth": []
           },
           {}
+        ]
+      }
+    },
+    "/api/v1/room-types": {
+      "post": {
+        "summary": "Create a new room type for partner or admin property",
+        "operationId": "createRoomType",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "base_price"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "max_guests": {
+                    "type": "integer",
+                    "default": 2
+                  },
+                  "base_price": {
+                    "type": "integer"
+                  },
+                  "area_sqm": {
+                    "type": "number"
+                  },
+                  "bed_type": {
+                    "type": "string"
+                  },
+                  "bed_count": {
+                    "type": "integer"
+                  },
+                  "has_sea_view": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "amenities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Room type created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/room-types/{id}": {
+      "put": {
+        "summary": "Update room type specifications and base price",
+        "operationId": "updateRoomType",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "max_guests": {
+                    "type": "integer"
+                  },
+                  "base_price": {
+                    "type": "integer"
+                  },
+                  "area_sqm": {
+                    "type": "number"
+                  },
+                  "bed_type": {
+                    "type": "string"
+                  },
+                  "bed_count": {
+                    "type": "integer"
+                  },
+                  "has_sea_view": {
+                    "type": "boolean"
+                  },
+                  "amenities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Room type updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete or deactivate room type",
+        "operationId": "deleteRoomType",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room type deleted or deactivated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ]
       }
     }

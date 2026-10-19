@@ -129,3 +129,93 @@ export async function listServices(category?: string) {
   const data = await parseApiResponse(res, successSchema(z.array(addonServiceItemSchema)));
   return data.data;
 }
+
+export type CreateRoomTypePayload = {
+  property_id?: string;
+  name: string;
+  description?: string;
+  max_guests?: number;
+  base_price: number;
+  area_sqm?: number;
+  bed_type?: string;
+  bed_count?: number;
+  has_sea_view?: boolean;
+  amenities?: string[];
+  is_active?: boolean;
+};
+
+export type UpdateRoomTypePayload = {
+  name?: string;
+  description?: string;
+  max_guests?: number;
+  base_price?: number;
+  area_sqm?: number;
+  bed_type?: string;
+  bed_count?: number;
+  has_sea_view?: boolean;
+  amenities?: string[];
+  is_active?: boolean;
+};
+
+export async function createRoomType(payload: CreateRoomTypePayload) {
+  const res = await fetch('/api/admin/room-types', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseApiResponse(res, successSchema(z.any()));
+  return data.data;
+}
+
+export async function updateRoomType(id: string, payload: UpdateRoomTypePayload) {
+  const res = await fetch(`/api/admin/room-types/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseApiResponse(res, successSchema(z.any()));
+  return data.data;
+}
+
+export async function deleteRoomType(id: string) {
+  const res = await fetch(`/api/admin/room-types/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+  const data = await parseApiResponse(res, successSchema(z.any()));
+  return data.data;
+}
+
+export type UpdatePropertyPayload = {
+  name?: string;
+  city?: string;
+  address?: string;
+  description?: string;
+  star_rating?: number;
+  thumbnail_url?: string;
+  images?: string[];
+  is_active?: boolean;
+};
+
+export async function updateProperty(id: string, payload: UpdatePropertyPayload) {
+  const res = await fetch(`/api/admin/properties/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseApiResponse(res, successSchema(z.any()));
+  return data.data;
+}
+
+

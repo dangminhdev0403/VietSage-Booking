@@ -27,7 +27,7 @@ Nền tảng OTA đã có baseline scaffold và full-stack prototype. Các nhãn
 - [ ] Xử lý timeout-after-write, durable idempotency key và cơ chế compensation / reconciliation định kỳ.
 
 ### Priority 2 — Payment Gateway & Webhook Orchestration
-- [ ] Tích hợp cổng thanh toán (VNPay / VietQR / Stripe) cho OTA Checkout.
+- [ ] Tích hợp cổng thanh toán (VNPay / Stripe) cho OTA Checkout.
 - [ ] Webhook handler xác thực signature, chống replay, idempotent transaction snapshot.
 - [ ] State machine thanh toán: Pending → Authorized → Captured → Refunded / Expired.
 

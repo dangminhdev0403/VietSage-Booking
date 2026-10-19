@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   Search,
   LogOut,
+  LogIn,
   Shield,
   ChevronDown,
   CheckCircle2,
@@ -38,10 +39,19 @@ export function UserMenu() {
       <div className="flex items-center gap-1.5 sm:gap-2">
         <Link
           href="/booking/lookup"
-          className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+          title="Tra cứu đơn đặt phòng"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/60 hover:border-primary/60 bg-surface-container-lowest/90 hover:bg-surface-container text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
         >
-          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-          <span>Tra cứu đơn</span>
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+          <span className="hidden sm:inline">Tra cứu đơn</span>
+        </Link>
+        <Link
+          href="/login"
+          title="Đăng nhập Cổng Quản trị & Đối tác"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/60 hover:border-primary/60 bg-surface-container-lowest/90 hover:bg-surface-container text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
+        >
+          <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+          <span className="hidden sm:inline">Đăng nhập</span>
         </Link>
       </div>
     );
@@ -49,7 +59,10 @@ export function UserMenu() {
 
   if (status === 'loading') {
     return (
-      <div className="w-9 h-9 rounded-full bg-surface-container animate-pulse" />
+      <div className="flex items-center gap-1.5 sm:gap-2 animate-pulse">
+        <div className="h-9 sm:h-10 w-10 sm:w-28 rounded-full bg-surface-container/60" />
+        <div className="h-9 sm:h-10 w-10 sm:w-28 rounded-full bg-surface-container/60" />
+      </div>
     );
   }
 
@@ -58,22 +71,26 @@ export function UserMenu() {
       <div className="flex items-center gap-1.5 sm:gap-2">
         <Link
           href="/booking/lookup"
-          className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/40 hover:border-primary/60 bg-surface-container-lowest/80 text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+          title="Tra cứu đơn đặt phòng"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/60 hover:border-primary/60 bg-surface-container-lowest/90 hover:bg-surface-container text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
         >
-          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-          <span>Tra cứu đơn</span>
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+          <span className="hidden sm:inline">Tra cứu đơn</span>
         </Link>
         <Link
           href="/login"
-          title="Cổng Quản Trị & Đối Tác Khách Sạn"
-          className="hidden lg:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-outline hover:text-on-surface hover:bg-surface-container text-xs font-semibold transition-colors"
+          title="Đăng nhập Cổng Quản trị & Đối tác"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-outline-variant/60 hover:border-primary/60 bg-surface-container-lowest/90 hover:bg-surface-container text-on-surface hover:text-primary text-xs sm:text-base font-bold transition-all shadow-xs cursor-pointer active:scale-95 whitespace-nowrap"
         >
-          <Shield className="w-3.5 h-3.5 text-outline" />
-          <span>Đối tác</span>
+          <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+          <span className="hidden sm:inline">Đăng nhập</span>
         </Link>
       </div>
     );
   }
+
+  const user = session?.user as { role?: string; name?: string | null; email?: string | null } | undefined;
+  const isPartner = user?.role === 'HOTEL_PARTNER';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -82,11 +99,11 @@ export function UserMenu() {
         className="inline-flex items-center gap-2.5 pl-2 pr-3.5 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/40 shadow-xs transition-all cursor-pointer"
       >
         <div className="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-black">
-          {(session.user.name || session.user.email || 'U').charAt(0).toUpperCase()}
+          {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
         </div>
         <div className="text-left hidden sm:block">
           <div className="text-xs font-bold text-on-surface line-clamp-1 max-w-[120px]">
-            {session.user.name || 'Quản Trị Viên'}
+            {user?.name || (isPartner ? 'Đối Tác Khách Sạn' : 'Quản Trị Viên')}
           </div>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-outline transition-transform duration-200" />
@@ -97,14 +114,14 @@ export function UserMenu() {
         <div className="absolute right-0 mt-2 w-64 rounded-3xl bg-surface-container-lowest border border-outline-variant/30 shadow-xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="p-3 border-b border-outline-variant/20 mb-2">
             <div className="font-bold text-base text-on-surface">
-              {session.user.name || 'Quản Trị Viên VietSage'}
+              {user?.name || (isPartner ? 'Đối Tác Khách Sạn' : 'Quản Trị Viên VietSage')}
             </div>
             <div className="text-xs text-outline truncate mt-0.5">
-              {session.user.email || 'Phiên làm việc nội bộ'}
+              {user?.email || 'Phiên làm việc nội bộ'}
             </div>
             <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary text-xs font-extrabold uppercase tracking-wider">
               <CheckCircle2 className="w-3 h-3" />
-              <span>Quản Trị Viên</span>
+              <span>{isPartner ? 'Đối Tác Khách Sạn' : 'Quản Trị Viên'}</span>
             </div>
           </div>
 
@@ -119,16 +136,16 @@ export function UserMenu() {
             </Link>
 
             <Link
-              href="/admin"
+              href={isPartner ? '/partner' : '/admin'}
               onClick={() => setIsDropdownOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
             >
               <Shield className="w-4 h-4 text-primary" />
-              <span>Bảng Quản Trị</span>
+              <span>{isPartner ? 'Cổng Đối Tác Khách Sạn' : 'Bảng Quản Trị'}</span>
             </Link>
 
             <Link
-              href="/admin/allotments"
+              href={isPartner ? '/partner/allotments' : '/admin/allotments'}
               onClick={() => setIsDropdownOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
             >

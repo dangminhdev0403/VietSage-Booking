@@ -1,32 +1,33 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import {
-  CreditCard,
   Clock,
-  ArrowRight,
   ShieldCheck,
   FileSpreadsheet,
   BadgeDollarSign,
 } from 'lucide-react';
 
 export default function AdminSettlementsPage() {
+  const { data: session } = useSession();
+  const user = session?.user as { role?: string; managedPropertyId?: string | null } | undefined;
+  const isPartner = Boolean(user?.managedPropertyId || user?.role === 'HOTEL_PARTNER');
+
   return (
     <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-8">
       {/* 1. HEADER */}
       <div className="flex flex-col gap-2 pb-2">
         <div className="flex items-center gap-1.5 text-outline text-xs font-bold uppercase tracking-widest">
-          <span>Financial Operations</span>
+          <span>{isPartner ? 'Đối Tác Cơ Sở' : 'Vận Hành Tài Chính'}</span>
           <span className="text-outline-variant">•</span>
-          <span className="text-primary font-extrabold">Partner Settlements &amp; Commission</span>
+          <span className="text-primary font-extrabold">
+            {isPartner ? 'Quyết Toán Đối Tác' : 'Quyết Toán & Hoa Hồng'}
+          </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
-          Quyết Toán &amp; Đối Soát Doanh Thu Đối Tác
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight text-balance">
+          {isPartner ? 'Quyết Toán Tiền Phòng' : 'Quyết Toán Doanh Thu Đối Tác'}
         </h1>
-        <p className="text-xs sm:text-base text-on-surface-variant max-w-2xl leading-relaxed">
-          Quản lý chu kỳ thanh toán, tỷ lệ hoa hồng đại lý và biên bản đối soát doanh thu với các cơ sở lưu trú đối tác.
-        </p>
       </div>
 
       {/* 2. PLANNED SURFACE CARD (TRUTHFUL & ZERO NETWORK CALLS) */}
@@ -81,25 +82,6 @@ export default function AdminSettlementsPage() {
               Kết nối lệnh chuyển khoản tự động qua tài khoản thụ hưởng của khách sạn đối tác.
             </p>
           </div>
-        </div>
-
-        {/* Action shortcuts */}
-        <div className="pt-4 flex items-center justify-center gap-3">
-          <Link
-            href="/admin/payments"
-            className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-xs cursor-pointer"
-          >
-            <CreditCard className="w-4 h-4" />
-            <span>Xem Lịch Sử Thanh Toán</span>
-          </Link>
-
-          <Link
-            href="/admin/bookings"
-            className="px-5 py-2.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <span>Quản Lý Đơn Đặt Phòng</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
       </div>
     </div>

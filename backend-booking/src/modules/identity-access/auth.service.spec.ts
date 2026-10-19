@@ -261,6 +261,16 @@ describe('AuthService', () => {
       const partnerAccountWithProperty = {
         ...mockHotelPartnerAccount,
         managedPropertyId: 'prop-123',
+        roleAssignments: [
+          {
+            role: {
+              rolePermissions: [
+                { permissionKey: 'allotments:manage' },
+                { permissionKey: 'catalog:read' },
+              ],
+            },
+          },
+        ],
       };
       prisma.account.findUnique.mockResolvedValue(partnerAccountWithProperty);
 
@@ -275,7 +285,22 @@ describe('AuthService', () => {
       ]);
     });
 
-    it('should normalize retired SUPER_ADMIN to ADMIN and grant platform permissions', async () => {
+    it('should return empty permissions array when roleAssignments is empty (fail-closed)', async () => {
+      const partnerAccountWithEmptyRoles = {
+        ...mockHotelPartnerAccount,
+        managedPropertyId: 'prop-123',
+        roleAssignments: [],
+      };
+      prisma.account.findUnique.mockResolvedValue(partnerAccountWithEmptyRoles);
+
+      const profile = await service.getProfile(partnerAccountWithEmptyRoles.id);
+
+      expect(profile.role).toBe('HOTEL_PARTNER');
+      expect(profile.permissions).toEqual([]);
+      expect(profile.managedPropertyId).toBe('prop-123');
+    });
+
+    it('should normalize retired SUPER_ADMIN to ADMIN and resolve role permissions', async () => {
       const legacySuperAdmin = {
         id: 'u-legacy-super',
         username: 'superadmin',
@@ -285,7 +310,16 @@ describe('AuthService', () => {
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
-        roleAssignments: [],
+        roleAssignments: [
+          {
+            role: {
+              rolePermissions: [
+                { permissionKey: 'sync:manage' },
+                { permissionKey: 'payments:manage' },
+              ],
+            },
+          },
+        ],
       };
       prisma.account.findUnique.mockResolvedValue(legacySuperAdmin);
 

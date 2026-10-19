@@ -22,6 +22,10 @@ import {
   UpdateProfileDto,
   updateProfileSchema,
 } from './dto/auth.dto';
+import {
+  resolveEffectivePermissions,
+  resolveEffectiveRole,
+} from '../../common/auth/permission-resolver.helper';
 
 const SALT_ROUNDS = 10;
 const REFRESH_TOKEN_DAYS = 7;
@@ -155,14 +159,8 @@ export class AuthService {
       throw new UnauthorizedException('Không tìm thấy tài khoản');
     }
 
-    const assignedPermissions = account.roleAssignments?.flatMap((assignment) =>
-      assignment.role?.rolePermissions?.map((rp) => rp.permissionKey) ?? [],
-    ) ?? [];
-
-    const effectiveRole = account.role === 'SUPER_ADMIN' ? 'ADMIN' : account.role;
-    const permissions = assignedPermissions.length > 0
-      ? Array.from(new Set(assignedPermissions))
-      : this.resolvePermissionsForRole(effectiveRole);
+    const effectiveRole = resolveEffectiveRole(account.role);
+    const permissions = resolveEffectivePermissions(account.roleAssignments);
 
     return {
       id: account.id,
@@ -179,37 +177,6 @@ export class AuthService {
       created_at: account.createdAt.toISOString(),
       updated_at: account.updatedAt.toISOString(),
     };
-  }
-
-  resolvePermissionsForRole(role: string): string[] {
-    switch (role.toUpperCase()) {
-      case 'ADMIN':
-        return [
-          'admin:access',
-          'catalog:read',
-          'catalog:manage',
-          'allotments:read',
-          'allotments:manage',
-          'bookings:read',
-          'bookings:manage',
-          'payments:read',
-          'payments:manage',
-          'sync:manage',
-        ];
-      case 'HOTEL_PARTNER':
-        return [
-          'admin:access',
-          'catalog:read',
-          'catalog:manage',
-          'allotments:read',
-          'allotments:manage',
-          'bookings:read',
-          'bookings:manage',
-          'payments:read',
-        ];
-      default:
-        return [];
-    }
   }
 
   async updateProfile(accountId: string, rawDto: UpdateProfileDto) {
@@ -262,7 +229,7 @@ export class AuthService {
       username: updated.username,
       display_name: updated.displayName,
       email: updated.email,
-      role: updated.role === 'SUPER_ADMIN' ? 'ADMIN' : updated.role,
+      role: (updated.role as string) === 'SUPER_ADMIN' ? 'ADMIN' : updated.role,
       updated_at: updated.updatedAt.toISOString(),
     };
   }
@@ -314,7 +281,7 @@ export class AuthService {
     username: string,
     role: string,
   ) {
-    const effectiveRole = role === 'SUPER_ADMIN' ? 'ADMIN' : role;
+    const effectiveRole = resolveEffectiveRole(role);
     const payload = { sub: accountId, username, role: effectiveRole };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
 

@@ -3,12 +3,15 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../identity-access/audit.service';
+import { VietSageSyncService } from '../vietsage-sync/vietsage-sync.service';
 import {
   CreateBookingDto,
   createBookingSchema,
@@ -75,6 +78,14 @@ function dateToYmd(val: Date | string): string {
   return String(val).split('T')[0];
 }
 
+function extractAssignedRoomNumber(
+  specialRequests?: string | null,
+): string | null {
+  if (!specialRequests) return null;
+  const match = /\[Phòng gán:\s*([^\]]+)\]/i.exec(specialRequests);
+  return match ? match[1].trim() : null;
+}
+
 interface BookingRecordForResponse {
   id: string;
   bookingCode: string;
@@ -102,9 +113,12 @@ interface BookingRecordForResponse {
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    @Optional() private readonly vietSageSyncService?: VietSageSyncService,
   ) {}
 
   private async calculateStayAndPricing(params: {
@@ -115,8 +129,7 @@ export class BookingsService {
     guests?: number;
     serviceIds?: string[];
   }) {
-    const { propertyId, roomTypeId, checkIn, checkOut, guests, serviceIds } =
-      params;
+    const { propertyId, roomTypeId, checkIn, checkOut, guests } = params;
 
     const checkInDate = parseStrictCalendarDate(checkIn, 'Ngày nhận phòng');
     const checkOutDate = parseStrictCalendarDate(checkOut, 'Ngày trả phòng');
@@ -158,24 +171,10 @@ export class BookingsService {
       );
     }
 
-    let addonsTotalPrice = 0;
-    let validServices: Array<{ id: string; name: string; price: number }> = [];
-
-    if (serviceIds && serviceIds.length > 0) {
-      const uniqueIds = Array.from(new Set(serviceIds));
-      validServices = await this.prisma.addonService.findMany({
-        where: { id: { in: uniqueIds }, isActive: true },
-        select: { id: true, name: true, price: true },
-      });
-
-      if (validServices.length !== uniqueIds.length) {
-        throw new BadRequestException(
-          'Một hoặc nhiều dịch vụ đi kèm không hợp lệ hoặc đã ngừng cung cấp',
-        );
-      }
-
-      addonsTotalPrice = validServices.reduce((sum, s) => sum + s.price, 0);
-    }
+    // Addon service pruning: totalPrice = roomPrice * nights, addonSubtotal = 0.
+    // service_ids in DTO is safely ignored / optional for streamlined, high-conversion guest checkout.
+    const addonsTotalPrice = 0;
+    const validServices: Array<{ id: string; name: string; price: number }> = [];
 
     const stayDates: Date[] = [];
     let dateCursor = new Date(checkInDate.getTime());
@@ -497,7 +496,7 @@ export class BookingsService {
           checkOut: pricing.checkOutDate,
           nights: pricing.nights,
           roomSubtotal: pricing.roomTotalPrice,
-          addonSubtotal: pricing.addonsTotalPrice,
+          addonSubtotal: 0,
           totalPrice: pricing.totalPrice,
           depositRateBps: pricing.depositRateBps,
           depositAmount: pricing.depositAmount,
@@ -509,6 +508,7 @@ export class BookingsService {
           idempotencyKey: effectiveIdempotencyKey ?? null,
           requestFingerprint,
           lookupTokenHash,
+          holdId: `HOLD-${bookingCode}`,
           holdExpiresAt,
         },
         include: {
@@ -516,20 +516,6 @@ export class BookingsService {
           roomType: true,
         },
       });
-
-      if (pricing.validServices.length > 0) {
-        for (const s of pricing.validServices) {
-          await tx.bookingAddon.create({
-            data: {
-              bookingId: createdBooking.id,
-              addonServiceId: s.id,
-              quantity: 1,
-              unitPrice: s.price,
-              totalPrice: s.price,
-            },
-          });
-        }
-      }
 
       return createdBooking;
     });
@@ -916,6 +902,19 @@ export class BookingsService {
       metadata: { previous: existing.status, next: status, reason },
     });
 
+    if (existing.holdId && this.vietSageSyncService) {
+      try {
+        await this.vietSageSyncService.releaseHold(
+          existing.holdId,
+          reason ?? 'STAFF_CANCELLED',
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Failed to release VietSage hold ${existing.holdId}: ${err}`,
+        );
+      }
+    }
+
     return {
       id: updated.id,
       booking_code: updated.bookingCode,
@@ -1013,6 +1012,7 @@ export class BookingsService {
       currency: booking.currency ?? 'VND',
       status: booking.status,
       payment_status: booking.paymentStatus,
+      assigned_room_number: extractAssignedRoomNumber(booking.specialRequests),
       special_requests: booking.specialRequests,
       addons:
         booking.addons?.map((a) => ({
@@ -1145,6 +1145,19 @@ export class BookingsService {
         reason,
       },
     });
+
+    if (booking.holdId && this.vietSageSyncService) {
+      try {
+        await this.vietSageSyncService.releaseHold(
+          booking.holdId,
+          reason ?? 'GUEST_CANCELLED',
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Failed to release VietSage hold ${booking.holdId}: ${err}`,
+        );
+      }
+    }
 
     return {
       id: updated.id,

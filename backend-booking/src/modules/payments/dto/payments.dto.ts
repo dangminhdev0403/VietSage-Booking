@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const createPaymentIntentSchema = z.object({
   booking_id: z.string().uuid(),
   payment_method: z
-    .enum(['VIETQR', 'BANK_TRANSFER', 'PAY_AT_HOTEL', 'STRIPE_LOCALMATE'])
-    .default('VIETQR'),
+    .enum(['BANK_TRANSFER', 'PAY_AT_HOTEL', 'STRIPE_LOCALMATE'])
+    .default('BANK_TRANSFER'),
   contact: z.string().optional(),
 });
 

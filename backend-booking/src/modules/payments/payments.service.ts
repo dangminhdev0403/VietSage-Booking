@@ -1,15 +1,18 @@
 import {
   BadRequestException,
   ForbiddenException,
+  GatewayTimeoutException,
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import type { Booking } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../identity-access/audit.service';
+import { VietSageSyncService } from '../vietsage-sync/vietsage-sync.service';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import { resolvePropertyScope } from '../../common/auth/property-scope.helper';
 import {
@@ -71,6 +74,7 @@ export class PaymentsService {
     private readonly auditService: AuditService,
     private readonly signatureVerifier: StripeSignatureVerifier,
     private readonly stripeClient: StripeLocalMateClient,
+    @Optional() private readonly vietSageSyncService?: VietSageSyncService,
   ) {}
 
   private normalizeActor(
@@ -408,14 +412,6 @@ export class PaymentsService {
             data: { status: 'CONFIRMING' },
           });
 
-          await tx.booking.update({
-            where: { id: booking.id },
-            data: {
-              status: 'CONFIRMED',
-              paymentStatus: 'DEPOSIT_PAID',
-            },
-          });
-
           await tx.payment.update({
             where: { id: payment.id },
             data: {
@@ -439,6 +435,80 @@ export class PaymentsService {
           });
         });
 
+        // Authoritative VietSage PMS Reservation Confirmation
+        let pmsConfirmed = false;
+        let pmsReservationId: string | null = null;
+        let pmsAssignedRoom:
+          | { roomNumber?: string; floor?: string | number | null }
+          | undefined = undefined;
+        let pmsTimedOut = false;
+
+        if (booking.holdId && this.vietSageSyncService) {
+          try {
+            const confirmResult = await this.vietSageSyncService.confirmHold(
+              booking.holdId,
+              booking.id,
+            );
+            if (confirmResult && confirmResult.status === 'CONFIRMED') {
+              pmsConfirmed = true;
+              pmsReservationId = confirmResult.reservationId;
+              pmsAssignedRoom = confirmResult.assignedRoom;
+            }
+          } catch (err: unknown) {
+            const isTimeout =
+              (err as any)?.status === 504 ||
+              (err as any)?.name === 'GatewayTimeoutException' ||
+              (err as any)?.code === 'ETIMEDOUT' ||
+              (err as any)?.message?.toLowerCase()?.includes('time');
+
+            if (isTimeout) {
+              pmsTimedOut = true;
+              this.logger.warn(
+                `VietSage confirmHold timed out for booking ${booking.id} (holdId: ${booking.holdId}). State remains CONFIRMING (indeterminate outcome, pending reconciliation).`,
+              );
+            } else {
+              this.logger.error(
+                `VietSage confirmHold failed for booking ${booking.id}: ${err}`,
+              );
+              throw err;
+            }
+          }
+        } else {
+          pmsConfirmed = true;
+        }
+
+        if (pmsConfirmed) {
+          let updatedSpecialRequests: string | undefined = undefined;
+          if (pmsAssignedRoom?.roomNumber) {
+            const tag = `[Phòng gán: ${pmsAssignedRoom.roomNumber}]`;
+            if (!booking.specialRequests) {
+              updatedSpecialRequests = tag;
+            } else if (!booking.specialRequests.includes(tag)) {
+              updatedSpecialRequests = `${booking.specialRequests} ${tag}`;
+            } else {
+              updatedSpecialRequests = booking.specialRequests;
+            }
+          }
+
+          await this.prisma.booking.update({
+            where: { id: booking.id },
+            data: {
+              status: 'CONFIRMED',
+              paymentStatus: 'DEPOSIT_PAID',
+              ...(pmsReservationId ? { vietSageReservationId: pmsReservationId } : {}),
+              ...(updatedSpecialRequests !== undefined
+                ? { specialRequests: updatedSpecialRequests }
+                : {}),
+            },
+          });
+
+          await this.decrementRoomAllotments(
+            booking.roomTypeId,
+            booking.checkIn,
+            booking.checkOut,
+          );
+        }
+
         this.auditService.logEvent({
           action: 'PAYMENT_VERIFIED_SYNC',
           actorId: booking.accountId || 'anonymous-guest',
@@ -450,12 +520,14 @@ export class PaymentsService {
             bookingCode: booking.bookingCode,
             sessionId: targetSessionId,
             status: 'SUCCESS',
+            pmsConfirmed,
+            pmsTimedOut,
           },
         });
 
         return {
           booking_code: booking.bookingCode,
-          status: 'CONFIRMED',
+          status: pmsTimedOut ? 'CONFIRMING' : 'CONFIRMED',
           payment_status: 'DEPOSIT_PAID',
           is_paid: true,
           paid_at: paidAt.toISOString(),
@@ -671,7 +743,11 @@ export class PaymentsService {
       };
     }
 
-    // Atomic CAS transition: PENDING -> CONFIRMING -> CONFIRMED
+    let isCancelled = false;
+    let targetBookingId = payment.bookingId;
+    let bookingHoldId: string | null = null;
+
+    // Atomic CAS transition: PENDING -> CONFIRMING
     await this.prisma.$transaction(async (tx) => {
       const booking = await tx.booking.findUnique({
         where: { id: payment.bookingId },
@@ -681,6 +757,9 @@ export class PaymentsService {
         throw new NotFoundException('Không tìm thấy thông tin đơn đặt phòng');
       }
 
+      targetBookingId = booking.id;
+      bookingHoldId = booking.holdId;
+
       const paidAt = new Date();
       const providerPaymentId =
         typeof session?.payment_intent === 'string'
@@ -688,6 +767,7 @@ export class PaymentsService {
           : payment.providerPaymentId;
 
       if (booking.status === 'CANCELLED') {
+        isCancelled = true;
         // Race condition: booking was cancelled before payment captured
         // Money was captured, mark payment REFUND_PENDING
         await tx.payment.update({
@@ -721,17 +801,7 @@ export class PaymentsService {
         },
       });
 
-      // 2. Finalize step: CONFIRMING -> CONFIRMED, paymentStatus -> DEPOSIT_PAID
-      // Ensures allotment remains locked and held ("giữ allotment")
-      await tx.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: 'CONFIRMED',
-          paymentStatus: 'DEPOSIT_PAID',
-        },
-      });
-
-      // 3. Update payment to SUCCESS
+      // 2. Update payment to SUCCESS
       await tx.payment.update({
         where: { id: payment.id },
         data: {
@@ -741,7 +811,7 @@ export class PaymentsService {
         },
       });
 
-      // 4. Record deduplicated event
+      // 3. Record deduplicated event
       await tx.paymentWebhookEvent.create({
         data: {
           providerEventId: eventId,
@@ -752,6 +822,90 @@ export class PaymentsService {
         },
       });
     });
+
+    if (isCancelled) {
+      return { received: true, status: 'PROCESSED' };
+    }
+
+    // Step 2: Confirm with VietSage PMS (authoritative reservation confirmation)
+    let pmsConfirmed = false;
+    let pmsReservationId: string | null = null;
+    let pmsAssignedRoom:
+      | { roomNumber?: string; floor?: string | number | null }
+      | undefined = undefined;
+
+    if (bookingHoldId && this.vietSageSyncService) {
+      try {
+        const confirmResult = await this.vietSageSyncService.confirmHold(
+          bookingHoldId,
+          targetBookingId,
+        );
+        if (confirmResult && confirmResult.status === 'CONFIRMED') {
+          pmsConfirmed = true;
+          pmsReservationId = confirmResult.reservationId;
+          pmsAssignedRoom = confirmResult.assignedRoom;
+        }
+      } catch (err: unknown) {
+        const isTimeout =
+          (err as any)?.status === 504 ||
+          (err as any)?.name === 'GatewayTimeoutException' ||
+          (err as any)?.code === 'ETIMEDOUT' ||
+          (err as any)?.message?.toLowerCase()?.includes('time');
+
+        if (isTimeout) {
+          this.logger.warn(
+            `VietSage confirmHold timed out for booking ${targetBookingId} (holdId: ${bookingHoldId}). State remains CONFIRMING (indeterminate, not failure) for reconciliation.`,
+          );
+        } else {
+          this.logger.error(
+            `VietSage confirmHold failed for booking ${targetBookingId}: ${err}`,
+          );
+          throw err;
+        }
+      }
+    } else {
+      // Local/mock confirmation applies when no VietSage hold exists
+      pmsConfirmed = true;
+    }
+
+    // Only finalize to CONFIRMED when payment is success AND PMS reservation is confirmed
+    if (pmsConfirmed) {
+      const currentBooking = await this.prisma.booking.findUnique({
+        where: { id: targetBookingId },
+      });
+
+      let updatedSpecialRequests: string | undefined = undefined;
+      if (pmsAssignedRoom?.roomNumber) {
+        const tag = `[Phòng gán: ${pmsAssignedRoom.roomNumber}]`;
+        if (!currentBooking?.specialRequests) {
+          updatedSpecialRequests = tag;
+        } else if (!currentBooking.specialRequests.includes(tag)) {
+          updatedSpecialRequests = `${currentBooking.specialRequests} ${tag}`;
+        } else {
+          updatedSpecialRequests = currentBooking.specialRequests;
+        }
+      }
+
+      await this.prisma.booking.update({
+        where: { id: targetBookingId },
+        data: {
+          status: 'CONFIRMED',
+          paymentStatus: 'DEPOSIT_PAID',
+          ...(pmsReservationId ? { vietSageReservationId: pmsReservationId } : {}),
+          ...(updatedSpecialRequests !== undefined
+            ? { specialRequests: updatedSpecialRequests }
+            : {}),
+        },
+      });
+
+      if (currentBooking) {
+        await this.decrementRoomAllotments(
+          currentBooking.roomTypeId,
+          currentBooking.checkIn,
+          currentBooking.checkOut,
+        );
+      }
+    }
 
     return { received: true, status: 'PROCESSED' };
   }
@@ -909,9 +1063,6 @@ export class PaymentsService {
     const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
     const transactionRef = `TXN-${booking.bookingCode}-${randomSuffix}`;
 
-    // Standard VietQR URL format
-    const qrCodeUrl = `https://img.vietqr.io/image/${BANK_CONFIG.bin}-${BANK_CONFIG.account_number}-compact2.png?amount=${booking.totalPrice}&addInfo=${encodeURIComponent(booking.bookingCode)}&accountName=${encodeURIComponent(BANK_CONFIG.account_holder)}`;
-
     const paymentRecord = await this.prisma.payment.create({
       data: {
         bookingId: booking.id,
@@ -920,7 +1071,7 @@ export class PaymentsService {
         currency: 'VND',
         status: 'PENDING',
         transactionRef,
-        qrCodeUrl,
+        qrCodeUrl: null,
       },
     });
 
@@ -955,7 +1106,7 @@ export class PaymentsService {
       account_number: BANK_CONFIG.account_number,
       account_holder: BANK_CONFIG.account_holder,
       transfer_content: booking.bookingCode,
-      qr_code_url: qrCodeUrl,
+      qr_code_url: null,
       created_at: paymentRecord.createdAt.toISOString(),
     };
   }
@@ -1016,6 +1167,8 @@ export class PaymentsService {
     }
 
     const paidAt = new Date();
+    const hasHold = Boolean(booking.holdId && this.vietSageSyncService);
+    const targetStatus = hasHold ? 'CONFIRMING' : 'CONFIRMED';
 
     await this.prisma.$transaction(async (tx) => {
       // Claim the pending booking atomically so cancellation cannot race payment confirmation.
@@ -1027,7 +1180,7 @@ export class PaymentsService {
         },
         data: {
           paymentStatus: 'PAID',
-          status: 'CONFIRMED',
+          status: targetStatus,
         },
       });
 
@@ -1053,6 +1206,54 @@ export class PaymentsService {
       }
     });
 
+    let pmsConfirmed = !hasHold;
+    let pmsReservationId: string | null = null;
+    let pmsTimedOut = false;
+
+    if (hasHold && booking.holdId && this.vietSageSyncService) {
+      try {
+        const confirmResult = await this.vietSageSyncService.confirmHold(
+          booking.holdId,
+          booking.id,
+        );
+        if (confirmResult && confirmResult.status === 'CONFIRMED') {
+          pmsConfirmed = true;
+          pmsReservationId = confirmResult.reservationId;
+        }
+      } catch (err: unknown) {
+        const isTimeout =
+          (err as any)?.status === 504 ||
+          (err as any)?.name === 'GatewayTimeoutException' ||
+          (err as any)?.code === 'ETIMEDOUT' ||
+          (err as any)?.message?.toLowerCase()?.includes('time');
+
+        if (isTimeout) {
+          pmsTimedOut = true;
+          this.logger.warn(
+            `VietSage confirmHold timed out for booking ${booking.id} (holdId: ${booking.holdId}). State remains CONFIRMING for reconciliation.`,
+          );
+        } else {
+          this.logger.error(
+            `VietSage confirmHold failed for booking ${booking.id}: ${err}`,
+          );
+          throw err;
+        }
+      }
+    }
+
+    if (hasHold && pmsConfirmed) {
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: 'CONFIRMED',
+          paymentStatus: 'PAID',
+          ...(pmsReservationId ? { vietSageReservationId: pmsReservationId } : {}),
+        },
+      });
+    }
+
+    const finalStatus = pmsConfirmed ? 'CONFIRMED' : 'CONFIRMING';
+
     await this.auditService.logEvent({
       actorId: actor.id,
       action: 'PAYMENT_CONFIRMED',
@@ -1063,8 +1264,10 @@ export class PaymentsService {
         bookingCode: booking.bookingCode,
         amount: booking.totalPrice,
         paymentStatus: 'PAID',
-        bookingStatus: 'CONFIRMED',
+        bookingStatus: finalStatus,
         paidAt: paidAt.toISOString(),
+        pmsConfirmed,
+        pmsTimedOut,
       },
     });
 
@@ -1073,10 +1276,11 @@ export class PaymentsService {
       booking_code: booking.bookingCode,
       amount: booking.totalPrice,
       payment_status: 'PAID',
-      booking_status: 'CONFIRMED',
+      booking_status: finalStatus,
       paid_at: paidAt.toISOString(),
-      message:
-        'Xác nhận thanh toán thành công. Đơn đặt phòng đã được xác nhận.',
+      message: pmsTimedOut
+        ? 'Xác nhận thanh toán thành công. Đang chờ xác nhận phòng từ hệ thống VietSage PMS.'
+        : 'Xác nhận thanh toán thành công. Đơn đặt phòng đã được xác nhận.',
     };
   }
 
@@ -1204,7 +1408,7 @@ export class PaymentsService {
       account_number: BANK_CONFIG.account_number,
       account_holder: BANK_CONFIG.account_holder,
       transfer_content: booking.bookingCode,
-      qr_code_url: `https://img.vietqr.io/image/${BANK_CONFIG.bin}-${BANK_CONFIG.account_number}-compact2.png?amount=${booking.totalPrice}&addInfo=${encodeURIComponent(booking.bookingCode)}&accountName=${encodeURIComponent(BANK_CONFIG.account_holder)}`,
+      qr_code_url: null,
       payments: payments.map((p) => ({
         id: p.id,
         payment_method: p.paymentMethod,
@@ -1215,5 +1419,109 @@ export class PaymentsService {
         created_at: p.createdAt.toISOString(),
       })),
     };
+  }
+
+  /**
+   * Automatically decrement room allotment capacity for stay dates [checkIn, checkOut).
+   * Increments bookedRooms by 1 for each date where bookedRooms < totalRooms.
+   */
+  private async decrementRoomAllotments(
+    roomTypeId?: string | null,
+    checkIn?: Date | string | null,
+    checkOut?: Date | string | null,
+  ): Promise<void> {
+    if (!roomTypeId || !checkIn || !checkOut || !this.prisma.roomAllotment) {
+      return;
+    }
+
+    try {
+      const start = new Date(checkIn);
+      const end = new Date(checkOut);
+      if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+        return;
+      }
+
+      const startDate = new Date(
+        Date.UTC(
+          start.getUTCFullYear(),
+          start.getUTCMonth(),
+          start.getUTCDate(),
+        ),
+      );
+      const endDate = new Date(
+        Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()),
+      );
+
+      const stayDates: Date[] = [];
+      let cursor = new Date(startDate.getTime());
+      while (cursor.getTime() < endDate.getTime()) {
+        stayDates.push(new Date(cursor.getTime()));
+        cursor = new Date(
+          Date.UTC(
+            cursor.getUTCFullYear(),
+            cursor.getUTCMonth(),
+            cursor.getUTCDate() + 1,
+          ),
+        );
+      }
+
+      for (const date of stayDates) {
+        let allotment: {
+          id: string;
+          totalRooms: number;
+          bookedRooms: number;
+        } | null = null;
+
+        if (typeof this.prisma.roomAllotment.findUnique === 'function') {
+          try {
+            allotment = await this.prisma.roomAllotment.findUnique({
+              where: {
+                roomTypeId_date: {
+                  roomTypeId,
+                  date,
+                },
+              },
+            });
+          } catch {
+            allotment = null;
+          }
+        }
+
+        if (allotment) {
+          if (allotment.bookedRooms < allotment.totalRooms) {
+            if (typeof this.prisma.roomAllotment.update === 'function') {
+              await this.prisma.roomAllotment.update({
+                where: { id: allotment.id },
+                data: {
+                  bookedRooms: { increment: 1 },
+                },
+              });
+            } else if (
+              typeof this.prisma.roomAllotment.updateMany === 'function'
+            ) {
+              await this.prisma.roomAllotment.updateMany({
+                where: { id: allotment.id },
+                data: {
+                  bookedRooms: { increment: 1 },
+                },
+              });
+            }
+          }
+        } else if (typeof this.prisma.roomAllotment.updateMany === 'function') {
+          await this.prisma.roomAllotment.updateMany({
+            where: {
+              roomTypeId,
+              date,
+            },
+            data: {
+              bookedRooms: { increment: 1 },
+            },
+          });
+        }
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to decrement room allotments: ${message}`);
+    }
   }
 }

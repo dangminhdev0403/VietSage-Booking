@@ -12,6 +12,7 @@ import { BookingsService } from './bookings.service';
 import { ok } from '../../common/http/api-response';
 import { Public } from '../../common/auth/public.decorator';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { RequirePermission } from '../../common/auth/require-permission.decorator';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import type {
   CancelBookingDto,
@@ -21,11 +22,14 @@ import type {
   UpdateBookingStatusDto,
 } from './dto/bookings.dto';
 
+import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
+
 @Controller('api/v1/bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Public()
+  @RateLimit({ points: 20, duration: 60, keyPrefix: 'booking:quote' })
   @Post('quote')
   async getQuote(@Body() body: QuoteBookingDto) {
     const data = await this.bookingsService.getQuote(body);
@@ -33,6 +37,13 @@ export class BookingsController {
   }
 
   @Public()
+  @RateLimit({
+    points: 6,
+    duration: 60,
+    keyPrefix: 'booking:create',
+    errorMessage:
+      'Bạn đã thực hiện quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau 1 phút.',
+  })
   @Post()
   async createBooking(
     @Body() body: CreateBookingDto,
@@ -45,6 +56,13 @@ export class BookingsController {
   }
 
   @Public()
+  @RateLimit({
+    points: 15,
+    duration: 60,
+    keyPrefix: 'booking:lookup',
+    errorMessage:
+      'Quá nhiều lần tra cứu đơn đặt phòng. Vui lòng chờ 1 phút trước khi thử lại.',
+  })
   @Post('lookup')
   async lookupBooking(
     @Body() body: LookupBookingDto,
@@ -58,6 +76,7 @@ export class BookingsController {
   }
 
   @Public()
+  @RateLimit({ points: 5, duration: 60, keyPrefix: 'booking:cancel' })
   @Post(':code/cancel')
   async cancelBooking(
     @Param('code') code: string,
@@ -73,6 +92,7 @@ export class BookingsController {
     return ok(data);
   }
 
+  @RequirePermission('bookings:read')
   @Get()
   async listBookings(
     @CurrentUser() user: AuthenticatedUser,
@@ -101,6 +121,7 @@ export class BookingsController {
     return ok(data);
   }
 
+  @RequirePermission('bookings:read')
   @Get('summary')
   async getBookingSummary(
     @CurrentUser() user: AuthenticatedUser,
@@ -116,6 +137,7 @@ export class BookingsController {
     return ok(data);
   }
 
+  @RequirePermission('bookings:read')
   @Get(':id')
   async getBooking(
     @Param('id') id: string,
@@ -125,6 +147,7 @@ export class BookingsController {
     return ok(data);
   }
 
+  @RequirePermission('bookings:cancel')
   @Patch(':id/status')
   async updateBookingStatus(
     @Param('id') id: string,

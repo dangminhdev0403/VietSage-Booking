@@ -41,6 +41,7 @@ export interface BookingInvoiceData {
   currency?: string;
   status: string;
   payment_status: string;
+  assigned_room_number?: string | null;
   created_at?: string;
   paid_at?: string;
   addons?: { service_name: string; price: number }[];
@@ -193,6 +194,11 @@ export function BookingInvoice({
                   <Bed className="w-4 h-4 text-primary" />
                   {data.room_type_name || 'Phòng nghỉ dưỡng'}
                 </span>
+                {data.assigned_room_number && depositPaid && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                    Phòng {data.assigned_room_number}
+                  </span>
+                )}
                 {data.property_city && (
                   <span className="flex items-center gap-1 text-outline">
                     <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />

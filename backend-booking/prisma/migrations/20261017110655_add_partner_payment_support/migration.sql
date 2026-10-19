@@ -1,7 +1,7 @@
 -- Add partner property ownership and payment transactions.
 BEGIN;
 
-CREATE TYPE "PaymentMethod" AS ENUM ('VIETQR', 'BANK_TRANSFER', 'PAY_AT_HOTEL');
+CREATE TYPE "PaymentMethod" AS ENUM ('BANK_TRANSFER', 'PAY_AT_HOTEL', 'STRIPE_LOCALMATE', 'CARD');
 CREATE TYPE "PaymentTransactionStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
 
 ALTER TABLE "accounts" ADD COLUMN "managed_property_id" TEXT;
@@ -9,7 +9,7 @@ ALTER TABLE "accounts" ADD COLUMN "managed_property_id" TEXT;
 CREATE TABLE "payments" (
     "id" TEXT NOT NULL,
     "booking_id" TEXT NOT NULL,
-    "payment_method" "PaymentMethod" NOT NULL DEFAULT 'VIETQR',
+    "payment_method" "PaymentMethod" NOT NULL DEFAULT 'STRIPE_LOCALMATE',
     "amount" INTEGER NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'VND',
     "status" "PaymentTransactionStatus" NOT NULL DEFAULT 'PENDING',

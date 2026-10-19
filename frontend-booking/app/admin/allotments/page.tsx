@@ -46,12 +46,14 @@ export default function AdminAllotmentsPage() {
 
   const user = session?.user as
     | {
+        role?: string;
         managedPropertyId?: string | null;
         accessibleProperties?: Array<{ id: string; name: string }>;
       }
     | undefined;
 
   const managedPropertyId = user?.managedPropertyId ?? undefined;
+  const isPartner = Boolean(managedPropertyId || user?.role === 'HOTEL_PARTNER');
 
   // Month state (YYYY-MM)
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
@@ -201,7 +203,11 @@ export default function AdminAllotmentsPage() {
         is_blocked: editIsBlocked,
       });
 
-      luxuryAlert.toast(`Đã cập nhật lịch ngày ${editingDay.date} thành công`, 'success');
+      await luxuryAlert.success({
+        title: 'Cập Nhật Lịch Thành Công',
+        message: `Đã cập nhật lịch ngày ${editingDay.date} thành công.`,
+        confirmText: 'Đã Hiểu',
+      });
       handleCloseEdit();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Không thể lưu thay đổi tồn kho';
@@ -266,16 +272,13 @@ export default function AdminAllotmentsPage() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-outline text-xs font-bold uppercase tracking-widest">
             <CalendarDays className="w-4 h-4 text-primary" />
-            <span>Quản Trị Quỹ Phòng &amp; Doanh Thu</span>
+            <span>{isPartner ? 'Đối Tác Cơ Sở' : 'Quản Trị Quỹ Phòng'}</span>
             <span className="text-outline-variant">•</span>
-            <span className="text-primary font-extrabold">Allotments &amp; Dynamic Rates</span>
+            <span className="text-primary font-extrabold">{isPartner ? 'Quỹ Phòng & Giá Bán' : 'Tồn Kho & Giá Động'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
-            Lịch Tồn Kho &amp; Giá Động
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight text-balance">
+            {isPartner ? 'Lịch Quỹ Phòng & Giá Bán' : 'Lịch Tồn Kho & Giá Động'}
           </h1>
-          <p className="text-xs sm:text-sm text-on-surface-variant max-w-2xl leading-relaxed">
-            Kiểm soát hạn mức phân phối phòng, giá bán theo đêm và chính sách Chặn bán (Stop-Sell) trực tiếp cho các cơ sở lưu trú.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -389,7 +392,9 @@ export default function AdminAllotmentsPage() {
                     onClick={() => setSelectedRoomTypeId(rt.id)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 ${
                       isActive
-                        ? 'bg-primary text-on-primary shadow-xs'
+                        ? isPartner
+                          ? 'bg-emerald-700 text-white shadow-xs'
+                          : 'bg-primary text-on-primary shadow-xs'
                         : 'bg-surface-container-low hover:bg-surface-container text-on-surface border border-outline-variant/30'
                     }`}
                   >
@@ -397,7 +402,9 @@ export default function AdminAllotmentsPage() {
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-md ${
                         isActive
-                          ? 'bg-primary-container text-on-primary-container'
+                          ? isPartner
+                            ? 'bg-emerald-800 text-white'
+                            : 'bg-[#684f2c] text-white'
                           : 'bg-surface-container text-outline'
                       }`}
                     >
@@ -509,7 +516,7 @@ export default function AdminAllotmentsPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="px-5 py-2 rounded-full bg-primary text-on-primary text-xs font-bold hover:bg-primary/90 transition-all cursor-pointer"
+              className="px-5 py-2 rounded-full bg-primary hover:bg-[#684f2c] text-on-primary text-xs font-bold transition-all cursor-pointer shadow-xs"
             >
               Thử Lại
             </button>
@@ -700,7 +707,9 @@ export default function AdminAllotmentsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 h-11 rounded-full bg-primary text-on-primary text-xs font-bold hover:bg-primary/90 transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className={`flex-1 h-11 rounded-full text-white text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 ${
+                    isPartner ? 'bg-emerald-700 hover:bg-emerald-800' : 'bg-primary hover:bg-[#684f2c]'
+                  }`}
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? 'Đang Lưu...' : 'Lưu Thay Đổi'}</span>

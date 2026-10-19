@@ -222,7 +222,7 @@ export const luxuryAlert = {
     const detailsHtml = buildDetailsHtml(parsed.options.details);
     const bodyHtml = parsed.options.html || `
       <div class="space-y-2">
-        <p class="leading-relaxed text-slate-600">${parsed.message}</p>
+        <p class="leading-relaxed text-slate-600 text-pretty">${parsed.message}</p>
         ${detailsHtml}
       </div>
     `;
@@ -233,6 +233,8 @@ export const luxuryAlert = {
       iconHtml: parsed.options.customIconHtml || ICONS.error,
       confirmButtonText: parsed.options.confirmText || 'Đã hiểu & Kiểm tra lại',
       showCancelButton: false,
+      timer: parsed.options.timer,
+      timerProgressBar: Boolean(parsed.options.timer),
     });
   },
 
@@ -247,7 +249,7 @@ export const luxuryAlert = {
     const detailsHtml = buildDetailsHtml(parsed.options.details);
     const bodyHtml = parsed.options.html || `
       <div class="space-y-2">
-        <p class="leading-relaxed text-slate-600">${parsed.message}</p>
+        <p class="leading-relaxed text-slate-600 text-pretty">${parsed.message}</p>
         ${detailsHtml}
       </div>
     `;
@@ -256,8 +258,10 @@ export const luxuryAlert = {
       title: parsed.title,
       html: bodyHtml,
       iconHtml: parsed.options.customIconHtml || ICONS.success,
-      confirmButtonText: parsed.options.confirmText || 'Hoàn tất & Tiếp tục',
+      confirmButtonText: parsed.options.confirmText || 'Đã Hiểu',
       showCancelButton: false,
+      timer: parsed.options.timer,
+      timerProgressBar: Boolean(parsed.options.timer),
     });
   },
 
@@ -272,7 +276,7 @@ export const luxuryAlert = {
     const detailsHtml = buildDetailsHtml(parsed.options.details);
     const bodyHtml = parsed.options.html || `
       <div class="space-y-2">
-        <p class="leading-relaxed text-slate-600">${parsed.message}</p>
+        <p class="leading-relaxed text-slate-600 text-pretty">${parsed.message}</p>
         ${detailsHtml}
       </div>
     `;
@@ -284,6 +288,8 @@ export const luxuryAlert = {
       confirmButtonText: parsed.options.confirmText || 'Xác nhận tiếp tục',
       showCancelButton: parsed.options.showCancelButton ?? false,
       cancelButtonText: parsed.options.cancelText || 'Quay lại',
+      timer: parsed.options.timer,
+      timerProgressBar: Boolean(parsed.options.timer),
     });
   },
 
@@ -296,7 +302,7 @@ export const luxuryAlert = {
   ): Promise<SweetAlertResult> {
     const parsed = parseInputOptions(input, title);
     const bodyHtml = parsed.options.html || `
-      <p class="leading-relaxed text-slate-600">${parsed.message}</p>
+      <p class="leading-relaxed text-slate-600 text-pretty">${parsed.message}</p>
     `;
 
     return LuxurySwal.fire({
@@ -305,6 +311,8 @@ export const luxuryAlert = {
       iconHtml: parsed.options.customIconHtml || ICONS.info,
       confirmButtonText: parsed.options.confirmText || 'Đóng thông báo',
       showCancelButton: false,
+      timer: parsed.options.timer,
+      timerProgressBar: Boolean(parsed.options.timer),
     });
   },
 
@@ -325,7 +333,7 @@ export const luxuryAlert = {
     const detailsHtml = buildDetailsHtml(options.details);
     const bodyHtml = options.html || `
       <div class="space-y-2">
-        <p class="leading-relaxed text-slate-600">${options.message || options.text || ''}</p>
+        <p class="leading-relaxed text-slate-600 text-pretty">${options.message || options.text || ''}</p>
         ${detailsHtml}
       </div>
     `;
@@ -345,28 +353,27 @@ export const luxuryAlert = {
   },
 
   /**
-   * Toast notification (replaces raw alerts or snackbars)
+   * Replaces raw floating toasts with customized SweetAlert2 dialogs
    */
-  toast(
+  async toast(
     input: LuxuryAlertOptions | string,
     variant: ToastVariant = 'info',
-  ) {
-    const parsed = parseInputOptions(input, '');
-    let iconClass = 'text-brand-gold';
-    if (variant === 'success') iconClass = 'text-emerald-500';
-    if (variant === 'error') iconClass = 'text-rose-500';
-    if (variant === 'warning') iconClass = 'text-amber-500';
+  ): Promise<SweetAlertResult> {
+    const options: LuxuryAlertOptions =
+      typeof input === 'string'
+        ? { message: input, timer: 3500 }
+        : { timer: input.timer ?? 3500, ...input };
 
-    return LuxuryToast.fire({
-      title: parsed.title ? `<strong class="block text-xs uppercase tracking-wider text-slate-400">${parsed.title}</strong>` : undefined,
-      html: `
-        <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full ${iconClass} bg-current shrink-0"></span>
-          <span class="text-xs font-medium text-slate-100">${parsed.message}</span>
-        </div>
-      `,
-      timer: parsed.options.timer ?? 4000,
-    });
+    if (variant === 'success') {
+      return this.success(options, options.title || 'Thao Tác Thành Công');
+    }
+    if (variant === 'error') {
+      return this.error(options, options.title || 'Thông Báo Sự Cố');
+    }
+    if (variant === 'warning') {
+      return this.warning(options, options.title || 'Lưu Ý Quan Trọng');
+    }
+    return this.info(options, options.title || 'Thông Tin Hệ Thống');
   },
 
   /**

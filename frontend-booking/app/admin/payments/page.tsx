@@ -12,19 +12,41 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Hotel,
 } from 'lucide-react';
 import { usePaymentsQuery } from '@/features/payments/hooks/use-payments';
+import { usePropertiesQuery } from '@/features/catalog/hooks/use-catalog';
 
 export default function AdminPaymentsPage() {
   const { data: session, status: authStatus } = useSession();
 
   const user = session?.user as
     | {
+        role?: string;
         managedPropertyId?: string | null;
+        accessibleProperties?: Array<{ id: string; name: string }>;
       }
     | undefined;
 
+  const isPartner = Boolean(user?.managedPropertyId || user?.role === 'HOTEL_PARTNER');
   const managedPropertyId = user?.managedPropertyId ?? undefined;
+  const managedPropertyName = managedPropertyId
+    ? user?.accessibleProperties?.find((p) => p.id === managedPropertyId)?.name || 'Cơ sở lưu trú liên kết'
+    : null;
+
+  const [adminSelectedPropertyId, setAdminSelectedPropertyId] = useState<string>('ALL');
+
+  const { data: propertiesData } = usePropertiesQuery(
+    {},
+    { enabled: !managedPropertyId && authStatus === 'authenticated' },
+  );
+  const properties = propertiesData?.items || [];
+
+  const effectivePropertyId = managedPropertyId
+    ? managedPropertyId
+    : adminSelectedPropertyId === 'ALL'
+    ? undefined
+    : adminSelectedPropertyId;
 
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'PENDING' | 'FAILED'>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,7 +59,7 @@ export default function AdminPaymentsPage() {
     refetch,
   } = usePaymentsQuery(
     {
-      property_id: managedPropertyId,
+      property_id: effectivePropertyId,
       status: statusFilter === 'ALL' ? undefined : statusFilter,
       page: currentPage,
       pageSize,
@@ -57,41 +79,69 @@ export default function AdminPaymentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2">
         <div>
           <div className="flex items-center gap-2 text-outline text-xs font-bold uppercase tracking-wider">
-            <CreditCard className="w-4 h-4 text-emerald-600" />
-            <span>Đối Soát &amp; Tài Chính OTA</span>
+            <CreditCard className={`w-4 h-4 ${isPartner ? 'text-emerald-600' : 'text-primary'}`} />
+            <span className={isPartner ? 'text-emerald-700' : 'text-primary'}>
+              {isPartner ? 'Doanh Thu & Tiền Cọc' : 'Quản Trị Thanh Toán'}
+            </span>
+            {isPartner && managedPropertyName && (
+              <>
+                <span className="text-outline-variant">•</span>
+                <span className="text-emerald-950 font-bold">{managedPropertyName}</span>
+              </>
+            )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight mt-1">
-            Lịch Sử Giao Dịch Thanh Toán
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight mt-1 text-balance">
+            {isPartner ? 'Doanh Thu & Tiền Cọc' : 'Lịch Sử Giao Dịch & Thanh Toán'}
           </h1>
-          <p className="text-xs sm:text-sm text-outline mt-1">
-            Theo dõi dòng tiền thanh toán trực tuyến, đối soát giao dịch chuyển khoản VietQR và thanh toán thẻ
-          </p>
         </div>
 
-        <button
-          onClick={() => refetch()}
-          className="px-4 py-2.5 rounded-2xl bg-surface-container-lowest text-on-surface border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 text-xs font-bold cursor-pointer self-start sm:self-auto"
-        >
-          <RefreshCw className="w-4 h-4 text-primary" />
-          <span>Làm mới giao dịch</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+          {!managedPropertyId && properties.length > 0 && (
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-2xs">
+              <Building2 className="w-4 h-4 text-primary shrink-0" />
+              <select
+                value={adminSelectedPropertyId}
+                onChange={(e) => {
+                  setAdminSelectedPropertyId(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-xs font-bold text-on-surface focus:outline-none cursor-pointer max-w-[200px] truncate"
+              >
+                <option value="ALL">Tất cả khách sạn đối tác</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2.5 rounded-2xl bg-surface-container-lowest text-on-surface border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 text-xs font-bold cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4 text-primary" />
+            <span>Làm mới giao dịch</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. SUMMARY STRIP & FILTERS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <span className="text-xs uppercase font-bold text-outline tracking-wider block">
-            Tổng Số Giao Dịch
+            {isPartner ? 'Giao Dịch Cọc Cơ Sở' : 'Tổng Giao Dịch Toàn Sàn'}
           </span>
           <div className="text-2xl font-black text-on-surface mt-1">{totalItems}</div>
           <span className="text-xs text-outline font-medium mt-0.5 block">
-            Giao dịch thanh toán được ghi nhận
+            {isPartner ? 'Lượt khách đặt cọc tại khách sạn' : 'Giao dịch thanh toán được ghi nhận'}
           </span>
         </div>
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <span className="text-xs uppercase font-bold text-outline tracking-wider block">
-            Giá Trị Trên Trang Này
+            {isPartner ? 'Tổng Tiền Cọc 30% Đã Nhận' : 'Giá Trị Trên Trang Này'}
           </span>
           <div className="text-2xl font-black text-emerald-700 mt-1">
             {new Intl.NumberFormat('vi-VN', {
@@ -100,7 +150,7 @@ export default function AdminPaymentsPage() {
             }).format(totalAmount)}
           </div>
           <span className="text-xs text-outline font-medium mt-0.5 block">
-            Tổng tiền {payments.length} bản ghi
+            Tổng tiền {payments.length} bản ghi hiển thị
           </span>
         </div>
 
@@ -108,7 +158,7 @@ export default function AdminPaymentsPage() {
           <span className="text-xs uppercase font-bold text-outline tracking-wider block">
             Phương Thức Chủ Đạo
           </span>
-          <div className="text-2xl font-black text-primary mt-1">VietQR / Stripe</div>
+          <div className="text-2xl font-black text-primary mt-1">Chuyển khoản / Stripe</div>
           <span className="text-xs text-outline font-medium mt-0.5 block">
             Cổng thanh toán tự động
           </span>
@@ -132,7 +182,9 @@ export default function AdminPaymentsPage() {
               }}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 statusFilter === tab
-                  ? 'bg-primary text-on-primary shadow-2xs'
+                  ? isPartner
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'bg-primary text-on-primary shadow-xs'
                   : 'bg-surface-container text-outline hover:text-on-surface'
               }`}
             >
@@ -180,43 +232,43 @@ export default function AdminPaymentsPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-surface-container-low text-outline uppercase tracking-wider text-xs font-bold border-b border-outline-variant/20">
                 <tr>
-                  <th className="py-4 px-6">Mã Đơn</th>
-                  <th className="py-4 px-6">Mã Giao Dịch</th>
-                  <th className="py-4 px-6">Khách Hàng &amp; Cơ Sở</th>
-                  <th className="py-4 px-6">Số Tiền</th>
-                  <th className="py-4 px-6">Phương Thức</th>
-                  <th className="py-4 px-6">Trạng Thái</th>
-                  <th className="py-4 px-6 text-right">Thời Gian</th>
+                  <th className="py-3 px-4 w-[130px] whitespace-nowrap">Mã Đơn</th>
+                  <th className="py-3 px-4 w-[180px] whitespace-nowrap">Mã Giao Dịch</th>
+                  <th className="py-3 px-4 min-w-[200px]">Khách Hàng &amp; Cơ Sở</th>
+                  <th className="py-3 px-4 w-[140px] text-right whitespace-nowrap">Số Tiền</th>
+                  <th className="py-3 px-4 w-[130px] text-center whitespace-nowrap">Phương Thức</th>
+                  <th className="py-3 px-4 w-[140px] whitespace-nowrap">Trạng Thái</th>
+                  <th className="py-3 px-4 w-[120px] text-right whitespace-nowrap">Thời Gian</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/20 text-on-surface">
                 {payments.map((p) => (
                   <tr key={p.id} className="hover:bg-surface-container/50 transition-colors">
                     {/* Booking Code */}
-                    <td className="py-4 px-6">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <span className="font-mono font-bold text-primary">
                         {p.booking_code || '—'}
                       </span>
                     </td>
 
                     {/* Transaction Ref */}
-                    <td className="py-4 px-6">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="font-mono text-xs text-on-surface truncate max-w-[160px]" title={p.transaction_ref || p.id}>
                         {p.transaction_ref || p.id}
                       </div>
                     </td>
 
                     {/* Guest & Property */}
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-on-surface">{p.guest_name || 'Khách hàng'}</div>
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-on-surface text-sm">{p.guest_name || 'Khách hàng'}</div>
                       <div className="text-xs text-outline flex items-center gap-1 mt-0.5">
                         <Building2 className="w-3 h-3 text-primary shrink-0" />
-                        <span className="truncate max-w-[150px]">{p.property_name || 'Cơ sở lưu trú'}</span>
+                        <span className="truncate max-w-[200px]">{p.property_name || 'Cơ sở lưu trú'}</span>
                       </div>
                     </td>
 
                     {/* Amount */}
-                    <td className="py-4 px-6 font-black text-on-surface">
+                    <td className="py-3.5 px-4 font-black text-on-surface text-right whitespace-nowrap">
                       {new Intl.NumberFormat('vi-VN', {
                         style: 'currency',
                         currency: 'VND',
@@ -224,14 +276,14 @@ export default function AdminPaymentsPage() {
                     </td>
 
                     {/* Payment Method */}
-                    <td className="py-4 px-6">
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-surface-container text-on-surface">
                         {p.payment_method}
                       </span>
                     </td>
 
                     {/* Status Badge */}
-                    <td className="py-4 px-6">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         {p.status === 'PAID' || p.status === 'SUCCESS' ? (
                           <>
@@ -259,7 +311,7 @@ export default function AdminPaymentsPage() {
                     </td>
 
                     {/* Timestamp */}
-                    <td className="py-4 px-6 text-right">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="text-xs font-medium text-on-surface">
                         {new Date(p.created_at).toLocaleDateString('vi-VN')}
                       </div>

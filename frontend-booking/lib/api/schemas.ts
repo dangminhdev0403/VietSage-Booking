@@ -86,6 +86,12 @@ export const roomTypeSummarySchema = z.object({
   base_price: z.number(),
   description: z.string().nullable().optional(),
   amenities: z.array(z.string()).default([]),
+  area_sqm: z.number().nullable().optional(),
+  bed_count: z.number().nullable().optional(),
+  bed_type: z.string().nullable().optional(),
+  has_sea_view: z.boolean().nullable().optional(),
+  room_images: z.array(z.string()).default([]).optional(),
+  is_active: z.boolean().nullable().optional(),
   allotments: z.array(z.object({
     date: z.string(),
     total_rooms: z.number(),
@@ -183,6 +189,7 @@ export const bookingItemSchema = z.object({
   currency: z.string().default('VND'),
   status: z.string(),
   payment_status: z.string().default('UNPAID'),
+  assigned_room_number: z.string().nullable().optional(),
   special_requests: z.string().nullable().optional(),
   addons: z.array(z.object({
     service_name: z.string(),

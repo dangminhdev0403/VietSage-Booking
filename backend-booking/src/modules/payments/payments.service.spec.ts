@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
   ForbiddenException,
+  GatewayTimeoutException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,6 +12,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../identity-access/audit.service';
 import { StripeSignatureVerifier } from './stripe-signature.verifier';
 import { StripeLocalMateClient } from './stripe-localmate.client';
+import { VietSageSyncService } from '../vietsage-sync/vietsage-sync.service';
+import { createPaymentIntentSchema } from './dto/payments.dto';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 
 describe('PaymentsService', () => {
@@ -19,10 +22,25 @@ describe('PaymentsService', () => {
   let audit: any;
   let signatureVerifier: StripeSignatureVerifier;
   let stripeClient: StripeLocalMateClient;
+  let vietSageSyncService: any;
 
   const validBookingId = 'a0000000-0000-0000-0000-000000000001';
   const nonExistentBookingId = 'f0000000-0000-0000-0000-000000000000';
   const ownerId = 'u0000000-0000-0000-0000-000000000001';
+  const defaultWebhookSecret = 'whsec_test_localmate_secret';
+
+  const generateSignatureHeader = (
+    timestamp: number,
+    payload: string,
+    secret = defaultWebhookSecret,
+  ): string => {
+    const signed = `${timestamp}.${payload}`;
+    const sig = crypto
+      .createHmac('sha256', secret)
+      .update(signed, 'utf8')
+      .digest('hex');
+    return `t=${timestamp},v1=${sig}`;
+  };
 
   const mockBooking = {
     id: validBookingId,
@@ -115,6 +133,11 @@ describe('PaymentsService', () => {
       logEvent: jest.fn().mockResolvedValue(undefined),
     };
 
+    vietSageSyncService = {
+      confirmHold: jest.fn(),
+      releaseHold: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentsService,
@@ -122,6 +145,7 @@ describe('PaymentsService', () => {
         { provide: AuditService, useValue: audit },
         { provide: StripeSignatureVerifier, useValue: signatureVerifier },
         { provide: StripeLocalMateClient, useValue: stripeClient },
+        { provide: VietSageSyncService, useValue: vietSageSyncService },
       ],
     }).compile();
 
@@ -138,18 +162,18 @@ describe('PaymentsService', () => {
       const mockCreatedPayment = {
         id: 'pay-001',
         bookingId: mockBooking.id,
-        paymentMethod: 'VIETQR',
+        paymentMethod: 'BANK_TRANSFER',
         amount: mockBooking.totalPrice,
         currency: 'VND',
         status: 'PENDING',
         transactionRef: 'TXN-OTA-202610-ABCD-999999',
-        qrCodeUrl: 'https://img.vietqr.io/image/970422-0388889999-compact2.png',
+        qrCodeUrl: null,
         createdAt: new Date('2026-10-17T03:00:00Z'),
       };
       prisma.payment.create.mockResolvedValue(mockCreatedPayment);
 
       const result = await service.createPaymentIntent(
-        { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+        { booking_id: mockBooking.id, payment_method: 'BANK_TRANSFER' },
         partnerUser,
       );
 
@@ -162,7 +186,7 @@ describe('PaymentsService', () => {
       expect(result.bank_code).toBe('MB');
       expect(result.account_number).toBe('0388889999');
       expect(result.transfer_content).toBe(mockBooking.bookingCode);
-      expect(result.qr_code_url).toContain('img.vietqr.io');
+      expect(result.qr_code_url).toBeNull();
       expect(audit.logEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'PAYMENT_INTENT_CREATED',
@@ -176,18 +200,18 @@ describe('PaymentsService', () => {
       const mockCreatedPayment = {
         id: 'pay-admin',
         bookingId: mockBooking.id,
-        paymentMethod: 'VIETQR',
+        paymentMethod: 'BANK_TRANSFER',
         amount: mockBooking.totalPrice,
         currency: 'VND',
         status: 'PENDING',
         transactionRef: 'TXN-OTA-ADMIN-111111',
-        qrCodeUrl: 'https://img.vietqr.io/image/970422-0388889999-compact2.png',
+        qrCodeUrl: null,
         createdAt: new Date('2026-10-17T03:00:00Z'),
       };
       prisma.payment.create.mockResolvedValue(mockCreatedPayment);
 
       const result = await service.createPaymentIntent(
-        { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+        { booking_id: mockBooking.id, payment_method: 'BANK_TRANSFER' },
         adminUser,
       );
 
@@ -205,12 +229,12 @@ describe('PaymentsService', () => {
       const mockCreatedPayment = {
         id: 'pay-guest',
         bookingId: mockBooking.id,
-        paymentMethod: 'VIETQR',
+        paymentMethod: 'BANK_TRANSFER',
         amount: mockBooking.totalPrice,
         currency: 'VND',
         status: 'PENDING',
         transactionRef: 'TXN-GUEST-001',
-        qrCodeUrl: 'https://img.vietqr.io/image/970422-0388889999-compact2.png',
+        qrCodeUrl: null,
         createdAt: new Date('2026-10-17T03:00:00Z'),
       };
       prisma.payment.create.mockResolvedValue(mockCreatedPayment);
@@ -218,7 +242,7 @@ describe('PaymentsService', () => {
       const result = await service.createPaymentIntent(
         {
           booking_id: mockBooking.id,
-          payment_method: 'VIETQR',
+          payment_method: 'BANK_TRANSFER',
           contact: 'dukhach@aurumhaven.vn',
         },
         null,
@@ -232,12 +256,12 @@ describe('PaymentsService', () => {
       const mockCreatedPayment = {
         id: 'pay-guest-phone',
         bookingId: mockBooking.id,
-        paymentMethod: 'VIETQR',
+        paymentMethod: 'BANK_TRANSFER',
         amount: mockBooking.totalPrice,
         currency: 'VND',
         status: 'PENDING',
         transactionRef: 'TXN-GUEST-PHONE',
-        qrCodeUrl: 'https://img.vietqr.io/image/970422-0388889999-compact2.png',
+        qrCodeUrl: null,
         createdAt: new Date('2026-10-17T03:00:00Z'),
       };
       prisma.payment.create.mockResolvedValue(mockCreatedPayment);
@@ -245,7 +269,7 @@ describe('PaymentsService', () => {
       const result = await service.createPaymentIntent(
         {
           booking_id: mockBooking.id,
-          payment_method: 'VIETQR',
+          payment_method: 'BANK_TRANSFER',
           contact: '0901234567',
         },
         null,
@@ -259,7 +283,7 @@ describe('PaymentsService', () => {
 
       await expect(
         service.createPaymentIntent(
-          { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+          { booking_id: mockBooking.id, payment_method: 'BANK_TRANSFER' },
           null,
         ),
       ).rejects.toThrow(UnauthorizedException);
@@ -272,7 +296,7 @@ describe('PaymentsService', () => {
         service.createPaymentIntent(
           {
             booking_id: mockBooking.id,
-            payment_method: 'VIETQR',
+            payment_method: 'BANK_TRANSFER',
             contact: 'wrong@example.com',
           },
           null,
@@ -287,7 +311,7 @@ describe('PaymentsService', () => {
         service.createPaymentIntent(
           {
             booking_id: mockBooking.id,
-            payment_method: 'VIETQR',
+            payment_method: 'BANK_TRANSFER',
             contact: '012345',
           },
           null,
@@ -308,7 +332,7 @@ describe('PaymentsService', () => {
       });
 
       const result = await service.createPaymentIntent(
-        { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+        { booking_id: mockBooking.id, payment_method: 'BANK_TRANSFER' },
         adminUser,
       );
       expect(result.id).toBe('pay-new-001');
@@ -321,7 +345,7 @@ describe('PaymentsService', () => {
         service.createPaymentIntent(
           {
             booking_id: nonExistentBookingId,
-            payment_method: 'VIETQR',
+            payment_method: 'BANK_TRANSFER',
             contact: 'any@test.com',
           },
           null,
@@ -337,7 +361,7 @@ describe('PaymentsService', () => {
 
       await expect(
         service.createPaymentIntent(
-          { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+          { booking_id: mockBooking.id, payment_method: 'BANK_TRANSFER' },
           adminUser,
         ),
       ).rejects.toThrow(BadRequestException);
@@ -351,7 +375,7 @@ describe('PaymentsService', () => {
 
       await expect(
         service.createPaymentIntent(
-          { booking_id: mockBooking.id, payment_method: 'VIETQR' },
+          { booking_id: mockBooking.id, payment_method: 'BANK_TRANSFER' },
           adminUser,
         ),
       ).rejects.toThrow(BadRequestException);
@@ -452,7 +476,7 @@ describe('PaymentsService', () => {
       const mockPaymentItem = {
         id: 'pay-001',
         bookingId: mockBooking.id,
-        paymentMethod: 'VIETQR',
+        paymentMethod: 'BANK_TRANSFER',
         amount: 4500000,
         currency: 'VND',
         purpose: 'DEPOSIT',
@@ -525,7 +549,7 @@ describe('PaymentsService', () => {
         {
           id: 'pay-001',
           bookingId: mockBooking.id,
-          paymentMethod: 'VIETQR',
+          paymentMethod: 'BANK_TRANSFER',
           amount: mockBooking.totalPrice,
           status: 'PENDING',
           transactionRef: 'TXN-001',
@@ -992,6 +1016,213 @@ describe('PaymentsService', () => {
         where: { id: mockBooking.id },
         data: { paymentStatus: 'REFUNDED' },
       });
+    });
+
+    it('confirms booking only when payment succeeds AND VietSage confirmHold returns reservation', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const sessionId = 'cs_test_vietsage_confirm';
+      const eventPayload = {
+        id: 'evt_vs_confirm_001',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            payment_status: 'paid',
+            amount_total: 1350000,
+            currency: 'vnd',
+            payment_intent: 'pi_vs_123',
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      const bookingWithHold = {
+        ...mockBooking,
+        id: 'b-vs-hold-001',
+        holdId: 'vs-hold-active-123',
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+      };
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-vs-001',
+        bookingId: bookingWithHold.id,
+        amount: 1350000,
+        currency: 'VND',
+        status: 'OPEN',
+        providerSessionId: sessionId,
+        booking: bookingWithHold,
+      });
+      prisma.booking.findUnique.mockResolvedValue(bookingWithHold);
+
+      vietSageSyncService.confirmHold.mockResolvedValue({
+        status: 'CONFIRMED',
+        reservationId: 'vs-res-confirmed-999',
+      });
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.status).toBe('PROCESSED');
+      expect(vietSageSyncService.confirmHold).toHaveBeenCalledWith(
+        'vs-hold-active-123',
+        bookingWithHold.id,
+      );
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: bookingWithHold.id },
+        data: {
+          status: 'CONFIRMED',
+          paymentStatus: 'DEPOSIT_PAID',
+          vietSageReservationId: 'vs-res-confirmed-999',
+        },
+      });
+    });
+
+    it('saves assigned room number to specialRequests and decrements room allotments when VietSage confirmHold returns assignedRoom', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const sessionId = 'cs_test_vietsage_assigned_room';
+      const eventPayload = {
+        id: 'evt_vs_assigned_001',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            payment_status: 'paid',
+            amount_total: 1350000,
+            currency: 'vnd',
+            payment_intent: 'pi_vs_assigned_001',
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      const bookingWithAssigned = {
+        ...mockBooking,
+        id: 'b-vs-assigned-001',
+        holdId: 'vs-hold-assigned-123',
+        roomTypeId: 'r-test-room-1',
+        checkIn: new Date('2026-11-20'),
+        checkOut: new Date('2026-11-22'),
+        specialRequests: 'Tầng cao yên tĩnh',
+      };
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-vs-assigned-001',
+        bookingId: bookingWithAssigned.id,
+        amount: 1350000,
+        currency: 'VND',
+        status: 'OPEN',
+        providerSessionId: sessionId,
+        booking: bookingWithAssigned,
+      });
+      prisma.booking.findUnique.mockResolvedValue(bookingWithAssigned);
+
+      vietSageSyncService.confirmHold.mockResolvedValue({
+        status: 'CONFIRMED',
+        reservationId: 'vs-res-assigned-888',
+        assignedRoom: {
+          roomNumber: '405',
+          floor: 4,
+        },
+      });
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.status).toBe('PROCESSED');
+      expect(prisma.booking.update).toHaveBeenCalledWith({
+        where: { id: bookingWithAssigned.id },
+        data: {
+          status: 'CONFIRMED',
+          paymentStatus: 'DEPOSIT_PAID',
+          vietSageReservationId: 'vs-res-assigned-888',
+          specialRequests: 'Tầng cao yên tĩnh [Phòng gán: 405]',
+        },
+      });
+
+      expect(prisma.roomAllotment.updateMany).toHaveBeenCalled();
+    });
+
+    it('records indeterminate status CONFIRMING and does NOT fail when VietSage confirmHold times out', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const sessionId = 'cs_test_vietsage_timeout';
+      const eventPayload = {
+        id: 'evt_vs_timeout_001',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            payment_status: 'paid',
+            amount_total: 1350000,
+            currency: 'vnd',
+            payment_intent: 'pi_vs_timeout',
+          },
+        },
+      };
+      const rawBody = JSON.stringify(eventPayload);
+      const header = generateSignatureHeader(now, rawBody);
+
+      const bookingWithHold = {
+        ...mockBooking,
+        id: 'b-vs-hold-002',
+        holdId: 'vs-hold-timeout-456',
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+      };
+
+      prisma.paymentWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.payment.findFirst.mockResolvedValue({
+        id: 'pay-vs-002',
+        bookingId: bookingWithHold.id,
+        amount: 1350000,
+        currency: 'VND',
+        status: 'OPEN',
+        providerSessionId: sessionId,
+        booking: bookingWithHold,
+      });
+      prisma.booking.findUnique.mockResolvedValue(bookingWithHold);
+
+      vietSageSyncService.confirmHold.mockRejectedValue(
+        new GatewayTimeoutException('VietSage request timed out'),
+      );
+
+      const result = await service.handleWebhook(rawBody, header);
+
+      expect(result.status).toBe('PROCESSED');
+      expect(vietSageSyncService.confirmHold).toHaveBeenCalledWith(
+        'vs-hold-timeout-456',
+        bookingWithHold.id,
+      );
+      // CAS step marked it CONFIRMING
+      expect(prisma.booking.updateMany).toHaveBeenCalledWith({
+        where: { id: bookingWithHold.id, status: 'PENDING' },
+        data: { status: 'CONFIRMING' },
+      });
+      // But update to CONFIRMED was NOT called due to indeterminate timeout outcome
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+      // Payment was successfully recorded
+      expect(prisma.payment.update).toHaveBeenCalledWith({
+        where: { id: 'pay-vs-002' },
+        data: expect.objectContaining({ status: 'SUCCESS' }),
+      });
+    });
+  });
+
+  describe('VietQR Zero Policy', () => {
+    it('verifies zero-VietQR policy: rejects VIETQR payment method in DTO', () => {
+      const result = createPaymentIntentSchema.safeParse({
+        booking_id: validBookingId,
+        payment_method: 'VIETQR',
+      });
+      expect(result.success).toBe(false);
+
+      const validResult = createPaymentIntentSchema.safeParse({
+        booking_id: validBookingId,
+        payment_method: 'STRIPE_LOCALMATE',
+      });
+      expect(validResult.success).toBe(true);
     });
   });
 });

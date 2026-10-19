@@ -54,7 +54,26 @@ export interface ConfirmHoldResult {
   bookingId: string;
   status: 'CONFIRMED';
   roomStatus: 'RESERVED' | 'UNASSIGNED';
+  assignedRoom?: {
+    roomNumber?: string;
+    floor?: string | number | null;
+  };
   confirmedAt: string;
+}
+
+export interface InventoryAdjustmentItem {
+  date: string;
+  available_rooms?: number;
+  total_rooms?: number;
+  booked_rooms?: number;
+  price?: number;
+  is_blocked?: boolean;
+}
+
+export interface InventoryUpdatePayload {
+  property_id: string;
+  room_type_id: string;
+  adjustments: InventoryAdjustmentItem[];
 }
 
 export interface ReleaseHoldParams {
@@ -118,6 +137,18 @@ interface PmsConfirmResponse {
     room_status?: string;
     roomStatus?: string;
     confirmed_at?: string;
+    assigned_room?: {
+      room_number?: string;
+      roomNumber?: string;
+      floor?: string | number | null;
+    } | string;
+    assignedRoom?: {
+      room_number?: string;
+      roomNumber?: string;
+      floor?: string | number | null;
+    } | string;
+    room_number?: string;
+    roomNumber?: string;
   };
   reservation_id?: string;
   id?: string;
@@ -126,6 +157,18 @@ interface PmsConfirmResponse {
   room_status?: string;
   roomStatus?: string;
   confirmed_at?: string;
+  assigned_room?: {
+    room_number?: string;
+    roomNumber?: string;
+    floor?: string | number | null;
+  } | string;
+  assignedRoom?: {
+    room_number?: string;
+    roomNumber?: string;
+    floor?: string | number | null;
+  } | string;
+  room_number?: string;
+  roomNumber?: string;
 }
 
 interface PmsStatusResponse {
@@ -138,6 +181,18 @@ interface PmsStatusResponse {
     room_status?: string;
     hold_status?: string;
     confirmed_at?: string;
+    assigned_room?: {
+      room_number?: string;
+      roomNumber?: string;
+      floor?: string | number | null;
+    } | string;
+    assignedRoom?: {
+      room_number?: string;
+      roomNumber?: string;
+      floor?: string | number | null;
+    } | string;
+    room_number?: string;
+    roomNumber?: string;
   };
   confirmed?: boolean;
   reservation_id?: string;
@@ -147,6 +202,18 @@ interface PmsStatusResponse {
   room_status?: string;
   hold_status?: string;
   confirmed_at?: string;
+  assigned_room?: {
+    room_number?: string;
+    roomNumber?: string;
+    floor?: string | number | null;
+  } | string;
+  assignedRoom?: {
+    room_number?: string;
+    roomNumber?: string;
+    floor?: string | number | null;
+  } | string;
+  room_number?: string;
+  roomNumber?: string;
 }
 
 export function computeCanonicalPayload(
@@ -411,8 +478,12 @@ export class VietSageSyncService {
         );
       }
 
-      const json = (await response.json()) as PmsHoldResponse;
-      const pmsData = json.data ?? json;
+      const json = (await response.json()) as any;
+      const rawData = json?.data;
+      const pmsData =
+        typeof rawData === 'object' && rawData !== null && 'data' in rawData
+          ? rawData.data
+          : (rawData ?? json);
 
       const holdResult: HoldResult = {
         holdId: pmsData.hold_id ?? pmsData.id ?? '',
@@ -589,8 +660,12 @@ export class VietSageSyncService {
         );
       }
 
-      const json = (await response.json()) as PmsConfirmResponse;
-      const pmsData = json.data ?? json;
+      const json = (await response.json()) as any;
+      const rawData = json?.data;
+      const pmsData =
+        typeof rawData === 'object' && rawData !== null && 'data' in rawData
+          ? rawData.data
+          : (rawData ?? json);
 
       // Invariant assertion: Room status must NEVER be set to OCCUPIED prior to check-in
       const rawRoomStatus = (
@@ -607,6 +682,30 @@ export class VietSageSyncService {
         );
       }
 
+      let assignedRoom:
+        | { roomNumber?: string; floor?: string | number | null }
+        | undefined = undefined;
+      const rawAssigned = pmsData.assigned_room ?? pmsData.assignedRoom;
+      if (typeof rawAssigned === 'object' && rawAssigned !== null) {
+        const roomNumber =
+          rawAssigned.room_number ??
+          rawAssigned.roomNumber ??
+          pmsData.room_number ??
+          pmsData.roomNumber;
+        const floor = rawAssigned.floor ?? null;
+        if (roomNumber) {
+          assignedRoom = { roomNumber: String(roomNumber), floor };
+        }
+      } else if (
+        typeof rawAssigned === 'string' &&
+        rawAssigned.trim().length > 0
+      ) {
+        assignedRoom = { roomNumber: rawAssigned.trim(), floor: null };
+      } else if (pmsData.room_number || pmsData.roomNumber) {
+        const roomNumber = pmsData.room_number ?? pmsData.roomNumber;
+        assignedRoom = { roomNumber: String(roomNumber), floor: null };
+      }
+
       const confirmResult: ConfirmHoldResult = {
         reservationId:
           pmsData.reservation_id ??
@@ -620,6 +719,7 @@ export class VietSageSyncService {
         bookingId,
         status: 'CONFIRMED',
         roomStatus: rawRoomStatus === 'UNASSIGNED' ? 'UNASSIGNED' : 'RESERVED',
+        assignedRoom,
         confirmedAt: pmsData.confirmed_at ?? new Date().toISOString(),
       };
 
@@ -809,6 +909,30 @@ export class VietSageSyncService {
           if (pmsData.confirmed && (pmsData.reservation_id || pmsData.id)) {
             const reservationId = pmsData.reservation_id ?? pmsData.id ?? '';
             const payloadObj = log.payload as { holdId?: string } | null;
+            let assignedRoom:
+              | { roomNumber?: string; floor?: string | number | null }
+              | undefined = undefined;
+            const rawAssigned = pmsData.assigned_room ?? pmsData.assignedRoom;
+            if (typeof rawAssigned === 'object' && rawAssigned !== null) {
+              const roomNumber =
+                rawAssigned.room_number ??
+                rawAssigned.roomNumber ??
+                pmsData.room_number ??
+                pmsData.roomNumber;
+              const floor = rawAssigned.floor ?? null;
+              if (roomNumber) {
+                assignedRoom = { roomNumber: String(roomNumber), floor };
+              }
+            } else if (
+              typeof rawAssigned === 'string' &&
+              rawAssigned.trim().length > 0
+            ) {
+              assignedRoom = { roomNumber: rawAssigned.trim(), floor: null };
+            } else if (pmsData.room_number || pmsData.roomNumber) {
+              const roomNumber = pmsData.room_number ?? pmsData.roomNumber;
+              assignedRoom = { roomNumber: String(roomNumber), floor: null };
+            }
+
             const confirmResult: ConfirmHoldResult = {
               reservationId,
               reservationCode:
@@ -822,6 +946,7 @@ export class VietSageSyncService {
                 pmsData.room_status === 'UNASSIGNED'
                   ? 'UNASSIGNED'
                   : 'RESERVED',
+              assignedRoom,
               confirmedAt: pmsData.confirmed_at ?? new Date().toISOString(),
             };
 
@@ -901,5 +1026,142 @@ export class VietSageSyncService {
         'Tính năng đẩy đơn đặt phòng sang VietSage chưa được kích hoạt: runtime connector/adapter chưa được cấu hình.',
       ),
     );
+  }
+
+  getHmacSecret(): string {
+    return this.hmacSecret;
+  }
+
+  /**
+   * Process inbound inventory updates from VietSage PMS webhook.
+   */
+  async processInventoryAdjustments(payload: InventoryUpdatePayload): Promise<{
+    processed: number;
+    roomTypeId: string;
+  }> {
+    if (
+      !payload.property_id ||
+      !payload.room_type_id ||
+      !Array.isArray(payload.adjustments)
+    ) {
+      throw new BadRequestException('Payload điều chỉnh tồn kho không hợp lệ');
+    }
+
+    let targetRoomTypeId = payload.room_type_id;
+    let basePrice = 1000000;
+
+    if (this.prisma.roomType) {
+      const roomType = await this.prisma.roomType.findFirst({
+        where: {
+          OR: [
+            { id: payload.room_type_id },
+            { vietSageRoomTypeId: payload.room_type_id },
+          ],
+        },
+      });
+      if (roomType) {
+        targetRoomTypeId = roomType.id;
+        basePrice = roomType.basePrice;
+      }
+    }
+
+    let processedCount = 0;
+
+    if (this.prisma.roomAllotment) {
+      for (const adj of payload.adjustments) {
+        if (!adj.date || !/^\d{4}-\d{2}-\d{2}$/.test(adj.date)) {
+          continue;
+        }
+
+        const [y, m, d] = adj.date.split('-').map((v) => parseInt(v, 10));
+        const dateOnly = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+
+        let existing: { totalRooms: number; bookedRooms: number; price: number } | null = null;
+        if (typeof this.prisma.roomAllotment.findUnique === 'function') {
+          existing = await this.prisma.roomAllotment
+            .findUnique({
+              where: {
+                roomTypeId_date: {
+                  roomTypeId: targetRoomTypeId,
+                  date: dateOnly,
+                },
+              },
+            })
+            .catch(() => null);
+        }
+
+        const totalRooms =
+          adj.total_rooms !== undefined
+            ? adj.total_rooms
+            : existing?.totalRooms ?? 10;
+
+        let bookedRooms = existing?.bookedRooms ?? 0;
+        if (adj.available_rooms !== undefined) {
+          bookedRooms = Math.max(0, totalRooms - adj.available_rooms);
+        } else if (adj.booked_rooms !== undefined) {
+          bookedRooms = adj.booked_rooms;
+        }
+
+        const price =
+          adj.price !== undefined
+            ? adj.price
+            : existing?.price ?? basePrice;
+
+        const isBlocked =
+          adj.is_blocked !== undefined
+            ? adj.is_blocked
+            : totalRooms <= 0 ||
+              (adj.available_rooms !== undefined &&
+                adj.available_rooms <= 0 &&
+                bookedRooms >= totalRooms);
+
+        if (typeof this.prisma.roomAllotment.upsert === 'function') {
+          await this.prisma.roomAllotment.upsert({
+            where: {
+              roomTypeId_date: {
+                roomTypeId: targetRoomTypeId,
+                date: dateOnly,
+              },
+            },
+            create: {
+              roomTypeId: targetRoomTypeId,
+              date: dateOnly,
+              totalRooms,
+              bookedRooms,
+              price,
+              isBlocked,
+            },
+            update: {
+              ...(adj.total_rooms !== undefined ? { totalRooms: adj.total_rooms } : {}),
+              bookedRooms,
+              ...(adj.price !== undefined ? { price: adj.price } : {}),
+              ...(adj.is_blocked !== undefined ? { isBlocked: adj.is_blocked } : {}),
+            },
+          });
+        }
+
+        processedCount++;
+      }
+    }
+
+    if (this.prisma.vietSageSyncLog) {
+      await this.prisma.vietSageSyncLog
+        .create({
+          data: {
+            syncType: 'inbound_inventory_updated',
+            direction: 'INBOUND',
+            status: SyncStatus.SUCCESS,
+            payload: payload as unknown as Prisma.InputJsonValue,
+          },
+        })
+        .catch((err) => {
+          this.logger.warn(`Failed to log inbound inventory webhook: ${err}`);
+        });
+    }
+
+    return {
+      processed: processedCount,
+      roomTypeId: targetRoomTypeId,
+    };
   }
 }

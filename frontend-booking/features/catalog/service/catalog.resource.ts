@@ -10,7 +10,9 @@ import {
   listProperties,
   listServices,
   updateAllotment,
+  updateProperty,
   type PropertyFilter,
+  type UpdatePropertyPayload,
 } from './catalog.client';
 
 export const catalogResource = createResource<void>()({
@@ -72,6 +74,20 @@ export const catalogResource = createResource<void>()({
         };
       }) => createProperty(variables),
       invalidates: [{ type: 'query', operation: 'properties' }],
+    }),
+    updateProperty: defineMutation({
+      mutationFn: ({
+        variables,
+      }: {
+        variables: {
+          id: string;
+          payload: UpdatePropertyPayload;
+        };
+      }) => updateProperty(variables.id, variables.payload),
+      invalidates: [
+        { type: 'query', operation: 'propertyDetail' },
+        { type: 'query', operation: 'properties' },
+      ],
     }),
   },
 });

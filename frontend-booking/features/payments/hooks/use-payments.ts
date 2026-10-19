@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { paymentsResource } from '../service/payments.resource';
 import type { ListPaymentsParams } from '../service/payments.client';

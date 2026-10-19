@@ -57,11 +57,11 @@ Toàn bộ các tệp HTML mẫu đã được kéo về và lưu trữ cục b�
 | STT | Tệp HTML cục bộ | Stitch Screen ID | Route Next.js tương ứng | Vai trò kiến trúc & Trải nghiệm |
 | :---: | :--- | :---: | :---: | :--- |
 | **1** | `my_bookings_evoucher.html` | `fbb7cd2b911b4366b39c1232854b5ad1` | `/my-bookings` | Quản lý kỳ nghỉ khách hàng, lọc tab đơn đặt, hiển thị thẻ **E-Voucher VIP** kèm mã QR check-in & hotline Concierge. |
-| **2** | `guest_lookup_vietqr.html` | `39940912337a43eb87e7ca2861618a8a` | `/booking/lookup` | Tra cứu đơn không cần đăng nhập cho khách vãng lai, hiển thị mã **VietQR Napas 247** động kèm đồng hồ đếm ngược giữ phòng. |
+| **2** | `guest_lookup_payment.html` | `39940912337a43eb87e7ca2861618a8a` | `/booking/lookup` | Tra cứu đơn không cần đăng nhập cho khách vãng lai, hiển thị thông tin chuyển khoản ngân hàng động kèm đồng hồ đếm ngược giữ phòng. |
 | **3** | `admin_allotments_rates.html` | `809dc299398549ee8d93e20fa7cfb25f` | `/admin/allotments` | Kênh vận hành đối tác/quản trị: Bảng lịch lưới 30 ngày (Calendar Grid), theo dõi quota phòng còn lại, tỷ lệ OCC và công tắc Stop-Sell. |
 | **4** | `profile_elite_membership.html` | `887e1235d86b49a08f440e53b1f38d5f` | `/profile` | Hồ sơ hội viên cá nhân, thẻ kim loại **Aurum Elite Club Card**, quản lý Fast Check-in ID, đổi mật khẩu và ví ưu đãi. |
 | **5** | `property_detail.html` | `9cc3128fc19d473c9c54ffb87f468de5` | `/properties/[id]` | Chi tiết khu nghỉ dưỡng: Bộ sưu tập ảnh 16:10, thông số tiện nghi, bảng so sánh hạng phòng, chính sách nhận/trả phòng. |
-| **6** | `checkout_payment.html` | `f72b196055644c528aa3d910e90659da` | `/checkout` | Trang thanh toán tập trung: Chọn phương thức (VietQR / Chuyển khoản / Tại quầy), tóm tắt chi phí thuế phí và thông tin khách lưu trú. |
+| **6** | `checkout_payment.html` | `f72b196055644c528aa3d910e90659da` | `/checkout` | Trang thanh toán tập trung: Chọn phương thức (Chuyển khoản / Thẻ quốc tế / Tại quầy), tóm tắt chi phí thuế phí và thông tin khách lưu trú. |
 | **7** | `auth_login_register.html` | `c4bbfafe51274cd8bdae6a21b7bb9a50` | `/login` (Modal) | Modal & trang đăng nhập/đăng ký tích hợp, hỗ trợ chuyển đổi mượt mà giữa Traveler và Partner. |
 | **8** | `search_results.html` | `321db1ae8fd44203b92aa1224022060a` | `/search` | Trang kết quả tìm kiếm với bộ lọc nâng cao (khoảng giá, số sao, vị trí). |
 | **9** | `home_search.html` | `6003d17a243e4756b192e490639d407b` | `/` | Trang chủ sang trọng với Hero Search Capsule và Bento Grid điểm đến. |
@@ -79,5 +79,5 @@ Toàn bộ các tệp HTML mẫu đã được kéo về và lưu trữ cục b�
    - Giữ nguyên kiến trúc `@dangminhdev04032005/query-resource` và Zustand store theo đúng quy định trong `AGENTS.md` và `Architecture/RULES.md`.
 2. **Authoritative Server Pricing & State**:
    - Mọi mức giá và tính toán chiết khấu phải được fetch từ Backend NestJS (`/api/v1/bookings/calculate-price` hoặc `/api/v1/catalog`), không tính nhẩm ở client.
-3. **Thanh Toán VietQR Tiêu Chuẩn**:
-   - Sử dụng định dạng Napas 247 với cú pháp chuyển khoản tự động chứa `booking_code` để phục vụ xác nhận tự động hoặc thủ công.
+3. **Thanh Toán Chuyển Khoản Tiêu Chuẩn**:
+   - Sử dụng cú pháp chuyển khoản tự động chứa `booking_code` để phục vụ xác nhận tự động hoặc thủ công.

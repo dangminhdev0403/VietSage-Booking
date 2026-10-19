@@ -39,14 +39,14 @@ export default function RegisterRedirectPage() {
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/20 text-primary text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/20 text-primary text-xs font-bold uppercase tracking-wider whitespace-nowrap">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Trải Nghiệm Đặt Phòng Tiện Lợi</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface text-balance">
             Đặt Phòng Không Cần Tài Khoản
           </h1>
-          <p className="text-xs sm:text-base text-outline leading-relaxed font-light">
+          <p className="text-xs sm:text-base text-outline leading-relaxed font-light text-pretty">
             Tại VietSageBooking, quý khách có thể thoải mái đặt phòng và trải nghiệm dịch vụ nghỉ dưỡng cao cấp mà <strong className="text-on-surface font-semibold">không bắt buộc phải đăng ký tài khoản</strong>.
           </p>
         </div>

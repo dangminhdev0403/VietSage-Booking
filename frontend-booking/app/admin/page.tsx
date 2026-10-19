@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import {
@@ -15,11 +15,31 @@ import {
   CreditCard,
   Building2,
   RefreshCw,
+  Eye,
+  Phone,
 } from 'lucide-react';
 import {
   useBookingsQuery,
   useBookingSummaryQuery,
 } from '@/features/bookings/hooks/use-bookings';
+import { usePropertiesQuery } from '@/features/catalog/hooks/use-catalog';
+import {
+  AdminBookingDetailDrawer,
+  BookingDetailItem,
+} from '@/features/bookings/components/admin-booking-detail-drawer';
+
+function formatStayDates(checkIn: string, checkOut: string): string {
+  try {
+    const ci = checkIn.split('-');
+    const co = checkOut.split('-');
+    if (ci.length === 3 && co.length === 3) {
+      return `${ci[2]}/${ci[1]} → ${co[2]}/${co[1]}/${co[0]}`;
+    }
+  } catch {
+    // fallback
+  }
+  return `${checkIn} → ${checkOut}`;
+}
 
 export default function AdminDashboardPage() {
   const { data: session, status: authStatus } = useSession();
@@ -33,15 +53,29 @@ export default function AdminDashboardPage() {
       }
     | undefined;
 
-  const userName = user?.name || 'Tổng Quản Lý';
+  const isPartner = Boolean(user?.managedPropertyId || user?.role === 'HOTEL_PARTNER');
   const managedPropertyId = user?.managedPropertyId ?? undefined;
+  const userName = user?.name || (isPartner ? 'Quản Lý Đối Tác' : 'Tổng Quản Lý Sàn');
+  const [adminSelectedPropertyId, setAdminSelectedPropertyId] = useState<string>('ALL');
+
+  const { data: propertiesData } = usePropertiesQuery(
+    {},
+    { enabled: !managedPropertyId && authStatus === 'authenticated' },
+  );
+  const properties = propertiesData?.items || [];
+
+  const effectivePropertyId = managedPropertyId
+    ? managedPropertyId
+    : adminSelectedPropertyId === 'ALL'
+    ? undefined
+    : adminSelectedPropertyId;
 
   const {
     data: summary,
     isLoading: summaryLoading,
     refetch: refetchSummary,
   } = useBookingSummaryQuery(
-    { property_id: managedPropertyId },
+    { property_id: effectivePropertyId },
     { enabled: authStatus === 'authenticated' },
   );
 
@@ -51,7 +85,7 @@ export default function AdminDashboardPage() {
     refetch: refetchBookings,
   } = useBookingsQuery(
     {
-      property_id: managedPropertyId,
+      property_id: effectivePropertyId,
       page: 1,
       pageSize: 5,
     },
@@ -69,35 +103,57 @@ export default function AdminDashboardPage() {
   const upcomingCheckins = summary?.upcoming_checkins_7d ?? 0;
 
   const recentBookings = recentBookingsData?.items || [];
+  const [selectedBooking, setSelectedBooking] = useState<BookingDetailItem | null>(null);
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-10">
       {/* 1. TOP GREETING & OPERATIONAL HEADER */}
       <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-outline">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              OTA Operations Center
+          <div className="flex items-center gap-2 text-stone-600">
+            <Sparkles className={`w-4 h-4 ${isPartner ? 'text-emerald-600' : 'text-primary'}`} />
+            <span
+              className={`text-xs sm:text-sm font-extrabold uppercase tracking-widest ${
+                isPartner ? 'text-emerald-700' : 'text-primary'
+              }`}
+            >
+              {isPartner ? 'Đối Tác Cơ Sở' : 'Trung Tâm Điều Hành'}
             </span>
-            <span className="text-outline-variant">•</span>
-            <span className="text-xs text-outline">Bảng Điều Hành Trung Tâm</span>
+            <span className="text-stone-300">•</span>
+            <span className="text-xs sm:text-sm text-stone-600 font-medium">
+              {isPartner ? 'Vận Hành Cơ Sở' : 'Điều Hành Hệ Thống'}
+            </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight text-balance">
             Chào mừng trở lại, {userName}
           </h1>
-
-          <p className="text-xs sm:text-base text-on-surface-variant max-w-2xl leading-relaxed">
-            Hệ thống phân phối phòng OTA đang hoạt động bình thường. Theo dõi số liệu doanh số thời gian thực, tiến độ thanh toán và các đơn sắp đến ngày nhận phòng.
-          </p>
         </div>
 
         {/* Quick Executive Actions */}
-        <div className="flex items-center gap-3 self-start lg:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto shrink-0">
+          {!managedPropertyId && properties.length > 0 && (
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-2xs">
+              <Building2 className="w-4 h-4 text-primary shrink-0" />
+              <span className="text-xs font-bold text-outline whitespace-nowrap">Lọc cơ sở:</span>
+              <select
+                value={adminSelectedPropertyId}
+                onChange={(e) => setAdminSelectedPropertyId(e.target.value)}
+                className="bg-transparent text-xs font-bold text-on-surface focus:outline-none cursor-pointer max-w-[200px] truncate"
+              >
+                <option value="ALL">Toàn sàn (Tất cả đối tác)</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button
             onClick={handleRefresh}
-            className="px-4 py-2.5 rounded-2xl bg-surface-container-lowest text-on-surface border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 text-xs font-bold cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl bg-surface-container-lowest text-on-surface border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 text-sm font-bold cursor-pointer"
           >
             <RefreshCw className="w-4 h-4 text-primary" />
             <span>Làm mới số liệu</span>
@@ -105,10 +161,14 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/admin/bookings"
-            className="px-4 py-2.5 rounded-2xl bg-primary text-on-primary font-bold text-xs shadow-xs hover:bg-primary/90 transition-all flex items-center gap-2 cursor-pointer"
+            className={`px-4 py-2.5 rounded-2xl font-bold text-sm shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
+              isPartner
+                ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                : 'bg-primary hover:bg-[#684f2c] text-on-primary'
+            }`}
           >
             <Calendar className="w-4 h-4" />
-            <span>Quản lý đơn đặt</span>
+            <span>{isPartner ? 'Đón tiếp khách đặt' : 'Quản lý đơn toàn sàn'}</span>
           </Link>
         </div>
       </section>
@@ -118,7 +178,7 @@ export default function AdminDashboardPage() {
         {/* Card 1: Giá trị đặt phòng OTA (Gross Booking Value) */}
         <div className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs flex flex-col justify-between group hover:shadow-xs transition-all sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-outline">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-stone-500">
               Giá Trị Đặt Phòng OTA
             </span>
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -126,7 +186,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-on-surface">
+            <div className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
               {summaryLoading ? (
                 <span className="text-outline text-lg">Đang tải...</span>
               ) : (
@@ -136,20 +196,20 @@ export default function AdminDashboardPage() {
                 }).format(grossBookingValue)
               )}
             </div>
-            <p className="text-xs text-primary font-semibold mt-1">
+            <p className="text-xs sm:text-sm text-primary font-bold mt-1">
               Gross Booking Value (GBV)
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-outline text-xs">
+          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs sm:text-sm text-stone-600">
             <span>Tổng giá trị đơn</span>
-            <span className="text-emerald-700 font-bold">Thời gian thực</span>
+            <span className="text-emerald-700 font-extrabold">Thời gian thực</span>
           </div>
         </div>
 
         {/* Card 2: Tổng số đơn */}
         <div className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs flex flex-col justify-between group hover:shadow-xs transition-all">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-outline">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-stone-500">
               Tổng Số Đơn
             </span>
             <div className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center text-on-surface">
@@ -157,23 +217,23 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-on-surface">
+            <div className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
               {summaryLoading ? '...' : totalBookings}
             </div>
-            <p className="text-xs text-outline font-medium mt-1">
+            <p className="text-xs sm:text-sm text-stone-500 font-semibold mt-1">
               Toàn bộ giao dịch
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-outline text-xs">
+          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs sm:text-sm text-stone-600">
             <span>Đơn lưu trữ</span>
-            <span className="font-semibold text-on-surface">OTA Platform</span>
+            <span className="font-bold text-on-surface">OTA Platform</span>
           </div>
         </div>
 
         {/* Card 3: Đơn đã xác nhận */}
         <div className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs flex flex-col justify-between group hover:shadow-xs transition-all">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-outline">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-stone-500">
               Đơn Đã Xác Nhận
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
@@ -181,16 +241,16 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-emerald-700">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight">
               {summaryLoading ? '...' : confirmedBookings}
             </div>
-            <p className="text-xs text-outline font-medium mt-1">
+            <p className="text-xs sm:text-sm text-stone-500 font-semibold mt-1">
               Đã giữ chỗ / thanh toán
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-outline text-xs">
+          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs sm:text-sm text-stone-600">
             <span>Tỷ lệ xác nhận</span>
-            <span className="text-emerald-700 font-bold">
+            <span className="text-emerald-700 font-extrabold">
               {totalBookings > 0
                 ? `${Math.round((confirmedBookings / totalBookings) * 100)}%`
                 : '0%'}
@@ -201,7 +261,7 @@ export default function AdminDashboardPage() {
         {/* Card 4: Đơn chờ thanh toán */}
         <div className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs flex flex-col justify-between group hover:shadow-xs transition-all">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-outline">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-stone-500">
               Đơn Chờ Thanh Toán
             </span>
             <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
@@ -209,23 +269,23 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-amber-700">
+            <div className="text-2xl sm:text-3xl font-black text-amber-700 tracking-tight">
               {summaryLoading ? '...' : pendingBookings}
             </div>
-            <p className="text-xs text-outline font-medium mt-1">
+            <p className="text-xs sm:text-sm text-stone-500 font-semibold mt-1">
               Chờ đối soát chuyển khoản
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-outline text-xs">
+          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs sm:text-sm text-stone-600">
             <span>Cần theo dõi</span>
-            <span className="text-amber-700 font-bold">Pending / Unpaid</span>
+            <span className="text-amber-700 font-extrabold">Pending / Unpaid</span>
           </div>
         </div>
 
         {/* Card 5: Đơn sắp check-in (7 ngày) */}
         <div className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs flex flex-col justify-between group hover:shadow-xs transition-all">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-outline">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-stone-500">
               Sắp Check-in (7 Ngày)
             </span>
             <div className="w-9 h-9 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary">
@@ -233,16 +293,16 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-black text-primary">
+            <div className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
               {summaryLoading ? '...' : upcomingCheckins}
             </div>
-            <p className="text-xs text-outline font-medium mt-1">
+            <p className="text-xs sm:text-sm text-stone-500 font-semibold mt-1">
               Khách sắp đến nhận phòng
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-outline text-xs">
+          <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between text-xs sm:text-sm text-stone-600">
             <span>Khung vận hành</span>
-            <span className="text-primary font-bold">7 ngày tới</span>
+            <span className="text-primary font-extrabold">7 ngày tới</span>
           </div>
         </div>
       </section>
@@ -254,19 +314,19 @@ export default function AdminDashboardPage() {
           className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between group"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <Calendar className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors">
+              <h3 className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
                 Quản Trị Đơn Đặt Phòng
               </h3>
-              <p className="text-xs text-outline mt-0.5">
+              <p className="text-sm text-stone-500 mt-1 leading-normal">
                 Tra cứu, tìm kiếm, lọc theo trạng thái và hủy giữ chỗ
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-outline group-hover:text-primary transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-5 h-5 text-stone-400 group-hover:text-primary transition-transform group-hover:translate-x-1 shrink-0 ml-2" />
         </Link>
 
         <Link
@@ -274,19 +334,19 @@ export default function AdminDashboardPage() {
           className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between group"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700 shrink-0">
               <CreditCard className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-on-surface group-hover:text-emerald-700 transition-colors">
+              <h3 className="text-base sm:text-lg font-bold text-on-surface group-hover:text-emerald-700 transition-colors">
                 Lịch Sử Thanh Toán
               </h3>
-              <p className="text-xs text-outline mt-0.5">
-                Theo dõi giao dịch, mã tham chiếu đối soát VietQR
+              <p className="text-sm text-stone-500 mt-1 leading-normal">
+                Theo dõi giao dịch, mã tham chiếu đối soát thanh toán
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-outline group-hover:text-emerald-700 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-5 h-5 text-stone-400 group-hover:text-emerald-700 transition-transform group-hover:translate-x-1 shrink-0 ml-2" />
         </Link>
 
         <Link
@@ -294,141 +354,189 @@ export default function AdminDashboardPage() {
           className="bg-surface-container-lowest p-6 rounded-3xl border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between group"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary-container/30 flex items-center justify-center text-primary">
+            <div className="w-12 h-12 rounded-2xl bg-primary-container/30 flex items-center justify-center text-primary shrink-0">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-on-surface group-hover:text-primary transition-colors">
+              <h3 className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
                 Cơ Sở Lưu Trú &amp; Hạng Phòng
               </h3>
-              <p className="text-xs text-outline mt-0.5">
+              <p className="text-sm text-stone-500 mt-1 leading-normal">
                 Xem danh mục khách sạn, sức chứa và chính sách giá
               </p>
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-outline group-hover:text-primary transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-5 h-5 text-stone-400 group-hover:text-primary transition-transform group-hover:translate-x-1 shrink-0 ml-2" />
         </Link>
       </section>
 
       {/* 4. QUICK OVERVIEW TABLE: 5 MOST RECENT BOOKINGS */}
       <section className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 shadow-2xs overflow-hidden">
-        <div className="p-6 sm:p-8 border-b border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold text-on-surface">
-                Đơn Đặt Phòng Gần Đây
-              </h2>
+        <div className="p-6 sm:p-7 border-b border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <p className="text-xs text-outline mt-1">
-              Top 5 giao dịch đặt phòng mới nhất được ghi nhận trên hệ thống OTA
-            </p>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-lg sm:text-xl font-bold text-on-surface">
+                  Đơn Đặt Phòng Gần Đây
+                </h2>
+                <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-stone-100 text-stone-700 border border-stone-200 whitespace-nowrap">
+                  5 đơn mới nhất
+                </span>
+              </div>
+            </div>
           </div>
 
           <Link
             href="/admin/bookings"
-            className="px-4 py-2 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 text-sm font-bold transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer border border-stone-200/80 whitespace-nowrap"
           >
-            <span>Xem toàn bộ danh sách đơn</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>Xem toàn bộ danh sách</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {bookingsLoading ? (
           <div className="py-20 text-center">
             <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs text-outline font-medium">
+            <p className="text-sm text-stone-500 font-medium">
               Đang tải danh sách đơn gần đây...
             </p>
           </div>
         ) : recentBookings.length === 0 ? (
-          <div className="py-20 text-center text-outline text-xs">
+          <div className="py-20 text-center text-stone-500 text-sm font-medium">
             Chưa có đơn đặt phòng nào được ghi nhận.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-surface-container-low text-outline uppercase tracking-wider text-xs font-bold border-b border-outline-variant/20">
+              <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-xs font-extrabold border-b border-slate-200/80">
                 <tr>
-                  <th className="py-4 px-6">Mã Đặt</th>
-                  <th className="py-4 px-6">Khách Sạn</th>
-                  <th className="py-4 px-6">Khách Hàng</th>
-                  <th className="py-4 px-6">Thời Gian Lưu Trú</th>
-                  <th className="py-4 px-6">Tổng Tiền</th>
-                  <th className="py-4 px-6">Thanh Toán</th>
-                  <th className="py-4 px-6 text-right">Trạng Thái</th>
+                  <th className="py-3 px-4 w-[130px] whitespace-nowrap">Mã Đặt</th>
+                  <th className="py-3 px-4 min-w-[200px]">Khách Sạn &amp; Hạng Phòng</th>
+                  <th className="py-3 px-4 w-[150px] whitespace-nowrap">Khách Hàng</th>
+                  <th className="py-3 px-4 w-[140px] whitespace-nowrap">Lưu Trú</th>
+                  <th className="py-3 px-4 w-[120px] text-right whitespace-nowrap">Tổng Tiền</th>
+                  <th className="py-3 px-4 w-[150px] text-center whitespace-nowrap">Trạng Thái</th>
+                  <th className="py-3 px-4 w-[110px] text-right whitespace-nowrap">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/20 text-on-surface">
+              <tbody className="divide-y divide-slate-100 text-slate-900">
                 {recentBookings.map((b) => (
                   <tr
                     key={b.id}
-                    className="hover:bg-surface-container/50 transition-colors"
+                    onClick={() => setSelectedBooking(b)}
+                    className="hover:bg-slate-50/80 cursor-pointer transition-colors group"
+                    title="Nhấn để xem chi tiết toàn bộ đơn đặt phòng"
                   >
-                    <td className="py-4 px-6 font-mono font-extrabold text-primary">
-                      {b.booking_code}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 group-hover:bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-200/90 whitespace-nowrap transition-colors">
+                        {b.booking_code}
+                      </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-bold text-on-surface">
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">
                         {b.property_name || 'Khách sạn liên kết'}
                       </div>
-                      <div className="text-xs text-outline">
+                      <div className="text-xs text-slate-500 font-medium mt-0.5 truncate max-w-[220px]">
                         {b.room_type_name || 'Tiêu chuẩn'}
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-on-surface">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="font-bold text-slate-900 text-sm truncate max-w-[140px]">
                         {b.guest_name}
                       </div>
-                      <div className="text-xs text-outline">{b.guest_phone}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-xs">
-                        {b.check_in} → {b.check_out}
-                      </div>
-                      <div className="text-xs text-outline">
-                        ({b.nights} đêm)
+                      <div className="text-xs font-mono text-slate-500 mt-0.5 flex items-center gap-1">
+                        <Phone className="w-3 h-3 shrink-0 text-slate-400" />
+                        <span>{b.guest_phone}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 font-black text-on-surface">
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND',
-                      }).format(b.total_price)}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="font-bold text-xs text-slate-900">
+                        {formatStayDates(b.check_in, b.check_out)}
+                      </div>
+                      <div className="text-xs text-slate-500 font-medium mt-0.5">
+                        {b.nights} đêm nghỉ
+                      </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                          b.payment_status === 'PAID'
-                            ? 'bg-emerald-100 text-emerald-800'
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <span className="font-mono text-sm font-black text-slate-900">
+                        {new Intl.NumberFormat('vi-VN', {
+                          style: 'currency',
+                          currency: 'VND',
+                        }).format(b.total_price)}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1 items-center">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${
+                            b.status === 'CONFIRMED'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : b.status === 'PENDING'
+                              ? 'bg-sky-50 text-sky-700 border-sky-200'
+                              : b.status === 'CHECKED_IN'
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                              : b.status === 'CANCELLED'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-slate-100 text-slate-600 border-slate-200'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              b.status === 'CONFIRMED'
+                                ? 'bg-emerald-500'
+                                : b.status === 'PENDING'
+                                ? 'bg-sky-500'
+                                : b.status === 'CHECKED_IN'
+                                ? 'bg-indigo-500'
+                                : b.status === 'CANCELLED'
+                                ? 'bg-rose-500'
+                                : 'bg-slate-400'
+                            }`}
+                          />
+                          {b.status}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide border ${
+                            b.payment_status === 'PAID'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : b.payment_status === 'REFUNDED'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              b.payment_status === 'PAID'
+                                ? 'bg-emerald-500'
+                                : b.payment_status === 'REFUNDED'
+                                ? 'bg-purple-500'
+                                : 'bg-amber-500'
+                            }`}
+                          />
+                          {b.payment_status === 'PAID'
+                            ? 'Đã thanh toán'
                             : b.payment_status === 'REFUNDED'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {b.payment_status === 'PAID'
-                          ? 'Đã Thanh Toán'
-                          : b.payment_status === 'REFUNDED'
-                          ? 'Đã Hoàn Tiền'
-                          : 'Chưa Thanh Toán'}
-                      </span>
+                            ? 'Đã hoàn tiền'
+                            : 'Chưa thanh toán'}
+                        </span>
+                      </div>
                     </td>
-                    <td className="py-4 px-6 text-right">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase ${
-                          b.status === 'CONFIRMED'
-                            ? 'bg-tertiary-container/30 text-tertiary'
-                            : b.status === 'PENDING'
-                            ? 'bg-primary-container/30 text-primary'
-                            : b.status === 'CHECKED_IN'
-                            ? 'bg-secondary-container/40 text-secondary'
-                            : b.status === 'CANCELLED'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-surface-container text-outline'
-                        }`}
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBooking(b);
+                        }}
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-primary hover:text-white text-slate-700 text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                        title="Xem chi tiết đơn đặt phòng"
                       >
-                        {b.status}
-                      </span>
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Chi tiết</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -437,6 +545,12 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </section>
+
+      {/* DETAIL DRAWER (SLIDE-OVER) */}
+      <AdminBookingDetailDrawer
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+      />
     </div>
   );
 }

@@ -19,8 +19,6 @@ import {
   RefreshCw,
   MapPin,
   Star,
-  ChevronDown,
-  ChevronUp,
   Calendar,
 } from 'lucide-react';
 import {
@@ -29,7 +27,6 @@ import {
   useDepositCheckoutMutation,
 } from '../hooks/use-bookings';
 import { lookupBooking, verifyCheckoutPayment } from '../service/bookings.client';
-import { useServicesQuery } from '@/features/catalog/hooks/use-catalog';
 import { Property } from '@/features/catalog/components/property-card';
 import { luxuryAlert } from '@/lib/alert/luxury-alert';
 import { LuxuryAlertBanner } from '@/components/shared/luxury-alert-banner';
@@ -57,8 +54,6 @@ export function BookingModal({
     return d.toISOString().split('T')[0];
   });
   const [selectedRoomId, setSelectedRoomId] = useState(roomTypes[0]?.id || '');
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [showAllAddons, setShowAllAddons] = useState(false);
   const [specialRequests] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -73,7 +68,6 @@ export function BookingModal({
     (BookingInvoiceData & { checkout_url?: string }) | null
   >(null);
 
-  const { data: services } = useServicesQuery();
   const createMutation = useCreateBookingMutation();
   const checkoutMutation = useDepositCheckoutMutation();
 
@@ -94,7 +88,6 @@ export function BookingModal({
       check_in: checkIn,
       check_out: checkOut,
       guests: selectedRoom?.max_guests ?? 2,
-      service_ids: selectedServiceIds,
     },
     { enabled: Boolean(isValidDateRange && (selectedRoomId || roomTypes[0]?.id)) },
   );
@@ -112,21 +105,11 @@ export function BookingModal({
       'Hạng phòng tạm thời không khả dụng trong khoảng thời gian đã chọn.'
     : null;
 
-  // Pricing values (authoritative quote with local fallback)
+  // Pricing values (authoritative quote with local fallback directly: basePrice * nights)
   const roomSubtotal = quote?.room_subtotal ?? roomPrice * nights;
-  const servicesPrice = (services || [])
-    .filter((s) => selectedServiceIds.includes(s.id))
-    .reduce((sum, s) => sum + s.price, 0);
-  const addonSubtotal = quote?.addon_subtotal ?? servicesPrice;
-  const totalPrice = quote?.total_price ?? (roomSubtotal + addonSubtotal);
+  const totalPrice = quote?.total_price ?? (roomPrice * nights);
   const depositAmount = quote?.deposit_amount ?? Math.round(totalPrice * 0.3);
   const balanceDue = quote?.balance_due ?? (totalPrice - depositAmount);
-
-  const toggleService = (id: string) => {
-    setSelectedServiceIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
 
   const handleCopy = (text: string, type: 'code' | 'token') => {
     if (navigator?.clipboard) {
@@ -169,7 +152,11 @@ export function BookingModal({
               payment_status: verifyRes.payment_status || 'DEPOSIT_PAID',
               paid_at: verifyRes.paid_at || new Date().toISOString(),
             }));
-            luxuryAlert.toast('Thanh toán cọc thành công! Hóa đơn xác nhận đã sẵn sàng.', 'success');
+            await luxuryAlert.success({
+              title: 'Thanh Toán Cọc Thành Công',
+              message: 'Thanh toán cọc thành công! Hóa đơn xác nhận kỳ nghỉ của quý khách đã sẵn sàng.',
+              confirmText: 'Xem Hóa Đơn',
+            });
             return;
           }
         } catch {}
@@ -192,9 +179,17 @@ export function BookingModal({
             payment_status: refreshed.payment_status || 'DEPOSIT_PAID',
             paid_at: (refreshed as { paid_at?: string }).paid_at || new Date().toISOString(),
           }));
-          luxuryAlert.toast('Thanh toán cọc thành công! Hóa đơn xác nhận đã sẵn sàng.', 'success');
+          await luxuryAlert.success({
+            title: 'Thanh Toán Cọc Thành Công',
+            message: 'Thanh toán cọc thành công! Hóa đơn xác nhận kỳ nghỉ của quý khách đã sẵn sàng.',
+            confirmText: 'Xem Hóa Đơn',
+          });
         } else if (isManual) {
-          luxuryAlert.toast('Hệ thống đang chờ nhận thông báo giao dịch từ Stripe...', 'info');
+          await luxuryAlert.info({
+            title: 'Đang Chờ Đối Soát',
+            message: 'Hệ thống đang chờ nhận thông báo giao dịch từ cổng thanh toán Stripe...',
+            confirmText: 'Đã Hiểu',
+          });
         }
       } catch (err) {
         console.warn('[Payment Check Silent Catch]', err);
@@ -301,7 +296,6 @@ export function BookingModal({
         check_out: checkOut,
         guests: selectedRoom?.max_guests ?? 2,
         special_requests: specialRequests || undefined,
-        service_ids: selectedServiceIds.length > 0 ? selectedServiceIds : undefined,
       });
 
       let checkoutUrl: string | undefined;
@@ -343,10 +337,7 @@ export function BookingModal({
         status: res.status,
         payment_status: res.payment_status || 'UNPAID',
         checkout_url: checkoutUrl,
-        addons: selectedServiceIds
-          .map((id) => services?.find((s) => s.id === id))
-          .filter(Boolean)
-          .map((s) => ({ service_name: s!.name, price: s!.price })),
+        addons: [],
       });
 
       luxuryAlert.toast('Đang mở cổng thanh toán bảo mật Stripe...', 'info');
@@ -821,23 +812,23 @@ export function BookingModal({
                                 )}
                               </div>
 
-                              {/* Badges */}
+                              {/* Prominent Core Room Attributes */}
                               <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-on-surface-variant">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40">
-                                  <Maximize2 className="w-3 h-3 text-primary" />
-                                  {room.name.toLowerCase().includes('villa') ? '120m²' : room.name.toLowerCase().includes('suite') ? '75m²' : '48m²'}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40">
-                                  <Bed className="w-3 h-3 text-primary" />
-                                  {room.name.toLowerCase().includes('suite') ? '1 King hoặc 2 Twin' : '1 Giường King-size'}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40">
-                                  <Waves className="w-3 h-3 text-primary" />
-                                  {room.name.toLowerCase().includes('beach') || room.name.toLowerCase().includes('ocean') ? 'View Biển' : 'View Vườn'}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
                                   <Users className="w-3 h-3 text-primary" />
                                   Tối đa {guestsCount} khách
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                  <Bed className="w-3 h-3 text-primary" />
+                                  {room.bed_type || (room.name.toLowerCase().includes('suite') ? '1 King hoặc 2 Twin' : '1 Giường King-size')}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                  <Maximize2 className="w-3 h-3 text-primary" />
+                                  {room.area_sqm ? `${room.area_sqm}m²` : (room.name.toLowerCase().includes('villa') ? '120m²' : room.name.toLowerCase().includes('suite') ? '75m²' : '62m²')}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                  <Waves className="w-3 h-3 text-primary" />
+                                  {room.has_sea_view ? 'Hướng Biển' : (room.name.toLowerCase().includes('beach') || room.name.toLowerCase().includes('ocean') ? 'Hướng Biển' : 'Hướng Vườn')}
                                 </span>
                               </div>
 
@@ -864,55 +855,6 @@ export function BookingModal({
                     })}
                   </div>
                 </div>
-
-                {/* 3. Optional Add-ons (Compact & Collapsible) */}
-                {services && services.length > 0 && (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Dịch vụ &amp; Trải nghiệm tùy chọn
-                        {selectedServiceIds.length > 0 && (
-                          <span className="text-xs bg-primary text-on-primary px-1.5 py-0.2 rounded-full font-bold">
-                            {selectedServiceIds.length} đã chọn
-                          </span>
-                        )}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setShowAllAddons((prev) => !prev)}
-                        className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>{showAllAddons ? 'Thu gọn' : `Xem tất cả (${services.length})`}</span>
-                        {showAllAddons ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      </button>
-                    </div>
-
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2 transition-all ${showAllAddons ? 'max-h-72 overflow-y-auto pr-1' : 'max-h-36 overflow-y-auto pr-1'}`}>
-                      {services.map((srv) => (
-                        <label
-                          key={srv.id}
-                          className={`p-2.5 rounded-lg border flex items-center justify-between text-xs cursor-pointer transition-all ${
-                            selectedServiceIds.includes(srv.id)
-                              ? 'border-primary bg-primary-container/10 ring-1 ring-primary'
-                              : 'border-outline-variant/40 bg-surface-container-low hover:bg-surface-container'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={selectedServiceIds.includes(srv.id)}
-                              onChange={() => toggleService(srv.id)}
-                              className="w-3.5 h-3.5 text-primary accent-primary cursor-pointer"
-                            />
-                            <span className="font-medium text-on-surface line-clamp-1">{srv.name}</span>
-                          </div>
-                          <span className="font-semibold text-primary shrink-0 ml-1">+{formatVND(srv.price)}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* ================= CỘT PHẢI (COL 8 - 12): Tóm tắt chi phí & Thanh toán cọc 30% ================= */}
@@ -950,39 +892,10 @@ export function BookingModal({
                     </p>
                   </div>
 
-                  {/* Selected Addons preview (if any) */}
-                  {selectedServiceIds.length > 0 && (
-                    <div className="space-y-1.5 py-2 border-y border-outline-variant/30 text-xs">
-                      <span className="font-bold text-primary block uppercase tracking-wider text-xs">
-                        Dịch vụ đã chọn ({selectedServiceIds.length}):
-                      </span>
-                      <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
-                        {services
-                          ?.filter((s) => selectedServiceIds.includes(s.id))
-                          .map((s) => (
-                            <div key={s.id} className="flex justify-between text-on-surface-variant">
-                              <span className="truncate mr-2">• {s.name}</span>
-                              <span className="font-semibold text-primary shrink-0">+{formatVND(s.price)}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Price breakdown */}
                   <div className="space-y-2 text-xs pt-1 border-t border-outline-variant/30">
-                    <div className="flex justify-between text-on-surface-variant">
-                      <span>Tiền phòng ({nights} đêm):</span>
-                      <span className="font-semibold text-on-surface">{formatVND(roomSubtotal)}</span>
-                    </div>
-                    {addonSubtotal > 0 && (
-                      <div className="flex justify-between text-on-surface-variant">
-                        <span>Dịch vụ cộng thêm:</span>
-                        <span className="font-semibold text-on-surface">+{formatVND(addonSubtotal)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-xs font-bold text-on-surface pt-1 border-t border-outline-variant/40">
-                      <span>Tổng tiền phòng trọn gói:</span>
+                    <div className="flex justify-between text-xs font-bold text-on-surface pt-1">
+                      <span>Tổng tiền phòng ({nights} đêm):</span>
                       <span className="text-sm font-extrabold">{formatVND(totalPrice)}</span>
                     </div>
 

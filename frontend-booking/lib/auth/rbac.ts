@@ -4,7 +4,7 @@ export type RoleDefaultPathMap = Record<string, string>;
 
 export const roleDefaultPaths: RoleDefaultPathMap = {
   ADMIN: '/admin',
-  HOTEL_PARTNER: '/admin',
+  HOTEL_PARTNER: '/partner',
   TRAVELER: '/',
 };
 
@@ -72,6 +72,13 @@ export const ROUTE_PERMISSION_MAP: Record<string, string> = {
   '/admin/payments': PERMISSIONS.PAYMENTS_READ,
   '/admin/settlements': PERMISSIONS.PAYMENTS_READ,
   '/admin': PERMISSIONS.ADMIN_ACCESS,
+  '/partner/rooms': PERMISSIONS.CATALOG_READ,
+  '/partner/properties': PERMISSIONS.CATALOG_READ,
+  '/partner/property': PERMISSIONS.CATALOG_READ,
+  '/partner/allotments': PERMISSIONS.ALLOTMENTS_READ,
+  '/partner/bookings': PERMISSIONS.BOOKINGS_READ,
+  '/partner/payments': PERMISSIONS.PAYMENTS_READ,
+  '/partner': PERMISSIONS.ADMIN_ACCESS,
 };
 
 export function isUserRole(role: unknown): boolean {
@@ -86,7 +93,7 @@ export function isAdminRole(role?: string | null): boolean {
 export function getDefaultPathForRole(role?: string | null): string {
   if (!role) return '/';
   const normalized = role.toUpperCase();
-  return roleDefaultPaths[normalized] || (isAdminRole(normalized) ? '/admin' : '/');
+  return roleDefaultPaths[normalized] || (isAdminRole(normalized) ? (normalized === 'HOTEL_PARTNER' ? '/partner' : '/admin') : '/');
 }
 
 export function getPermissionsForRole(role?: string | null): string[] {
@@ -148,6 +155,7 @@ export function isKnownRedirectPath(pathname: string): boolean {
 
   const allowedPrefixes = [
     '/admin',
+    '/partner',
     '/booking',
     '/properties',
     '/alerts',
@@ -187,6 +195,23 @@ export function canAccessPath(
   permissions: readonly string[] | undefined | null,
   path: string,
 ): boolean {
+  const normalized = normalizeInternalPath(path);
+  if (!normalized) return false;
+  const pathname = normalized.split('?')[0] || normalized;
+
+  const normalizedRole = role ? role.toUpperCase() : null;
+
+  // Strict physical portal separation
+  if (matchesPrefix(pathname, '/admin')) {
+    if (normalizedRole === 'HOTEL_PARTNER') return false;
+    if (!normalizedRole || normalizedRole === 'TRAVELER') return false;
+  }
+
+  if (matchesPrefix(pathname, '/partner')) {
+    if (normalizedRole === 'ADMIN') return false;
+    if (!normalizedRole || normalizedRole === 'TRAVELER') return false;
+  }
+
   if (permissions && permissions.length > 0) {
     return canAccessPathByPermissions(permissions, path);
   }

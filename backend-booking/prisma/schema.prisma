@@ -32,7 +32,6 @@ enum PaymentStatus {
 }
 
 enum PaymentMethod {
-  VIETQR
   BANK_TRANSFER
   PAY_AT_HOTEL
   STRIPE_LOCALMATE
@@ -77,6 +76,7 @@ model Account {
   auditEvents     AuditEvent[]
   bookings        Booking[]
 
+  @@index([managedPropertyId])
   @@map("accounts")
 }
 
@@ -189,6 +189,7 @@ model Property {
   partnerAccounts Account[] @relation("PartnerProperty")
 
   @@index([city])
+  @@index([isActive, city])
   @@map("properties")
 }
 
@@ -215,6 +216,8 @@ model RoomType {
   allotments  RoomAllotment[]
   bookings    Booking[]
 
+  @@index([propertyId])
+  @@index([propertyId, isActive, basePrice])
   @@map("room_types")
 }
 
@@ -298,6 +301,9 @@ model Booking {
   @@index([bookingCode])
   @@index([guestEmail])
   @@index([propertyId])
+  @@index([propertyId, status])
+  @@index([accountId])
+  @@index([status, createdAt])
   @@index([lookupTokenHash])
   @@map("bookings")
 }
@@ -313,6 +319,8 @@ model BookingAddon {
   booking        Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   addonService   AddonService @relation(fields: [addonServiceId], references: [id], onDelete: Restrict)
 
+  @@index([bookingId])
+  @@index([addonServiceId])
   @@map("booking_addons")
 }
 
@@ -341,6 +349,7 @@ model Payment {
   @@index([bookingId])
   @@index([transactionRef])
   @@index([providerSessionId])
+  @@index([status, createdAt])
   @@map("payments")
 }
 

@@ -6,11 +6,7 @@ import {
   Sparkles,
   Users,
   ArrowRight,
-  ShieldCheck,
-  Award,
-  Crown,
   Compass,
-  CheckCircle2,
 } from 'lucide-react';
 import { usePropertiesQuery } from '@/features/catalog/hooks/use-catalog';
 import { Property, PropertyCard } from '@/features/catalog/components/property-card';
@@ -55,28 +51,19 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/60"></div>
         </div>
 
-        <div className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 sm:pt-16 lg:pt-24 pb-20 sm:pb-24 lg:pb-28 flex flex-col items-center text-center">
-          <FadeIn direction="down" duration={0.7}>
-            <div className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-surface-container-lowest/85 backdrop-blur-md border border-outline-variant/40 shadow-sm mb-5 sm:mb-6">
-              <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-              <span className="text-xs sm:text-base uppercase tracking-wider text-primary font-extrabold">
-                Kênh Đặt Phòng Trực Tuyến VietSageBooking 2026
+        <div className="relative z-10 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10 pt-12 sm:pt-20 lg:pt-24 pb-20 sm:pb-24 lg:pb-28 flex flex-col items-center text-center">
+          <FadeIn delay={0.1} duration={0.8}>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white max-w-4xl tracking-tight leading-tight mb-4 sm:mb-6 drop-shadow-md">
+              <span className="block font-sans text-white/95 sm:whitespace-nowrap">
+                Đặt Phòng Khách Sạn & Biệt Thự
               </span>
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.15} duration={0.8}>
-            <h1 className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-5xl tracking-tight leading-[1.18] mb-5 sm:mb-6 drop-shadow-md">
-              <span className="block font-sans text-white/95">
-                Khám Phá Bản Giao Hưởng
-              </span>
-              <span className="block mt-2 sm:mt-3 text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-sans italic font-bold sm:font-extrabold tracking-normal text-primary-fixed drop-shadow-[0_4px_24px_rgba(254,222,178,0.45)] min-h-[1.3em]">
+              <span className="block mt-2 sm:mt-3 font-sans italic font-bold sm:font-extrabold tracking-normal text-primary-fixed drop-shadow-[0_4px_24px_rgba(254,222,178,0.45)] min-h-[1.3em]">
                 <TypingText
                   words={[
-                    'Nghỉ Dưỡng Thượng Lưu',
-                    'Đẳng Cấp Bản Địa',
-                    'Biệt Thự Biệt Lập',
-                    'Kỳ Nghỉ Tinh Hoa',
+                    'Giá Trực Tuyến Tốt Nhất',
+                    'Xác Nhận Tức Thì 24/7',
+                    'Resort Nghỉ Dưỡng Cao Cấp',
+                    'Không Phí Ẩn Minh Bạch',
                   ]}
                   className="whitespace-nowrap"
                   cursorClassName="bg-primary-fixed shadow-[0_0_12px_rgba(254,222,178,0.9)]"
@@ -85,30 +72,12 @@ export default function HomePage() {
             </h1>
           </FadeIn>
 
-          <FadeIn delay={0.3} duration={0.8}>
-            <p className="text-base sm:text-xl text-slate-100 max-w-3xl leading-relaxed mb-8 drop-shadow text-balance font-normal">
-              Bước vào lãnh địa của sự thanh lọc tâm hồn và tiện nghi vương giả không ồn ào. Nơi mỗi nhịp thở hòa cùng thiên nhiên di sản và đặc quyền xa hoa chuẩn mực quốc tế.
+          <FadeIn delay={0.25} duration={0.8}>
+            <p className="text-base sm:text-lg text-slate-100 max-w-2xl leading-relaxed mb-8 drop-shadow text-balance font-normal">
+              Tìm kiếm và đặt phòng trực tuyến tại các khách sạn, resort và biệt thự hàng đầu Việt Nam. Giữ chỗ tức thì, thông tin minh bạch và hỗ trợ suốt kỳ nghỉ.
             </p>
           </FadeIn>
 
-          <FadeIn delay={0.45} duration={0.8}>
-            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-slate-200">
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <Award className="w-4 h-4 text-primary-fixed-dim" />
-                <span className="text-xs sm:text-base font-bold uppercase tracking-wider">Michelin Key Selected</span>
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <ShieldCheck className="w-4 h-4 text-primary-fixed-dim" />
-                <span className="text-xs sm:text-base font-bold uppercase tracking-wider">Forbes Travel Guide 5-Star</span>
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-outline-variant"></div>
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4 text-primary-fixed-dim" />
-                <span className="text-xs sm:text-base font-bold uppercase tracking-wider">Xác Nhận Đặt Chỗ Tức Thì</span>
-              </div>
-            </div>
-          </FadeIn>
         </div>
       </section>
 
@@ -189,7 +158,7 @@ export default function HomePage() {
               <div className="p-1 lg:pl-2 shrink-0">
                 <button
                   type="submit"
-                  className="w-full lg:w-auto h-12 lg:h-13 px-6 lg:px-8 rounded-xl lg:rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm flex items-center justify-center gap-2 group cursor-pointer active:scale-95"
+                  className="w-full lg:w-auto h-12 lg:h-13 px-6 lg:px-8 rounded-xl lg:rounded-full bg-primary text-on-primary hover:bg-[#684f2c] transition-all shadow-sm flex items-center justify-center gap-2 group cursor-pointer active:scale-95"
                 >
                   <span className="text-xs sm:text-base tracking-wider uppercase font-extrabold whitespace-nowrap">
                     Tìm Kỳ Nghỉ

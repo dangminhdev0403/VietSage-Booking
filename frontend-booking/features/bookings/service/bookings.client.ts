@@ -241,7 +241,7 @@ export async function lookupBooking(bookingCode: string, tokenOrContact: string)
 
 export async function createPaymentIntent(
   bookingId: string,
-  paymentMethod = 'VIETQR',
+  paymentMethod = 'BANK_TRANSFER',
   contact?: string,
 ) {
   const res = await fetch('/api/payments/create-intent', {

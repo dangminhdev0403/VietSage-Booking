@@ -13,9 +13,13 @@ import { BookingsModule } from './modules/bookings/bookings.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { VietSageSyncModule } from './modules/vietsage-sync/vietsage-sync.module';
 
+import { RateLimitModule } from './common/rate-limit/rate-limit.module';
+import { RateLimitGuard } from './common/rate-limit/rate-limit.guard';
+
 @Module({
   imports: [
     PrismaModule,
+    RateLimitModule,
     IdentityAccessModule,
     CatalogModule,
     BookingsModule,
@@ -28,6 +32,10 @@ import { VietSageSyncModule } from './modules/vietsage-sync/vietsage-sync.module
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
     },
     {
       provide: APP_GUARD,

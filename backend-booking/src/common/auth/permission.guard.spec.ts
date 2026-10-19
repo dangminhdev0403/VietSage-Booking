@@ -1,7 +1,11 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionGuard } from './permission.guard';
-import { IS_PUBLIC_KEY, REQUIRED_PERMISSIONS_KEY } from './auth.constants';
+import {
+  ALLOW_AUTHENTICATED_KEY,
+  IS_PUBLIC_KEY,
+  REQUIRED_PERMISSIONS_KEY,
+} from './auth.constants';
 
 describe('PermissionGuard', () => {
   let guard: PermissionGuard;
@@ -44,10 +48,21 @@ describe('PermissionGuard', () => {
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
   });
 
-  it('allows authenticated requests when no specific permissions are required', () => {
+  it('rejects requests when endpoint lacks required permissions (fail-closed)', () => {
     reflector.getAllAndOverride.mockImplementation((key) => {
       if (key === IS_PUBLIC_KEY) return false;
       if (key === REQUIRED_PERMISSIONS_KEY) return [];
+      return undefined;
+    });
+
+    const ctx = createMockContext({ id: 'u1', permissions: [] });
+    expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
+  });
+
+  it('allows authenticated requests when route is marked with AllowAuthenticated', () => {
+    reflector.getAllAndOverride.mockImplementation((key) => {
+      if (key === IS_PUBLIC_KEY) return false;
+      if (key === ALLOW_AUTHENTICATED_KEY) return true;
       return undefined;
     });
 
@@ -93,6 +108,20 @@ describe('PermissionGuard', () => {
     const ctx = createMockContext({
       id: 'u-partner',
       permissions: ['allotments:*'],
+    });
+    expect(guard.canActivate(ctx)).toBe(true);
+  });
+
+  it('allows requests when user holds legacy compatibility permission', () => {
+    reflector.getAllAndOverride.mockImplementation((key) => {
+      if (key === IS_PUBLIC_KEY) return false;
+      if (key === REQUIRED_PERMISSIONS_KEY) return ['catalog:onboard'];
+      return undefined;
+    });
+
+    const ctx = createMockContext({
+      id: 'u-legacy-admin',
+      permissions: ['catalog:manage'],
     });
     expect(guard.canActivate(ctx)).toBe(true);
   });

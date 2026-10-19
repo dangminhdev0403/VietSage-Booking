@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, CalendarCheck } from 'lucide-react';
+import { CalendarCheck } from 'lucide-react';
 import { UserMenu } from '@/features/auth/components/user-menu';
+import { VietSageLogo } from '@/components/shared/vietsage-logo';
 
 function PublicHeaderContent() {
   const pathname = usePathname();
@@ -110,10 +111,10 @@ function PublicHeaderContent() {
 
   const getNavLinkClass = (section: 'home' | 'destinations' | 'catalog-stream') => {
     const isActive = pathname === '/' && activeSection === section;
-    return `px-3 lg:px-4 py-2 text-sm lg:text-base rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+    return `px-3.5 lg:px-4 py-2 text-sm lg:text-base rounded-full transition-all whitespace-nowrap cursor-pointer ${
       isActive
-        ? 'font-bold bg-primary-container/25 text-on-primary-container shadow-xs'
-        : 'font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+        ? 'font-bold bg-primary/10 text-primary'
+        : 'font-semibold text-on-surface-variant hover:text-primary hover:bg-surface-container-low'
     }`;
   };
 
@@ -125,19 +126,10 @@ function PublicHeaderContent() {
           <Link
             href="/"
             onClick={(e) => handleNavClick(e, 'home')}
-            className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0"
+            className="flex items-center group shrink-0"
+            aria-label="VietSageBooking - Trang chủ"
           >
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-sm group-hover:bg-primary-container group-hover:text-on-primary-container transition-all">
-              <Compass className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black text-on-surface tracking-tight leading-tight group-hover:text-primary transition-colors">
-                VietSage<span className="text-primary font-bold">Booking</span>
-              </span>
-              <span className="hidden sm:block text-xs tracking-wider text-outline font-semibold">
-                Đặt Phòng &amp; Nghỉ Dưỡng Trực Tuyến
-              </span>
-            </div>
+            <VietSageLogo variant="horizontal" size="md" showSubtitle priority />
           </Link>
 
           {/* Public Navigation Links */}
@@ -171,7 +163,7 @@ function PublicHeaderContent() {
             <Link
               href="/#destinations"
               onClick={(e) => handleNavClick(e, 'destinations')}
-              className="hidden md:inline-flex items-center gap-1.5 lg:gap-2 h-10 lg:h-11 px-4 lg:px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-sm lg:text-base font-extrabold shadow-sm whitespace-nowrap cursor-pointer active:scale-95"
+              className="hidden md:inline-flex items-center gap-1.5 lg:gap-2 h-10 lg:h-11 px-5 lg:px-6 rounded-full bg-primary text-on-primary hover:bg-[#684f2c] transition-all text-sm lg:text-base font-extrabold shadow-xs whitespace-nowrap cursor-pointer active:scale-95"
             >
               <CalendarCheck className="w-4 h-4" />
               <span>Đặt Kỳ Nghỉ Ngay</span>
@@ -188,18 +180,8 @@ function PublicHeaderFallback() {
     <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-[0_2px_16px_rgba(197,168,128,0.08)]">
       <div className="w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10">
         <div className="h-20 flex items-center justify-between gap-3 lg:gap-6">
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3.5 group shrink-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
-              <Compass className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black text-on-surface tracking-tight leading-tight">
-                VietSage<span className="text-primary font-bold">Booking</span>
-              </span>
-              <span className="hidden sm:block text-xs tracking-wider text-outline font-semibold">
-                Đặt Phòng &amp; Nghỉ Dưỡng Trực Tuyến
-              </span>
-            </div>
+          <Link href="/" className="flex items-center group shrink-0" aria-label="VietSageBooking - Trang chủ">
+            <VietSageLogo variant="horizontal" size="md" showSubtitle priority />
           </Link>
           <nav className="hidden md:flex items-center gap-1 lg:gap-2">
             <Link

@@ -43,6 +43,7 @@ type BookingLookupResult = {
   currency?: string;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | string;
   payment_status: 'UNPAID' | 'PAID' | 'DEPOSIT_PAID' | string;
+  assigned_room_number?: string | null;
   special_requests?: string | null;
   addons?: { service_name: string; price: number }[];
   created_at: string;
@@ -110,7 +111,7 @@ function GuestBookingLookupContent() {
 
       // Automatically generate payment intent if unpaid, passing verified contact capability
       if (data.status === 'PENDING' || data.payment_status === 'UNPAID') {
-        createPaymentIntent(data.id, 'VIETQR', contactToUse.trim())
+        createPaymentIntent(data.id, 'BANK_TRANSFER', contactToUse.trim())
           .then((intent) => setPaymentIntent(intent as PaymentIntentResult))
           .catch(() => {});
       }
@@ -137,7 +138,7 @@ function GuestBookingLookupContent() {
               setShowFullInvoice(true);
             }
             if (data.status === 'PENDING' || data.payment_status === 'UNPAID') {
-              createPaymentIntent(data.id, 'VIETQR', initialContact.trim())
+              createPaymentIntent(data.id, 'BANK_TRANSFER', initialContact.trim())
                 .then((intent) => {
                   if (active) setPaymentIntent(intent as PaymentIntentResult);
                 })
@@ -254,14 +255,14 @@ function GuestBookingLookupContent() {
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 flex-1">
       {/* Title & Introduction */}
       <div className="text-center max-w-2xl mx-auto space-y-3 mb-10 print:hidden">
-        <span className="text-xs uppercase tracking-widest text-primary font-extrabold bg-primary-container/20 px-3.5 py-1 rounded-full">
-          Dịch Vụ Khách Hàng Tự Phục Vụ (Self-Service)
+        <span className="text-xs uppercase tracking-widest text-primary font-extrabold bg-primary-container/20 px-3.5 py-1 rounded-full whitespace-nowrap inline-block">
+          Dịch Vụ Khách Hàng Tự Phục Vụ
         </span>
-        <h1 className="text-3xl sm:text-4xl font-sans font-extrabold text-on-surface tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-sans font-extrabold text-on-surface tracking-tight text-balance">
           Tra Cứu Đơn Đặt Phòng
         </h1>
-        <p className="text-sm text-outline leading-relaxed">
-          Dành cho khách hàng đặt phòng trực tuyến. Nhập mã đặt phòng kèm Mã tra cứu bảo mật (Lookup Token), email hoặc số điện thoại để xem chi tiết lịch trình và thanh toán tức thì.
+        <p className="text-sm text-outline leading-relaxed text-pretty">
+          Dành cho khách hàng đặt phòng trực tuyến. Nhập mã đặt phòng kèm mã tra cứu bảo mật (Lookup Token), email hoặc số điện thoại để xem chi tiết lịch trình và thanh toán tức thì.
         </p>
       </div>
 
@@ -274,7 +275,7 @@ function GuestBookingLookupContent() {
             </label>
             <input
               type="text"
-              placeholder="Ví dụ: OTA-202610-A1B2C3"
+              placeholder="Ví dụ: OTA-XXXXXX-XXXXXX"
               value={bookingCode}
               onChange={(e) => setBookingCode(e.target.value)}
               className="w-full h-12 px-4 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-hidden font-mono text-base tracking-wider uppercase text-on-surface bg-surface-container-low transition-colors"
@@ -365,6 +366,7 @@ function GuestBookingLookupContent() {
                 balance_due: booking.balance_due,
                 status: booking.status,
                 payment_status: booking.payment_status,
+                assigned_room_number: booking.assigned_room_number,
                 addons: booking.addons,
                 created_at: booking.created_at,
               }}
@@ -413,6 +415,31 @@ function GuestBookingLookupContent() {
                   </span>
                 </div>
               </div>
+
+              {/* Assigned Room Badge / Banner if Confirmed and assigned */}
+              {(booking.status === 'CONFIRMED' ||
+                booking.payment_status === 'DEPOSIT_PAID' ||
+                booking.payment_status === 'PAID') &&
+                booking.assigned_room_number && (
+                  <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 border border-emerald-200 text-emerald-700">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-emerald-950 uppercase tracking-wider block">
+                          Phòng Gán Tự Động
+                        </span>
+                        <span className="text-emerald-800 text-xs">
+                          VietSage PMS đã cấp phát số phòng cho kỳ nghỉ của quý khách.
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-emerald-600 text-white font-mono font-bold text-sm sm:text-base px-3.5 py-1.5 rounded-xl whitespace-nowrap shadow-xs">
+                      Phòng {booking.assigned_room_number}
+                    </div>
+                  </div>
+                )}
 
               {/* Grid Information */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-on-surface">
@@ -506,34 +533,22 @@ function GuestBookingLookupContent() {
                   </div>
                 </div>
 
-                {/* VietQR Payment Card (Alternative) */}
+                {/* Bank Transfer Payment Card */}
                 {paymentIntent && (
                   <div className="bg-surface-container-lowest rounded-3xl border border-primary/40 p-8 shadow-xl space-y-6">
                     <div className="text-center space-y-2">
                       <span className="text-xs uppercase font-extrabold tracking-widest text-primary">
-                        Thanh Toán An Toàn Qua VietQR Napas 247
+                        Thanh Toán Chuyển Khoản Ngân Hàng
                       </span>
                       <h3 className="text-2xl font-sans font-bold text-on-surface">
                         Chuyển Khoản Ngân Hàng Tức Thì
                       </h3>
                       <p className="text-xs text-outline max-w-md mx-auto">
-                        Vui lòng quét mã QR hoặc chuyển khoản đúng cú pháp bên dưới để hệ thống tự động đối soát và xác nhận đơn phòng.
+                        Vui lòng chuyển khoản đúng thông tin và cú pháp bên dưới để hệ thống tự động đối soát và xác nhận đơn phòng.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                      <div className="md:col-span-5 text-center">
-                        <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/40 inline-block shadow-inner">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={paymentIntent.qr_code_url}
-                            alt="Mã VietQR"
-                            className="w-56 h-56 object-contain rounded-xl bg-white p-2 shadow-sm"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="md:col-span-7 space-y-4">
+                    <div className="max-w-xl mx-auto w-full space-y-4">
                         <div className="bg-surface-container p-5 rounded-2xl text-xs space-y-3 border border-outline-variant/30">
                           <div className="flex justify-between">
                             <span className="text-outline">Ngân hàng thụ hưởng:</span>
@@ -621,8 +636,7 @@ function GuestBookingLookupContent() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             )}
         </div>

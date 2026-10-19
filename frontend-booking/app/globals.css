@@ -1,37 +1,37 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #725b38;
-  --color-primary-container: #c5a880;
+  --color-primary: #7d603a;
+  --color-primary-container: #f5ebe0;
   --color-on-primary: #ffffff;
-  --color-on-primary-container: #513d1d;
+  --color-on-primary-container: #473318;
   --color-primary-fixed: #fedeb2;
-  --color-primary-fixed-dim: #e0c298;
+  --color-primary-fixed-dim: #e4c497;
 
   --color-secondary: #565e74;
-  --color-secondary-container: #dae2fd;
+  --color-secondary-container: #eceff8;
   --color-on-secondary: #ffffff;
-  --color-on-secondary-container: #5c647a;
+  --color-on-secondary-container: #41485c;
 
-  --color-tertiary: #4f6351;
-  --color-tertiary-container: #9cb29d;
+  --color-tertiary: #1e4d3a;
+  --color-tertiary-container: #e6f4ed;
   --color-on-tertiary: #ffffff;
-  --color-on-tertiary-container: #324535;
+  --color-on-tertiary-container: #0b2e21;
 
-  --color-background: #faf9f6;
-  --color-surface: #faf9f6;
-  --color-surface-dim: #dbdad7;
-  --color-surface-bright: #faf9f6;
+  --color-background: #faf8f5;
+  --color-surface: #ffffff;
+  --color-surface-dim: #f3efe9;
+  --color-surface-bright: #ffffff;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f4f3f1;
-  --color-surface-container: #efeeeb;
-  --color-surface-container-high: #e9e8e5;
-  --color-surface-container-highest: #e3e2e0;
+  --color-surface-container-low: #f8f6f2;
+  --color-surface-container: #f2eee7;
+  --color-surface-container-high: #eae4db;
+  --color-surface-container-highest: #dfd8cc;
 
-  --color-on-surface: #1a1c1a;
-  --color-on-surface-variant: #4d463c;
-  --color-outline: #7f766a;
-  --color-outline-variant: #d1c5b8;
+  --color-on-surface: #1e1b18;
+  --color-on-surface-variant: #524d45;
+  --color-outline: #8c8479;
+  --color-outline-variant: #e0d8cc;
 
   --font-sans: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
@@ -47,11 +47,13 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 6.5rem;
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 :root {
-  --background: #faf9f6;
-  --foreground: #1a1c1a;
+  --background: #faf8f5;
+  --foreground: #1e1b18;
 }
 
 body {
@@ -90,22 +92,24 @@ body {
 
 .aurum-swal-title {
   font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
-  font-size: 1.45rem !important;
+  font-size: 1.35rem !important;
   font-weight: 600 !important;
   color: #0f172a !important;
   letter-spacing: -0.015em !important;
   padding: 0 !important;
   margin-bottom: 0.5rem !important;
   line-height: 1.35 !important;
+  text-wrap: balance !important;
 }
 
 .aurum-swal-html {
   font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
-  font-size: 0.9rem !important;
+  font-size: 0.875rem !important;
   line-height: 1.6 !important;
   color: #4d463c !important;
   margin: 0.25rem 0 1.25rem 0 !important;
   padding: 0 !important;
+  text-wrap: pretty !important;
 }
 
 .aurum-swal-actions {
@@ -129,6 +133,7 @@ body {
   cursor: pointer !important;
   box-shadow: 0 6px 18px rgba(114, 91, 56, 0.25) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
 }
 
 .aurum-swal-btn-confirm:hover {
@@ -150,6 +155,7 @@ body {
   border: 1px solid #d1c5b8 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
+  white-space: nowrap !important;
 }
 
 .aurum-swal-btn-cancel:hover {
@@ -159,14 +165,14 @@ body {
 }
 
 .aurum-swal-toast {
-  background: rgba(15, 23, 42, 0.95) !important;
-  backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 20px 32px -8px rgba(0, 0, 0, 0.45) !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(197, 168, 128, 0.45) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 20px 32px -8px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(197, 168, 128, 0.2) !important;
   padding: 0.85rem 1.25rem !important;
 }
 
 .aurum-swal-toast-progress {
-  background-color: #c5a880 !important;
+  background-color: #725b38 !important;
 }

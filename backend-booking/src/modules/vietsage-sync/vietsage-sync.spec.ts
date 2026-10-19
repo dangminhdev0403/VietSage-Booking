@@ -25,15 +25,29 @@ describe('VietSageSyncModule', () => {
       update: jest.Mock;
       upsert: jest.Mock;
     };
+    roomAllotment: {
+      findUnique: jest.Mock;
+      upsert: jest.Mock;
+    };
+    roomType: {
+      findFirst: jest.Mock;
+    };
   };
 
   beforeEach(async () => {
     prismaMock = {
       vietSageSyncLog: {
         findUnique: jest.fn(),
-        create: jest.fn(),
+        create: jest.fn().mockResolvedValue({}),
         update: jest.fn(),
         upsert: jest.fn(),
+      },
+      roomAllotment: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({}),
+      },
+      roomType: {
+        findFirst: jest.fn().mockResolvedValue(null),
       },
     };
 
@@ -344,6 +358,42 @@ describe('VietSageSyncModule', () => {
       expect(result.roomStatus).not.toBe('OCCUPIED');
     });
 
+    it('extracts assigned room info (roomNumber, floor) from VietSage confirmation response', async () => {
+      service.setHttpClient(() => {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              data: {
+                reservation_id: 'pms-res-888',
+                reservation_code: 'VS-OTA-RES-888',
+                room_status: 'RESERVED',
+                assigned_room: {
+                  room_number: '502',
+                  floor: 5,
+                },
+                confirmed_at: '2026-11-10T08:00:00.000Z',
+              },
+            }),
+        } as unknown as Response);
+      });
+
+      prismaMock.vietSageSyncLog.findUnique.mockResolvedValue(null);
+      prismaMock.vietSageSyncLog.upsert.mockResolvedValue({});
+      prismaMock.vietSageSyncLog.update.mockResolvedValue({});
+
+      const result = await service.confirmHold(
+        'vs-hold-502',
+        'ota-booking-502',
+      );
+
+      expect(result.status).toBe('CONFIRMED');
+      expect(result.assignedRoom).toBeDefined();
+      expect(result.assignedRoom?.roomNumber).toBe('502');
+      expect(result.assignedRoom?.floor).toBe(5);
+    });
+
     it('enforces INVARIANT: throws ConflictException if VietSage mistakenly sets room status to OCCUPIED prior to check-in', async () => {
       service.setHttpClient(() => {
         return Promise.resolve({
@@ -527,6 +577,71 @@ describe('VietSageSyncModule', () => {
       expect(res.reconciled).toBe(true);
       expect(res.status).toBe('FAILED');
       expect(res.error).toBe('HOLD_EXPIRED_OR_RELEASED');
+    });
+  });
+
+  describe('Inbound Webhook - inventory-updated', () => {
+    it('validates HMAC signature and processes inventory adjustments', async () => {
+      const path = '/api/v1/vietsage/webhook/inventory-updated';
+      const timestamp = Math.floor(Date.now() / 1000);
+      const requestId = 'req-webhook-001';
+      const payload = {
+        property_id: 'prop-001',
+        room_type_id: 'room-001',
+        adjustments: [
+          {
+            date: '2026-11-15',
+            available_rooms: 4,
+            total_rooms: 10,
+          },
+        ],
+      };
+
+      const canonical = computeCanonicalPayload(
+        'POST',
+        path,
+        timestamp,
+        requestId,
+        payload,
+      );
+      const secret = service.getHmacSecret();
+      const signature = signHmacPayload(canonical, secret);
+
+      const mockReq = {
+        path,
+        headers: { 'x-request-id': requestId },
+      } as any;
+
+      const response = await controller.handleInventoryUpdated(
+        `t=${timestamp},v1=${signature}`,
+        undefined,
+        String(timestamp),
+        requestId,
+        payload,
+        mockReq,
+      );
+
+      expect(response.success).toBe(true);
+      expect(response.data.roomTypeId).toBe('room-001');
+      expect(response.data.processed).toBe(1);
+    });
+
+    it('rejects inventory webhook with invalid HMAC signature', async () => {
+      const mockReq = {
+        path: '/api/v1/vietsage/webhook/inventory-updated',
+        headers: {},
+      } as any;
+
+      await expect(
+        controller.handleInventoryUpdated(
+          'invalid-sig',
+          undefined,
+          String(Math.floor(Date.now() / 1000)),
+          'req-002',
+          { property_id: 'p1', room_type_id: 'r1', adjustments: [] },
+          mockReq,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

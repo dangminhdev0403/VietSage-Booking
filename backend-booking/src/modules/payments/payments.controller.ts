@@ -16,6 +16,7 @@ import { PaymentsService } from './payments.service';
 import { ok } from '../../common/http/api-response';
 import { Public } from '../../common/auth/public.decorator';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { RequirePermission } from '../../common/auth/require-permission.decorator';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import type {
   ConfirmPaymentDto,
@@ -28,11 +29,14 @@ import {
   verifyCheckoutSchema,
 } from './dto/payments.dto';
 
+import { RateLimit } from '../../common/rate-limit/rate-limit.decorator';
+
 @Controller('api/v1/payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Public()
+  @RateLimit({ points: 10, duration: 60, keyPrefix: 'payment:checkout' })
   @Post('checkout')
   async createDepositCheckout(
     @Body() body: CreateDepositCheckoutDto,
@@ -65,6 +69,7 @@ export class PaymentsController {
   }
 
   @Public()
+  @RateLimit({ points: 20, duration: 60, keyPrefix: 'payment:verify' })
   @Post('verify-checkout')
   async verifyCheckout(
     @Body() body: VerifyCheckoutDto,
@@ -114,6 +119,7 @@ export class PaymentsController {
   }
 
   @Public()
+  @RateLimit({ points: 10, duration: 60, keyPrefix: 'payment:intent' })
   @Post('create-intent')
   async createPaymentIntent(
     @Body() body: CreatePaymentIntentDto,
@@ -123,6 +129,7 @@ export class PaymentsController {
     return ok(data);
   }
 
+  @RequirePermission('payments:reconcile')
   @Post('confirm')
   async confirmPayment(
     @Body() body: ConfirmPaymentDto,
@@ -132,6 +139,7 @@ export class PaymentsController {
     return ok(data);
   }
 
+  @RequirePermission('payments:read')
   @Get()
   async listPayments(
     @CurrentUser() user: AuthenticatedUser,

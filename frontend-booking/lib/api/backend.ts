@@ -3,7 +3,7 @@ export function backendUrl(path: string): string {
   const base =
     (isServer && process.env.INTERNAL_BACKEND_URL) ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:8080';
+    'http://localhost:8081';
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   return new URL(cleanPath, base.endsWith('/') ? base : `${base}/`).toString();
 }

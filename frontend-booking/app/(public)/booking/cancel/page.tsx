@@ -43,7 +43,7 @@ function BookingCancelContent() {
             • Phòng của quý khách vẫn đang được tạm giữ trong thời hạn 30 phút.
           </p>
           <p>
-            • Quý khách có thể đóng tab này để quay lại tab đặt phòng và thanh toán bằng chuyển khoản VietQR (Napas 247) hoặc thử lại cổng Stripe.
+            • Quý khách có thể đóng tab này để quay lại tab đặt phòng và thanh toán bằng chuyển khoản ngân hàng hoặc thử lại cổng Stripe.
           </p>
         </div>
 

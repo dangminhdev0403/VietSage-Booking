@@ -1,3 +1,5 @@
+'use client';
+
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { bookingsResource } from '../service/bookings.resource';
 import type { ListBookingsParams, QuoteBookingPayload } from '../service/bookings.client';

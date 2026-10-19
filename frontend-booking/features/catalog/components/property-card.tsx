@@ -26,6 +26,11 @@ export type Property = {
     base_price: number;
     description?: string | null;
     amenities?: string[];
+    area_sqm?: number | null;
+    bed_count?: number | null;
+    bed_type?: string | null;
+    has_sea_view?: boolean | null;
+    room_images?: string[];
     allotments?: AllotmentInfo[];
   }[];
   created_at?: string;
@@ -130,7 +135,7 @@ export function PropertyCard({
 
           <button
             onClick={() => onBookNow(property)}
-            className="h-12 px-6 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all text-base font-bold shadow-sm whitespace-nowrap cursor-pointer"
+            className="h-11 px-6 rounded-full bg-primary text-on-primary hover:bg-[#684f2c] transition-all text-sm font-bold shadow-xs whitespace-nowrap cursor-pointer active:scale-95"
             type="button"
           >
             Đặt Phòng Ngay

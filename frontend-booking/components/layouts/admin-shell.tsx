@@ -19,11 +19,14 @@ import {
   X,
   ShieldCheck,
   Hotel,
+  BedDouble,
 } from 'lucide-react';
 import { luxuryAlert } from '@/lib/alert/luxury-alert';
+import { VietSageLogo } from '@/components/shared/vietsage-logo';
 
 interface AdminShellProps {
   children: React.ReactNode;
+  isPartner?: boolean;
   sessionUser?: {
     name?: string | null;
     email?: string | null;
@@ -45,49 +48,90 @@ function getFormattedVietnamDate(): string {
   return new Intl.DateTimeFormat('vi-VN', options).format(now);
 }
 
-export function AdminShell({ children, sessionUser }: AdminShellProps) {
+export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: AdminShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const currentDateFormatted = getFormattedVietnamDate();
 
-  const navItems = [
-    {
-      label: 'Tổng quan',
-      sublabel: 'Dashboard',
-      href: '/admin',
-      icon: LayoutDashboard,
-      active: pathname === '/admin',
-    },
-    {
-      label: 'Đơn đặt phòng',
-      sublabel: 'Bookings',
-      href: '/admin/bookings',
-      icon: Calendar,
-      active: pathname.startsWith('/admin/bookings'),
-    },
-    {
-      label: 'Lịch sử thanh toán',
-      sublabel: 'Payments',
-      href: '/admin/payments',
-      icon: CreditCard,
-      active: pathname.startsWith('/admin/payments'),
-    },
-    {
-      label: 'Cơ sở lưu trú & Phòng',
-      sublabel: 'Properties & Catalog',
-      href: '/admin/properties',
-      icon: Building2,
-      active: pathname.startsWith('/admin/properties'),
-    },
-    {
-      label: 'Lịch giá & Tồn kho',
-      sublabel: 'Allotments & Rates',
-      href: '/admin/allotments',
-      icon: CalendarDays,
-      active: pathname.startsWith('/admin/allotments'),
-    },
-  ];
+  const isPartner =
+    isPartnerProp !== undefined
+      ? isPartnerProp
+      : Boolean(sessionUser?.managedPropertyId || sessionUser?.role === 'HOTEL_PARTNER' || pathname.startsWith('/partner'));
+
+  const navItems = isPartner
+    ? [
+        {
+          label: 'Tổng quan cơ sở',
+          href: '/partner',
+          icon: LayoutDashboard,
+          active: pathname === '/partner',
+        },
+        {
+          label: 'Khách đặt phòng',
+          href: '/partner/bookings',
+          icon: Calendar,
+          active: pathname.startsWith('/partner/bookings'),
+        },
+        {
+          label: 'Doanh thu tiền phòng',
+          href: '/partner/payments',
+          icon: CreditCard,
+          active: pathname.startsWith('/partner/payments'),
+        },
+        {
+          label: 'Hạng phòng cơ sở',
+          href: '/partner/rooms',
+          icon: BedDouble,
+          active: pathname.startsWith('/partner/rooms'),
+        },
+        {
+          label: 'Lịch giá & Tồn kho',
+          href: '/partner/allotments',
+          icon: CalendarDays,
+          active: pathname.startsWith('/partner/allotments'),
+        },
+        {
+          label: 'Cài đặt khách sạn',
+          href: '/partner/properties',
+          icon: Building2,
+          active:
+            pathname.startsWith('/partner/properties') ||
+            pathname.startsWith('/partner/property'),
+        },
+      ]
+    : [
+        {
+          label: 'Tổng quan toàn sàn',
+          href: '/admin',
+          icon: LayoutDashboard,
+          active: pathname === '/admin',
+        },
+        {
+          label: 'Đơn đặt phòng sàn',
+          href: '/admin/bookings',
+          icon: Calendar,
+          active: pathname.startsWith('/admin/bookings'),
+        },
+        {
+          label: 'Dòng tiền & Đối soát',
+          href: '/admin/payments',
+          icon: CreditCard,
+          active: pathname.startsWith('/admin/payments'),
+        },
+        {
+          label: 'Mạng lưới khách sạn',
+          href: '/admin/properties',
+          icon: Building2,
+          active: pathname.startsWith('/admin/properties'),
+        },
+        {
+          label: 'Lịch tồn kho & Giá sàn',
+          href: '/admin/allotments',
+          icon: CalendarDays,
+          active: pathname.startsWith('/admin/allotments'),
+        },
+      ];
 
   const role = sessionUser?.role || 'ADMIN';
   const displayName = sessionUser?.name || 'Tổng Quản Lý';
@@ -98,11 +142,21 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
     ? sessionUser?.accessibleProperties?.find((p) => p.id === managedPropertyId)?.name || 'Cơ sở lưu trú'
     : null;
 
-  const scopeBadgeLabel = managedPropertyId
+  const scopeBadgeLabel = isPartner
     ? managedPropertyName
-      ? `Quản lý: ${managedPropertyName}`
-      : 'Quản lý cơ sở lưu trú'
+      ? `Đối tác: ${managedPropertyName}`
+      : 'Cơ sở đối tác liên kết'
     : 'Quản trị toàn sàn OTA';
+
+  const portalTitle = isPartner ? 'Đối Tác Cơ Sở' : 'Quản Trị Hệ Thống';
+  const portalSubtitle = isPartner ? 'Vận hành cơ sở' : 'Điều hành hệ thống';
+
+  const activeNavItemClass = isPartner
+    ? 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200/90 shadow-2xs'
+    : 'bg-primary/10 text-primary font-bold border-primary/25 shadow-2xs';
+
+  const activeIndicatorClass = isPartner ? 'bg-emerald-700' : 'bg-primary';
+  const activeIconClass = isPartner ? 'text-emerald-700' : 'text-primary';
 
   const handleNotificationClick = () => {
     luxuryAlert.info({
@@ -114,42 +168,46 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
   return (
     <div className="min-h-screen bg-background text-on-surface flex flex-col antialiased">
       {/* SIDEBAR - DESKTOP */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 bg-surface-container-low border-r border-outline-variant/30 z-50 flex-col justify-between py-6 px-5 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-slate-200/90 z-50 flex-col justify-between py-6 px-5 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
         <div className="flex flex-col gap-6">
           {/* Brand Header */}
-          <div className="flex flex-col gap-1.5 px-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl border border-primary/40 bg-primary/10 flex items-center justify-center text-primary font-serif font-black text-base tracking-wider shadow-xs">
-                VB
-              </div>
+          <div className="flex flex-col gap-1 px-2">
+            <div className="flex items-center gap-3">
+              <VietSageLogo variant="mark" size="sm" />
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-primary block leading-none">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500 block leading-none">
                   VIETSAGE BOOKING
                 </span>
-                <span className="text-base font-bold text-on-surface tracking-tight block mt-0.5">
-                  Management Portal
+                <span className="text-base font-bold text-slate-900 tracking-tight block mt-1">
+                  {portalTitle}
                 </span>
               </div>
             </div>
-            <p className="text-xs text-outline mt-1 font-medium leading-tight">
-              Hệ thống Quản trị &amp; Điều hành OTA
+            <p className="text-xs text-slate-500 mt-1 font-medium leading-tight">
+              {portalSubtitle}
             </p>
           </div>
 
-          {/* Scope Badge */}
-          <div className="px-3.5 py-2.5 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-between shadow-2xs">
-            <div className="flex items-center gap-2 min-w-0">
-              {managedPropertyId ? (
-                <Hotel className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-              )}
-              <span className="text-xs text-on-surface font-semibold truncate" title={scopeBadgeLabel}>
-                {scopeBadgeLabel}
-              </span>
-            </div>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary-container/30 text-on-primary-container font-extrabold uppercase shrink-0">
-              v1.0
+          {/* Scope Badge (No truncation) */}
+          <div
+            className={`px-3.5 py-2.5 rounded-2xl border flex items-center gap-2.5 shadow-2xs ${
+              isPartner
+                ? 'bg-emerald-50/90 border-emerald-200/90'
+                : 'bg-primary/10 border-primary/20'
+            }`}
+          >
+            {isPartner ? (
+              <Hotel className="w-4.5 h-4.5 text-emerald-700 shrink-0" />
+            ) : (
+              <ShieldCheck className="w-4.5 h-4.5 text-primary shrink-0" />
+            )}
+            <span
+              className={`text-xs sm:text-sm font-bold whitespace-nowrap ${
+                isPartner ? 'text-emerald-950' : 'text-on-surface'
+              }`}
+              title={scopeBadgeLabel}
+            >
+              {scopeBadgeLabel}
             </span>
           </div>
 
@@ -161,43 +219,42 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all ${
+                  scroll={false}
+                  className={`group flex items-center justify-between px-3.5 py-3 rounded-xl border transition-colors duration-150 ${
                     item.active
-                      ? 'bg-primary-container text-on-primary-container font-bold shadow-xs'
-                      : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-medium'
+                      ? activeNavItemClass
+                      : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 shrink-0 ${item.active ? 'text-on-primary-container' : 'text-primary'}`} />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold leading-tight">{item.label}</span>
-                    <span className={`text-xs leading-tight mt-0.5 ${item.active ? 'text-on-primary-container/80' : 'text-outline'}`}>
-                      {item.sublabel}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon
+                      className={`w-5 h-5 shrink-0 transition-colors ${
+                        item.active ? activeIconClass : 'text-slate-400 group-hover:text-slate-600'
+                      }`}
+                    />
+                    <span className="text-sm sm:text-base font-bold tracking-tight truncate">
+                      {item.label}
                     </span>
                   </div>
+                  <span
+                    className={`w-1.5 h-4 rounded-full shrink-0 transition-opacity duration-150 ${activeIndicatorClass} ${
+                      item.active ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        {/* Bottom Support Card & Back to OTA */}
-        <div className="space-y-3">
+        {/* Bottom Action: Back to OTA */}
+        <div>
           <Link
             href="/"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-outline-variant/30 text-xs font-bold text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+            className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-outline-variant/30 text-xs sm:text-sm font-bold text-stone-600 hover:text-stone-900 hover:bg-surface-container transition-colors"
           >
             <span>Về Cổng Khách Hàng OTA</span>
           </Link>
-
-          <div className="p-3.5 bg-surface-container rounded-2xl border border-outline-variant/30 flex items-center justify-between shadow-2xs">
-            <div className="flex flex-col">
-              <span className="text-xs uppercase font-bold text-outline tracking-wider">Hỗ trợ vận hành</span>
-              <span className="text-xs font-bold text-on-surface mt-0.5">Hotline: 1900 6868</span>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center">
-              <Headphones className="w-4 h-4" />
-            </div>
-          </div>
         </div>
       </aside>
 
@@ -211,10 +268,8 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
           <div className="relative w-72 max-w-[80vw] bg-surface-container-low h-full flex flex-col justify-between py-6 px-5 border-r border-outline-variant/40 shadow-xl z-50">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
-                    VB
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <VietSageLogo variant="mark" size="sm" />
                   <span className="font-bold text-base text-on-surface">VietSage Booking</span>
                 </div>
                 <button
@@ -226,13 +281,19 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
               </div>
 
               {/* Scope Badge in Mobile */}
-              <div className="px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 flex items-center gap-2">
-                {managedPropertyId ? (
-                  <Hotel className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div
+                className={`px-3.5 py-2 rounded-xl border flex items-center gap-2.5 ${
+                  isPartner
+                    ? 'bg-emerald-50 border-emerald-200/80 text-emerald-950'
+                    : 'bg-primary/10 border-primary/20 text-on-surface'
+                }`}
+              >
+                {isPartner ? (
+                  <Hotel className="w-4 h-4 text-emerald-700 shrink-0" />
                 ) : (
                   <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
                 )}
-                <span className="text-xs text-on-surface font-semibold truncate">{scopeBadgeLabel}</span>
+                <span className="text-xs sm:text-sm font-bold whitespace-nowrap">{scopeBadgeLabel}</span>
               </div>
 
               <nav className="flex flex-col gap-1.5">
@@ -242,25 +303,33 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
                     <Link
                       key={item.href}
                       href={item.href}
+                      scroll={false}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold ${
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-colors duration-150 ${
                         item.active
-                          ? 'bg-primary-container text-on-primary-container shadow-xs'
-                          : 'text-on-surface-variant hover:bg-surface-container'
+                          ? activeNavItemClass
+                          : 'border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
-                      <span>{item.label}</span>
+                      <div className="flex items-center gap-2.5">
+                        <Icon className={`w-4 h-4 ${item.active ? activeIconClass : 'text-slate-400'}`} />
+                        <span>{item.label}</span>
+                      </div>
+                      <span
+                        className={`w-1.5 h-3.5 rounded-full shrink-0 transition-opacity duration-150 ${activeIndicatorClass} ${
+                          item.active ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
                     </Link>
                   );
                 })}
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-outline-variant/30 space-y-3">
+            <div className="pt-4 border-t border-slate-200 space-y-3">
               <Link
                 href="/"
-                className="block text-center text-xs font-bold text-outline hover:text-on-surface"
+                className="block text-center text-xs font-bold text-slate-500 hover:text-slate-900"
               >
                 Về Cổng Khách Hàng OTA
               </Link>
@@ -270,43 +339,39 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
       )}
 
       {/* TOP HEADER - STICKY */}
-      <header className="fixed top-0 left-0 lg:left-72 right-0 h-20 bg-surface/90 backdrop-blur-xl border-b border-outline-variant/30 z-40 flex items-center justify-between px-4 sm:px-6 lg:px-10 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
+      <header className="fixed top-0 left-0 lg:left-72 right-0 h-20 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 z-40 flex items-center justify-between px-4 sm:px-6 lg:px-10 shadow-[0_1px_8px_rgba(0,0,0,0.02)]">
         {/* Left Section: Mobile Toggle & Quick Search */}
-        <div className="flex items-center gap-3 sm:gap-6 flex-1 max-w-xl">
+        <div className="flex items-center gap-3 sm:gap-6 flex-1 max-w-2xl">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 rounded-xl text-outline hover:text-on-surface hover:bg-surface-container"
+            className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100"
             aria-label="Open mobile menu"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="relative flex items-center w-full max-w-xs sm:max-w-sm bg-surface-container-low rounded-xl px-3.5 py-2 border border-outline-variant/30 focus-within:border-primary/50 transition-colors">
-            <Search className="w-4 h-4 text-outline mr-2 shrink-0" />
+          <div className="relative flex items-center w-full max-w-sm sm:max-w-md lg:max-w-lg bg-slate-50 rounded-xl px-3.5 py-2 border border-slate-200 focus-within:border-slate-900 transition-colors">
+            <Search className="w-4.5 h-4.5 text-slate-400 mr-2.5 shrink-0" />
             <input
               type="text"
-              placeholder="Tìm mã đơn đặt, khách hàng, số điện thoại..."
-              className="bg-transparent text-xs text-on-surface placeholder:text-outline/70 focus:outline-hidden w-full font-medium"
+              placeholder="Tìm theo mã đơn, khách hàng, số điện thoại..."
+              className="bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden w-full font-medium"
             />
           </div>
 
           {/* Operational Date Indicator (Hidden on small screens) */}
-          <div className="hidden xl:flex items-center gap-2 bg-surface-container-low px-3.5 py-2 rounded-xl border border-outline-variant/30 text-xs font-medium text-on-surface shrink-0">
-            <Calendar className="w-4 h-4 text-primary" />
+          <div className="hidden xl:flex items-center gap-2 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 shrink-0">
+            <Calendar className="w-4 h-4 text-slate-500" />
             <span className="capitalize">{currentDateFormatted || 'Hôm nay'}</span>
           </div>
         </div>
 
         {/* Right Section: System Indicator, Notifications, User Profile */}
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Scope Indicator Badge */}
-          <div className="hidden sm:flex items-center gap-2 bg-surface-container-low px-3.5 py-1.5 rounded-xl border border-outline-variant/30 text-on-surface max-w-xs truncate">
-            {managedPropertyId ? (
-              <Hotel className="w-4 h-4 text-emerald-600 shrink-0" />
-            ) : (
-              <Building2 className="w-4 h-4 text-primary shrink-0" />
-            )}
-            <span className="text-xs font-bold text-on-surface truncate">{scopeBadgeLabel}</span>
+          {/* Live System Indicator */}
+          <div className="hidden sm:inline-flex items-center gap-2 bg-surface-container-low px-3.5 py-1.5 rounded-xl border border-outline-variant/30 text-sm font-bold text-stone-800">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="whitespace-nowrap font-bold text-stone-800">Trực Tuyến</span>
           </div>
 
           {/* Notifications Button */}
@@ -316,7 +381,7 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
             className="relative p-2.5 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
             title="Xem thông báo điều hành"
           >
-            <Bell className="w-4.5 h-4.5" />
+            <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500" />
           </button>
 
@@ -324,20 +389,22 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
           <div className="relative">
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full bg-surface-container-low border border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer"
+              className="h-10 inline-flex items-center gap-2.5 pl-1.5 pr-3 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all cursor-pointer select-none"
+              title={displayName}
             >
-              <div className="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-black shrink-0">
+              <div
+                className={`w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-black shrink-0 shadow-2xs ${
+                  isPartner ? 'bg-emerald-800' : 'bg-primary'
+                }`}
+              >
                 {displayName.charAt(0).toUpperCase()}
               </div>
               <div className="text-left hidden md:block">
-                <span className="text-xs font-bold text-on-surface block leading-tight line-clamp-1 max-w-[110px]">
+                <span className="text-xs sm:text-sm font-bold text-slate-800 block leading-none truncate whitespace-nowrap max-w-[130px] sm:max-w-[170px]">
                   {displayName}
                 </span>
-                <span className="text-xs text-outline font-medium block leading-tight">
-                  {role}
-                </span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-outline" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </button>
 
             {/* Dropdown Menu */}
@@ -354,45 +421,55 @@ export function AdminShell({ children, sessionUser }: AdminShellProps) {
 
                 <div className="space-y-1">
                   <Link
-                    href="/admin"
+                    href={isPartner ? '/partner' : '/admin'}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <LayoutDashboard className="w-4 h-4 text-primary" />
-                    <span>Tổng quan</span>
+                    <span>{isPartner ? 'Tổng quan cơ sở' : 'Tổng quan'}</span>
                   </Link>
                   <Link
-                    href="/admin/bookings"
+                    href={isPartner ? '/partner/bookings' : '/admin/bookings'}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <Calendar className="w-4 h-4 text-primary" />
-                    <span>Đơn đặt phòng</span>
+                    <span>{isPartner ? 'Khách đặt phòng' : 'Đơn đặt phòng'}</span>
                   </Link>
                   <Link
-                    href="/admin/payments"
+                    href={isPartner ? '/partner/payments' : '/admin/payments'}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <CreditCard className="w-4 h-4 text-primary" />
-                    <span>Lịch sử thanh toán</span>
+                    <span>{isPartner ? 'Doanh thu tiền phòng' : 'Lịch sử thanh toán'}</span>
                   </Link>
                   <Link
-                    href="/admin/properties"
+                    href={isPartner ? '/partner/rooms' : '/admin/properties'}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
-                    <Building2 className="w-4 h-4 text-primary" />
-                    <span>Cơ sở lưu trú &amp; Phòng</span>
+                    <BedDouble className="w-4 h-4 text-primary" />
+                    <span>{isPartner ? 'Hạng phòng cơ sở' : 'Cơ sở lưu trú & Phòng'}</span>
                   </Link>
                   <Link
-                    href="/admin/allotments"
+                    href={isPartner ? '/partner/allotments' : '/admin/allotments'}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <CalendarDays className="w-4 h-4 text-emerald-600" />
                     <span>Lịch giá &amp; Tồn kho</span>
                   </Link>
+                  {isPartner && (
+                    <Link
+                      href="/partner/properties"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                    >
+                      <Building2 className="w-4 h-4 text-emerald-700" />
+                      <span>Cài đặt khách sạn</span>
+                    </Link>
+                  )}
 
                   <div className="h-px bg-outline-variant/20 my-1" />
 

@@ -58,6 +58,7 @@ const FORBIDDEN_FLUFF = [
   { pattern: /lorem\s+ipsum/i, label: 'Lorem Ipsum dummy text' },
   { pattern: /test\s*123/i, label: 'Developer test dummy text' },
   { pattern: /Kỳ nghỉ thượng lưu\s*•\s*Trọn vẹn từng khoảnh khắc/i, label: 'Boilerplate marketing fluff slogan' },
+  { pattern: /Đăng Nhập Quản Trị & Đối Tác Khách Sạn/i, label: 'Awkward redundant headline causing orphan word wrap' },
 ];
 
 for (const filePath of allFiles) {
@@ -109,6 +110,28 @@ for (const filePath of allFiles) {
         });
       }
     }
+
+    // 4. In-Place Tab Isolation & Zero-Disruptive Redirect Check (Admin & Partner workspaces)
+    const isWorkspaceFile =
+      filePath.includes(path.join('app', 'admin')) ||
+      filePath.includes(path.join('app', 'partner'));
+
+    if (isWorkspaceFile) {
+      // Disallow programmatic cross-tab redirects inside tabbed workspaces during actions
+      const DISRUPTIVE_TAB_REDIRECT_REGEX =
+        /router\.(?:push|replace)\s*\(\s*['"`](\/(?:admin|partner)\/[a-zA-Z0-9_\/-]+)['"`]\s*\)/g;
+      let redirectMatch;
+      while ((redirectMatch = DISRUPTIVE_TAB_REDIRECT_REGEX.exec(line)) !== null) {
+        violationCount++;
+        violations.push({
+          file: path.relative(repoRoot, filePath),
+          line: lineIndex + 1,
+          type: 'DISRUPTIVE_TAB_REDIRECT',
+          detail: `Found forbidden redirect '${redirectMatch[0]}' inside workspace tab. 1 Tab = 1 Autonomous Workspace; actions must be handled in-place (Drawer, Modal, Inline, Split-pane).`,
+          snippet: line.trim(),
+        });
+      }
+    }
   });
 
   if (isFixMode) {
@@ -131,9 +154,11 @@ console.log('='.repeat(70));
 console.log(`Scanned: ${allFiles.length} frontend files in frontend-booking`);
 
 if (violations.length === 0) {
-  console.log('\n[PASS] All UI typography and copywriting guardrails verified clean.');
+  console.log('\n[PASS] All UI typography, anti-widow balance, copywriting, and in-place tab isolation guardrails verified clean.');
   console.log('  - Minimum font size >= 12px (text-xs) satisfied.');
-  console.log('  - Zero forbidden fluff or developer placeholder text detected.\n');
+  console.log('  - Typographic balance & anti-widow wrap standard satisfied.');
+  console.log('  - Zero forbidden fluff or developer placeholder text detected.');
+  console.log('  - In-place focused tab isolation & zero-disruptive redirect policy satisfied.\n');
   process.exit(0);
 } else {
   console.log(`\n[FAIL] Found ${violations.length} UI design violation(s):\n`);
