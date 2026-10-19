@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogService } from './catalog.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { VietSageSyncService } from '../vietsage-sync/vietsage-sync.service';
 import {
   BadRequestException,
   ForbiddenException,
@@ -12,6 +13,7 @@ import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 describe('CatalogService', () => {
   let service: CatalogService;
   let prisma: any;
+  let vietSageSyncService: any;
 
   const mockPropertyA = {
     id: 'prop-00000000-0000-0000-0000-000000000001',
@@ -91,8 +93,16 @@ describe('CatalogService', () => {
       },
     };
 
+    vietSageSyncService = {
+      fetchRoomCatalog: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CatalogService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        CatalogService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: VietSageSyncService, useValue: vietSageSyncService },
+      ],
     }).compile();
 
     service = module.get<CatalogService>(CatalogService);
