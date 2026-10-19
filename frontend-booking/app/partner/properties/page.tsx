@@ -18,6 +18,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   Hotel,
+  Mail,
+  ArrowRight,
+  BedDouble,
 } from 'lucide-react';
 import {
   usePropertyDetailQuery,
@@ -73,6 +76,7 @@ export default function PartnerPropertiesPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [vietSageHotelEmail, setVietSageHotelEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync state when property data loads
@@ -85,6 +89,12 @@ export default function PartnerPropertiesPage() {
       setStarRating(property.star_rating ?? 4.0);
       setThumbnailUrl(property.thumbnail_url || '');
       setImages(Array.isArray(property.images) ? property.images : []);
+      setVietSageHotelEmail(
+        property.vietsage_hotel_id ||
+          property.vietsage_hotel_email ||
+          property.partner_email ||
+          '',
+      );
     }
   }, [property]);
 
@@ -97,6 +107,12 @@ export default function PartnerPropertiesPage() {
       setStarRating(property.star_rating ?? 4.0);
       setThumbnailUrl(property.thumbnail_url || '');
       setImages(Array.isArray(property.images) ? property.images : []);
+      setVietSageHotelEmail(
+        property.vietsage_hotel_id ||
+          property.vietsage_hotel_email ||
+          property.partner_email ||
+          '',
+      );
       setNewImageUrl('');
       await luxuryAlert.info({
         title: 'Khôi Phục Dữ Liệu',
@@ -155,6 +171,7 @@ export default function PartnerPropertiesPage() {
           star_rating: Number(starRating),
           thumbnail_url: thumbnailUrl.trim() || undefined,
           images: images.length > 0 ? images : undefined,
+          vietsage_hotel_id: vietSageHotelEmail.trim() || null,
         },
       });
 
@@ -212,10 +229,10 @@ export default function PartnerPropertiesPage() {
 
       {/* 2. FORM BODY */}
       <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 pb-32">
           {/* LEFT 2 COLUMNS: Main Information */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Card 1: Core Profile */}
+            {/* Card 1: Core Hotel Profile & Contact */}
             <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-2xs space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
@@ -224,10 +241,10 @@ export default function PartnerPropertiesPage() {
                   </div>
                   <div>
                     <h2 className="text-base sm:text-lg font-bold text-slate-900 text-balance">
-                      Thông Tin Định Danh &amp; Địa Lý
+                      Thông Tin Khách Sạn &amp; Liên Hệ
                     </h2>
                     <p className="text-xs text-slate-500 text-pretty">
-                      Tên gọi chính thức và vị trí cơ sở hiển thị cho du khách
+                      Thông tin định danh, email liên hệ nhận đơn và địa chỉ cơ sở
                     </p>
                   </div>
                 </div>
@@ -247,32 +264,38 @@ export default function PartnerPropertiesPage() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ví dụ: Sapa Cloud Sanctuary Resort & Spa"
+                    placeholder="Ví dụ: Khách Sạn Minh 123"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-700 bg-slate-50/50 text-sm font-medium text-slate-900 transition-colors"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
-                      Điểm đến / Thành phố <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        required
-                        list="destinations-list"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="Chọn hoặc nhập điểm đến..."
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-700 bg-slate-50/50 text-sm font-medium text-slate-900 transition-colors"
-                      />
-                      <datalist id="destinations-list">
-                        {POPULAR_DESTINATIONS.map((d) => (
-                          <option key={d} value={d} />
-                        ))}
-                      </datalist>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs sm:text-sm font-bold text-slate-700">
+                        Email Khách Sạn <span className="text-rose-500">*</span>
+                      </label>
+                      {vietSageHotelEmail ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-800 text-xs font-bold whitespace-nowrap">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Đã liên kết PMS</span>
+                        </span>
+                      ) : null}
                     </div>
+                    <div className="relative">
+                      <Mail className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-3" />
+                      <input
+                        type="email"
+                        required
+                        value={vietSageHotelEmail}
+                        onChange={(e) => setVietSageHotelEmail(e.target.value)}
+                        placeholder="email@khachsan.com"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-700 bg-slate-50/50 text-sm font-medium text-slate-900 transition-colors"
+                      />
+                    </div>
+                    <span className="text-xs text-slate-400 mt-1 block">
+                      Email nhận thông báo đặt phòng và đồng bộ tự động với VietSage PMS.
+                    </span>
                   </div>
 
                   <div>
@@ -299,20 +322,42 @@ export default function PartnerPropertiesPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
-                    Địa chỉ chi tiết <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <MapPin className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-3" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
+                      Điểm đến / Thành phố <span className="text-rose-500">*</span>
+                    </label>
                     <input
                       type="text"
                       required
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-700 bg-slate-50/50 text-sm font-medium text-slate-900 transition-colors"
+                      list="destinations-list"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Chọn hoặc nhập điểm đến..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-700 bg-slate-50/50 text-sm font-medium text-slate-900 transition-colors"
                     />
+                    <datalist id="destinations-list">
+                      {POPULAR_DESTINATIONS.map((d) => (
+                        <option key={d} value={d} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
+                      Địa chỉ chi tiết <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <MapPin className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-3" />
+                      <input
+                        type="text"
+                        required
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-emerald-700 bg-slate-50/50 text-sm font-medium text-slate-900 transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -426,7 +471,7 @@ export default function PartnerPropertiesPage() {
             </div>
           </div>
 
-          {/* RIGHT 1 COLUMN: Thumbnail Preview & Ecosystem Information */}
+          {/* RIGHT 1 COLUMN: Thumbnail Preview & Quick Actions */}
           <div className="space-y-6">
             {/* Card 4: Primary Thumbnail Preview */}
             <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-2xs space-y-4">
@@ -469,60 +514,42 @@ export default function PartnerPropertiesPage() {
               </p>
             </div>
 
-            {/* Card 5: VietSage PMS Ecosystem Boundary */}
-            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 text-slate-900">
-                <ShieldCheck className="w-5 h-5 text-emerald-700" />
-                <h3 className="text-sm font-bold tracking-tight">Ranh Giới VietSage PMS</h3>
-              </div>
-
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-center justify-between py-1.5 border-b border-slate-200/60">
-                  <span className="text-slate-500 font-medium">Mã cơ sở OTA:</span>
-                  <span className="font-mono font-bold text-slate-800 truncate max-w-[150px]">
-                    {property?.id || managedPropertyId}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-slate-200/60">
-                  <span className="text-slate-500 font-medium">Định danh Slug:</span>
-                  <span className="font-mono font-bold text-slate-800 truncate max-w-[150px]">
-                    {property?.slug || 'chưa-tạo'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-1.5">
-                  <span className="text-slate-500 font-medium">Trạng thái đồng bộ:</span>
-                  <span className="inline-flex items-center gap-1 font-bold text-emerald-800 whitespace-nowrap">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Đã kết nối</span>
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-500 leading-normal text-pretty pt-1">
-                booking-manager quản lý các cấu hình thương mại OTA. Quyền sở hữu buồng phòng vật lý và check-in/out thuộc PMS VietSage.
-              </p>
-            </div>
-
-            {/* Public Link Card */}
-            {property?.id && (
+            {/* Card 5: Quick Management Shortcuts */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
+                Thao Tác Quản Trị
+              </h3>
               <Link
-                href={`/properties/${property.id}`}
-                target="_blank"
-                className="group p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs hover:border-emerald-500/50 flex items-center justify-between transition-all"
+                href="/partner/rooms"
+                className="w-full p-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white flex items-center justify-between transition-colors shadow-2xs"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
-                    <ExternalLink className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
-                      Xem trang công khai
-                    </div>
-                    <div className="text-xs text-slate-400">Trải nghiệm của du khách</div>
+                  <BedDouble className="w-4 h-4 text-emerald-200" />
+                  <div className="text-left">
+                    <div className="text-xs font-bold">Quản Lý Phòng</div>
+                    <div className="text-xs text-emerald-200">Đồng bộ phòng từ VietSage PMS</div>
                   </div>
                 </div>
+                <ArrowRight className="w-4 h-4 text-emerald-200" />
               </Link>
-            )}
+
+              {property?.id && (
+                <Link
+                  href={`/properties/${property.id}`}
+                  target="_blank"
+                  className="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-between transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ExternalLink className="w-4 h-4 text-slate-500" />
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-900">Xem Trang Công Khai</div>
+                      <div className="text-xs text-slate-500">Giao diện khách đặt phòng</div>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 

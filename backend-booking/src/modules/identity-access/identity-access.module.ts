@@ -7,16 +7,29 @@ import { JwtStrategy } from './jwt.strategy';
 import { LocalStrategy } from './local.strategy';
 import { AuditService } from './audit.service';
 
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { getRuntimeSecret } from '../../common/config/runtime-config';
+
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'booking-manager-secret-key-2026',
+      secret: getRuntimeSecret(
+        'JWT_SECRET',
+        'booking-manager-development-secret-key-2026',
+      ),
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, AuditService],
-  exports: [AuthService, AuditService],
+  controllers: [AuthController, UsersController],
+  providers: [
+    AuthService,
+    UsersService,
+    JwtStrategy,
+    LocalStrategy,
+    AuditService,
+  ],
+  exports: [AuthService, UsersService, AuditService],
 })
 export class IdentityAccessModule {}

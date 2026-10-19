@@ -144,6 +144,7 @@ export type CreateRoomTypePayload = {
   amenities?: string[];
   is_active?: boolean;
   vietsage_room_type_id?: string | null;
+  room_images?: string[];
 };
 
 export type UpdateRoomTypePayload = {
@@ -158,6 +159,7 @@ export type UpdateRoomTypePayload = {
   amenities?: string[];
   is_active?: boolean;
   vietsage_room_type_id?: string | null;
+  room_images?: string[];
 };
 
 export async function createRoomType(payload: CreateRoomTypePayload) {
@@ -221,5 +223,65 @@ export async function updateProperty(id: string, payload: UpdatePropertyPayload)
   const data = await parseApiResponse(res, successSchema(z.any()));
   return data.data;
 }
+
+export type VietSagePreviewRoomType = {
+  name: string;
+  normalized_key: string;
+  description: string;
+  base_price: number;
+  total_rooms: number;
+  max_guests: number;
+  bed_type: string;
+  area_sqm: number;
+  amenities: string[];
+  sample_room_numbers: string[];
+  action: 'CREATE' | 'UPDATE';
+  existing_id: string | null;
+};
+
+export type VietSageCatalogPreview = {
+  hotel_id: string;
+  hotel_name: string;
+  hotel_code: string;
+  partner_email: string;
+  total_pms_rooms: number;
+  room_types: VietSagePreviewRoomType[];
+};
+
+export async function previewVietSageRooms(propertyId: string): Promise<VietSageCatalogPreview> {
+  const res = await fetch(`/api/admin/properties/${encodeURIComponent(propertyId)}/vietsage-preview`, {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  const data = await parseApiResponse(res, successSchema(z.any()));
+  return data.data;
+}
+
+export type ImportVietSageResult = {
+  property_id: string;
+  hotel_name: string;
+  hotel_code: string;
+  created_count: number;
+  updated_count: number;
+  total_processed: number;
+  room_types: Array<{ id: string; name: string; action: string }>;
+};
+
+export async function importVietSageRooms(
+  propertyId: string,
+  selectedKeys?: string[],
+): Promise<ImportVietSageResult> {
+  const res = await fetch(`/api/admin/properties/${encodeURIComponent(propertyId)}/vietsage-import`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ selected_keys: selectedKeys }),
+  });
+  const data = await parseApiResponse(res, successSchema(z.any()));
+  return data.data;
+}
+
 
 

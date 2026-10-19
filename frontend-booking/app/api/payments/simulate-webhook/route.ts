@@ -3,6 +3,10 @@ import crypto from 'crypto';
 import { backendFetch } from '@/lib/api/backend';
 
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return new NextResponse(null, { status: 404 });
+  }
+
   try {
     const body = await req.json();
     const bookingCode = body.booking_code;

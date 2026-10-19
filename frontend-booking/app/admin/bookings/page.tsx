@@ -54,6 +54,12 @@ function getBookingStatusBadge(status: string) {
         badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         dotClass: 'bg-emerald-500',
       };
+    case 'CONFIRMING':
+      return {
+        label: 'Đang xác nhận',
+        badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+        dotClass: 'bg-sky-500',
+      };
     case 'PENDING':
       return {
         label: 'Chờ thanh toán',
@@ -520,8 +526,8 @@ export default function AdminBookingsPage() {
 
       {/* 5. CANCEL BOOKING MODAL */}
       {cancelingBooking && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+          <div className="bg-white rounded-3xl max-w-3xl lg:max-w-4xl w-full p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2 text-rose-600 font-bold text-lg">
                 <AlertTriangle className="w-5 h-5 shrink-0" />
@@ -535,82 +541,84 @@ export default function AdminBookingsPage() {
               </button>
             </div>
 
-            <div className="space-y-3 text-sm text-slate-600">
-              <p>
-                Quý đối tác đang thực hiện hủy đơn giữ chỗ{' '}
-                <strong className="text-slate-900 font-mono">
-                  {cancelingBooking.booking_code}
-                </strong>{' '}
-                của khách hàng{' '}
-                <strong className="text-slate-900">{cancelingBooking.guest_name}</strong>.
-              </p>
-              <div className="p-4 bg-slate-50 rounded-2xl space-y-1.5 text-xs sm:text-sm border border-slate-200/80">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Cơ sở: </span>
-                  <span className="font-bold text-slate-900">
-                    {cancelingBooking.property_name || 'Khách sạn liên kết'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Thời gian: </span>
-                  <span className="font-bold text-slate-900 font-mono">
-                    {cancelingBooking.check_in} → {cancelingBooking.check_out}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-1 border-t border-slate-200/60">
-                  <span className="text-slate-500">Tổng giá trị đơn: </span>
-                  <span className="font-black text-slate-900 font-mono">
-                    {new Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND',
-                    }).format(cancelingBooking.total_price)}
-                  </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+              <div className="space-y-3 text-sm text-slate-600">
+                <p className="text-pretty">
+                  Quý đối tác đang thực hiện hủy đơn giữ chỗ{' '}
+                  <strong className="text-slate-900 font-mono">
+                    {cancelingBooking.booking_code}
+                  </strong>{' '}
+                  của khách hàng{' '}
+                  <strong className="text-slate-900">{cancelingBooking.guest_name}</strong>.
+                </p>
+                <div className="p-4 bg-slate-50 rounded-2xl space-y-2 text-xs border border-slate-200/80">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Cơ sở: </span>
+                    <span className="font-bold text-slate-900 text-right">
+                      {cancelingBooking.property_name || 'Khách sạn liên kết'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Thời gian: </span>
+                    <span className="font-bold text-slate-900 font-mono">
+                      {cancelingBooking.check_in} → {cancelingBooking.check_out}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-1.5 border-t border-slate-200/60">
+                    <span className="text-slate-500">Tổng giá trị đơn: </span>
+                    <span className="font-black text-slate-900 font-mono">
+                      {new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                      }).format(cancelingBooking.total_price)}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <form onSubmit={handleConfirmCancel} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">
+                    Lý do hủy đơn <span className="text-rose-600">*</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="Nhập lý do hủy (ví dụ: Khách hàng yêu cầu hủy phòng, Quá hạn thanh toán giữ chỗ...)"
+                    value={cancelReason}
+                    onChange={(e) => {
+                      setCancelReason(e.target.value);
+                      if (cancelError) setCancelError(null);
+                    }}
+                    className="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-hidden resize-none font-medium"
+                    required
+                  />
+                </div>
+
+                {cancelError && (
+                  <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium border border-rose-200">
+                    {cancelError}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeCancelModal}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={updateStatusMutation.isPending}
+                    className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  >
+                    {updateStatusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hủy đơn'}
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <form onSubmit={handleConfirmCancel} className="space-y-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5">
-                  Lý do hủy đơn <span className="text-rose-600">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Nhập lý do hủy (ví dụ: Khách hàng yêu cầu hủy phòng, Quá hạn thanh toán giữ chỗ...)"
-                  value={cancelReason}
-                  onChange={(e) => {
-                    setCancelReason(e.target.value);
-                    if (cancelError) setCancelError(null);
-                  }}
-                  className="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-hidden resize-none font-medium"
-                  required
-                />
-              </div>
-
-              {cancelError && (
-                <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs sm:text-sm font-medium border border-rose-200">
-                  {cancelError}
-                </div>
-              )}
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeCancelModal}
-                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-bold text-slate-700 transition-colors cursor-pointer"
-                >
-                  Đóng
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={updateStatusMutation.isPending}
-                  className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-                >
-                  {updateStatusMutation.isPending ? 'Đang xử lý...' : 'Xác nhận hủy đơn'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

@@ -69,7 +69,7 @@ export class PaymentsController {
   }
 
   @Public()
-  @RateLimit({ points: 20, duration: 60, keyPrefix: 'payment:verify' })
+  @RateLimit({ points: 120, duration: 60, keyPrefix: 'payment:verify' })
   @Post('verify-checkout')
   async verifyCheckout(
     @Body() body: VerifyCheckoutDto,

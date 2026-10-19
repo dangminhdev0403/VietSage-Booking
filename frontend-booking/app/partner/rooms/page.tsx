@@ -14,7 +14,6 @@ import {
   Star,
   MapPin,
   Check,
-  Coffee,
   Info,
   Plus,
   Trash2,
@@ -37,6 +36,10 @@ import {
   createRoomType,
   updateRoomType,
   deleteRoomType,
+  previewVietSageRooms,
+  importVietSageRooms,
+  type VietSageCatalogPreview,
+  type VietSagePreviewRoomType,
 } from '@/features/catalog/service/catalog.client';
 import { luxuryAlert } from '@/lib/alert/luxury-alert';
 
@@ -53,6 +56,7 @@ type RoomTypeItem = {
   amenities?: string[];
   is_active?: boolean | null;
   vietsage_room_type_id?: string | null;
+  room_images?: string[];
 };
 
 // Formats number to '1.000.000 ₫'
@@ -79,6 +83,7 @@ export default function PartnerRoomsPage() {
 
   const user = session?.user as
     | {
+        email?: string | null;
         role?: string;
         managedPropertyId?: string | null;
         accessibleProperties?: Array<{ id: string; name: string }>;
@@ -116,9 +121,6 @@ export default function PartnerRoomsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Detail Modal State
-  const [selectedDetailRoom, setSelectedDetailRoom] = useState<RoomTypeItem | null>(null);
-
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createName, setCreateName] = useState('');
@@ -130,6 +132,8 @@ export default function PartnerRoomsPage() {
   const [createHasSeaView, setCreateHasSeaView] = useState(false);
   const [createIsActive, setCreateIsActive] = useState(true);
   const [createVietSageRoomTypeId, setCreateVietSageRoomTypeId] = useState('');
+  const [createRoomImages, setCreateRoomImages] = useState<string[]>([]);
+  const [newCreateImageUrl, setNewCreateImageUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   // Edit Modal State
@@ -143,17 +147,110 @@ export default function PartnerRoomsPage() {
   const [editHasSeaView, setEditHasSeaView] = useState(false);
   const [editIsActive, setEditIsActive] = useState(true);
   const [editVietSageRoomTypeId, setEditVietSageRoomTypeId] = useState('');
+  const [editRoomImages, setEditRoomImages] = useState<string[]>([]);
+  const [newEditImageUrl, setNewEditImageUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Status Action Loading
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  const openDetailModal = (room: RoomTypeItem) => {
-    setSelectedDetailRoom(room);
+  // VietSage PMS 1-Click Import Modal States
+  const [showVietSageModal, setShowVietSageModal] = useState(false);
+  const [isLoadingVietSagePreview, setIsLoadingVietSagePreview] = useState(false);
+  const [isImportingVietSage, setIsImportingVietSage] = useState(false);
+  const [vietSagePreviewData, setVietSagePreviewData] = useState<VietSageCatalogPreview | null>(null);
+  const [selectedRoomKeys, setSelectedRoomKeys] = useState<string[]>([]);
+  const [vietSageError, setVietSageError] = useState<string | null>(null);
+
+  const loadVietSagePreview = async (propId: string) => {
+    setIsLoadingVietSagePreview(true);
+    setVietSageError(null);
+    try {
+      const data = await previewVietSageRooms(propId);
+      setVietSagePreviewData(data);
+      // Default: select all room types
+      setSelectedRoomKeys(data.room_types.map((rt) => rt.normalized_key));
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Không thể kết nối và tải danh mục phòng từ VietSage PMS';
+      setVietSageError(msg);
+    } finally {
+      setIsLoadingVietSagePreview(false);
+    }
   };
 
-  const closeDetailModal = () => {
-    setSelectedDetailRoom(null);
+  const openVietSageSyncModal = () => {
+    if (!effectivePropertyId) {
+      luxuryAlert.error({
+        title: 'Chưa Chọn Cơ Sở Lưu Trú',
+        message: 'Vui lòng chọn cơ sở lưu trú trước khi thực hiện nhập phòng.',
+      });
+      return;
+    }
+    setShowVietSageModal(true);
+    loadVietSagePreview(effectivePropertyId);
+  };
+
+  const closeVietSageSyncModal = () => {
+    if (isImportingVietSage) return;
+    setShowVietSageModal(false);
+    setVietSageError(null);
+  };
+
+  const toggleSelectRoomKey = (key: string) => {
+    setSelectedRoomKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+
+  const toggleSelectAllRooms = (selectAll: boolean) => {
+    if (!vietSagePreviewData) return;
+    if (selectAll) {
+      setSelectedRoomKeys(
+        vietSagePreviewData.room_types.map((rt) => rt.normalized_key),
+      );
+    } else {
+      setSelectedRoomKeys([]);
+    }
+  };
+
+  const handleExecuteImport = async () => {
+    if (!effectivePropertyId) return;
+    if (selectedRoomKeys.length === 0) {
+      luxuryAlert.error({
+        title: 'Chưa Chọn Hạng Phòng',
+        message: 'Vui lòng chọn ít nhất 1 hạng phòng để tiến hành nhập.',
+      });
+      return;
+    }
+
+    setIsImportingVietSage(true);
+    try {
+      const result = await importVietSageRooms(
+        effectivePropertyId,
+        selectedRoomKeys,
+      );
+      await luxuryAlert.success({
+        title: 'Nhập Phòng Thành Công',
+        message: `Đã nhập và đồng bộ thành công ${result.total_processed} hạng phòng (tạo mới: ${result.created_count}, cập nhật: ${result.updated_count}) cùng quỹ phòng 30 ngày từ VietSage PMS.`,
+        confirmText: 'Tuyệt Vời',
+      });
+      setShowVietSageModal(false);
+      refetch();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Không thể nhập danh mục phòng từ VietSage PMS';
+      luxuryAlert.error({
+        title: 'Nhập Phòng Thất Bại',
+        message: msg,
+      });
+    } finally {
+      setIsImportingVietSage(false);
+    }
   };
 
   const openCreateModal = () => {
@@ -166,6 +263,8 @@ export default function PartnerRoomsPage() {
     setCreateHasSeaView(false);
     setCreateIsActive(true);
     setCreateVietSageRoomTypeId('');
+    setCreateRoomImages([]);
+    setNewCreateImageUrl('');
     setIsCreateOpen(true);
   };
 
@@ -200,6 +299,8 @@ export default function PartnerRoomsPage() {
     );
     setEditIsActive(room.is_active !== false);
     setEditVietSageRoomTypeId(room.vietsage_room_type_id || '');
+    setEditRoomImages(room.room_images || []);
+    setNewEditImageUrl('');
   };
 
   const closeEditModal = () => {
@@ -237,6 +338,7 @@ export default function PartnerRoomsPage() {
         has_sea_view: createHasSeaView,
         is_active: createIsActive,
         vietsage_room_type_id: createVietSageRoomTypeId.trim() || undefined,
+        room_images: createRoomImages,
       });
 
       await luxuryAlert.success({
@@ -289,6 +391,7 @@ export default function PartnerRoomsPage() {
         has_sea_view: editHasSeaView,
         is_active: editIsActive,
         vietsage_room_type_id: editVietSageRoomTypeId.trim() ? editVietSageRoomTypeId.trim() : null,
+        room_images: editRoomImages,
       });
 
       await luxuryAlert.success({
@@ -478,6 +581,16 @@ export default function PartnerRoomsPage() {
           >
             <RefreshCw className={`w-4 h-4 text-slate-700 ${isLoading ? 'animate-spin text-emerald-700' : ''}`} />
             <span>Làm mới</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openVietSageSyncModal}
+            className="px-4 py-2.5 rounded-2xl bg-[#24473d] hover:bg-[#1b362e] text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-98 whitespace-nowrap"
+            title="Đồng bộ tự động danh mục loại phòng và quỹ phòng từ VietSage PMS"
+          >
+            <Sparkles className="w-4 h-4 text-[#e8b363]" />
+            <span>Nhập phòng từ VietSage PMS</span>
           </button>
 
           <button
@@ -693,13 +806,24 @@ export default function PartnerRoomsPage() {
                 : 'Hãy thử xóa từ khóa tìm kiếm hoặc đặt lại bộ lọc trạng thái để xem đầy đủ danh sách.'}
             </p>
             {rawRoomTypes.length === 0 ? (
-              <button
-                onClick={openCreateModal}
-                className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition-all cursor-pointer whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Đăng Bán Hạng Phòng Mới</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={openVietSageSyncModal}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#24473d] hover:bg-[#1b362e] text-white font-bold text-xs shadow-md transition-all cursor-pointer whitespace-nowrap active:scale-98"
+                >
+                  <Sparkles className="w-4 h-4 text-[#e8b363]" />
+                  <span>Nhập phòng từ VietSage PMS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm phòng thủ công</span>
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => {
@@ -751,42 +875,36 @@ export default function PartnerRoomsPage() {
                     return (
                       <tr
                         key={room.id}
-                        onClick={() => openDetailModal(room)}
+                        onClick={() => openEditModal(room)}
                         className={`group cursor-pointer transition-colors hover:bg-emerald-50/40 ${
                           !isRoomActive ? 'bg-amber-50/20' : ''
                         }`}
-                        title="Click để xem đầy đủ chi tiết hạng phòng"
+                        title="Click để chỉnh sửa hạng phòng"
                       >
                         {/* Index Number */}
                         <td className="py-3.5 px-4 text-center text-xs font-bold text-slate-400">
                           {rowNumber}
                         </td>
 
-                        {/* Room Name & View Tag (Stacked, never cramped into 1 word per line) */}
+                        {/* Room Name & Thumbnail */}
                         <td className="py-3.5 px-4">
-                          <div className="space-y-1">
-                            <div className="font-bold text-slate-900 group-hover:text-emerald-800 text-sm sm:text-base leading-snug transition-colors text-balance">
-                              {room.name}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border whitespace-nowrap ${
-                                  hasSeaView
-                                    ? 'bg-sky-50 text-sky-800 border-sky-200'
-                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                }`}
-                              >
-                                {hasSeaView ? 'View Biển' : 'View Vườn'}
-                              </span>
-                              {room.vietsage_room_type_id ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
-                                  Đồng bộ PMS: {room.vietsage_room_type_id.length > 20 ? 'Đã liên kết bảo mật' : room.vietsage_room_type_id}
-                                </span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                              {room.room_images && room.room_images.length > 0 ? (
+                                <img
+                                  src={room.room_images[0]}
+                                  alt={room.name}
+                                  className="w-full h-full object-cover"
+                                />
                               ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                                  Chưa gán PMS
-                                </span>
+                                <BedDouble className="w-5 h-5 text-slate-400" />
                               )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="font-bold text-slate-900 group-hover:text-emerald-800 text-sm sm:text-base leading-snug transition-colors text-balance">
+                                {room.name}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -991,14 +1109,36 @@ export default function PartnerRoomsPage() {
                 return (
                   <div
                     key={room.id}
-                    onClick={() => openDetailModal(room)}
+                    onClick={() => openEditModal(room)}
                     className={`bg-white rounded-3xl p-6 border transition-all flex flex-col justify-between space-y-5 cursor-pointer hover:shadow-xs ${
                       isRoomActive
                         ? 'border-slate-200/80 shadow-2xs'
                         : 'border-amber-200/70 bg-amber-50/20 opacity-90'
                     }`}
+                    title="Click để chỉnh sửa hạng phòng"
                   >
                     <div className="space-y-3">
+                      {/* Room Photo / Fallback Banner */}
+                      {room.room_images && room.room_images.length > 0 ? (
+                        <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                          <img
+                            src={room.room_images[0]}
+                            alt={room.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-xs font-semibold backdrop-blur-xs whitespace-nowrap">
+                            {room.room_images.length} ảnh
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="relative aspect-[21/9] w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 flex items-center justify-center p-3 text-center">
+                          <div className="flex items-center gap-2 text-slate-500 text-xs">
+                            <BedDouble className="w-4 h-4 text-emerald-700" />
+                            <span className="font-semibold text-slate-700">Chưa tải ảnh lên</span>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Header: Name and Status Badge */}
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -1017,15 +1157,6 @@ export default function PartnerRoomsPage() {
                               />
                               <span>{isRoomActive ? 'Đang mở bán' : 'Tạm dừng bán'}</span>
                             </span>
-                            {room.vietsage_room_type_id ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
-                                Đồng bộ PMS: {room.vietsage_room_type_id.length > 20 ? 'Đã liên kết bảo mật' : room.vietsage_room_type_id}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                                Chưa gán PMS
-                              </span>
-                            )}
                           </div>
                           <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug text-balance">
                             {room.name}
@@ -1180,383 +1311,261 @@ export default function PartnerRoomsPage() {
         )}
       </div>
 
-      {/* 6. ROOM DETAIL MODAL (Opens upon clicking any row) */}
-      {selectedDetailRoom && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={closeDetailModal}
-              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Đóng chi tiết"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-1">
-              <Sparkles className="w-4 h-4 text-emerald-700" />
-              <span>Kênh Quản Trị Đối Tác • Chi Tiết Hạng Phòng</span>
-            </div>
-
-            <div className="pr-8">
-              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 text-balance">
-                {selectedDetailRoom.name}
-              </h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border whitespace-nowrap ${
-                    selectedDetailRoom.is_active !== false
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                      : 'bg-amber-50 text-amber-800 border-amber-200'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      selectedDetailRoom.is_active !== false ? 'bg-emerald-600' : 'bg-amber-600'
-                    }`}
-                  />
-                  <span>{selectedDetailRoom.is_active !== false ? 'Đang mở bán trên sàn' : 'Tạm dừng bán'}</span>
-                </span>
-
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border whitespace-nowrap ${
-                    selectedDetailRoom.has_sea_view
-                      ? 'bg-sky-50 text-sky-800 border-sky-200'
-                      : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                  }`}
-                >
-                  {selectedDetailRoom.has_sea_view ? 'View Hướng Biển' : 'View Hướng Vườn'}
-                </span>
-              </div>
-            </div>
-
-            {/* Price Highlight Banner */}
-            <div className="mt-4 p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 flex items-center justify-between">
-              <div>
-                <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
-                  Giá Bán Niêm Yết Cơ Sở
-                </div>
-                <div className="text-xs text-emerald-700 mt-0.5 font-medium">
-                  Áp dụng niêm yết trên kênh OTA
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xl sm:text-2xl font-black text-emerald-800 tracking-tight whitespace-nowrap">
-                  {formatVND(selectedDetailRoom.base_price)}
-                </div>
-                <span className="text-xs text-emerald-700 font-medium">/ đêm lưu trú</span>
-              </div>
-            </div>
-
-            {/* Specifications 4-Grid */}
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <Users className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Sức Chứa Tối Đa</span>
-                </div>
-                <div className="text-sm font-bold text-slate-900 mt-1 whitespace-nowrap">
-                  Tối đa {selectedDetailRoom.max_guests || 2} khách
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <Maximize2 className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Diện Tích Phòng</span>
-                </div>
-                <div className="text-sm font-bold text-slate-900 mt-1 whitespace-nowrap">
-                  {selectedDetailRoom.area_sqm || 52} m²
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <BedDouble className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Cấu Hình Giường</span>
-                </div>
-                <div className="text-sm font-bold text-slate-900 mt-1 truncate" title={selectedDetailRoom.bed_type || '1 Giường King-size'}>
-                  {selectedDetailRoom.bed_type || '1 Giường King-size'}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <Waves className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Tầm Nhìn Hướng Phòng</span>
-                </div>
-                <div className="text-sm font-bold text-slate-900 mt-1 whitespace-nowrap">
-                  {selectedDetailRoom.has_sea_view ? 'Hướng Biển' : 'Hướng Vườn'}
-                </div>
-              </div>
-            </div>
-
-            {/* Description Details */}
-            <div className="mt-4 space-y-1.5">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Mô Tả Không Gian &amp; Tiện Nghi
-              </div>
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs sm:text-sm text-slate-600 leading-relaxed text-pretty">
-                {selectedDetailRoom.description
-                  ? selectedDetailRoom.description
-                  : 'Chưa có thông tin mô tả chi tiết cho hạng phòng này.'}
-              </div>
-            </div>
-
-            {/* Included Privileges */}
-            <div className="mt-4 space-y-1.5">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Đặc Quyền Dịch Vụ Đi Kèm
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 font-medium">
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <Coffee className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>Buffet sáng mỗi ngày</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <Check className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>Wifi tốc độ cao toàn khu</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <Check className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>Dọn phòng hàng ngày</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
-                  <Check className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>Nước khoáng &amp; trà chào đón</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-100">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleToggleStatus(selectedDetailRoom);
-                    closeDetailModal();
-                  }}
-                  disabled={actionLoadingId === selectedDetailRoom.id}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors border cursor-pointer disabled:opacity-50 whitespace-nowrap ${
-                    selectedDetailRoom.is_active !== false
-                      ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
-                  }`}
-                >
-                  <Power className="w-3.5 h-3.5" />
-                  <span>{selectedDetailRoom.is_active !== false ? 'Tạm Dừng Mở Bán' : 'Mở Bán Lại'}</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={closeDetailModal}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  Đóng
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const r = selectedDetailRoom;
-                    closeDetailModal();
-                    openEditModal(r);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Chỉnh Sửa</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 7. CREATE ROOM MODAL */}
+      {/* CREATE ROOM MODAL */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={closeCreateModal}
-              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-1">
-              <Sparkles className="w-4 h-4 text-emerald-700" />
-              <span>Đăng Bán Hạng Phòng Mới</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 text-balance">
-              Thiết Lập Thông Số Hạng Phòng
-            </h3>
-
-            <div className="mt-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-xs text-emerald-950 flex items-start gap-2">
-              <Info className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-              <span className="text-pretty">
-                Hạng phòng sau khi đăng bán sẽ hiển thị trực tiếp cho khách hàng lựa chọn và đặt phòng tức thì trên sàn.
-              </span>
-            </div>
-
-            <form onSubmit={handleCreateRoom} className="space-y-4 mt-5">
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Tên Hạng Phòng <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  placeholder="Ví dụ: Deluxe Suite Hướng Biển, Premier Garden Villa..."
-                  required
-                  className="w-full px-3.5 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Giá Cơ Sở / Đêm (VND) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={createBasePriceStr}
-                    onChange={(e) => setCreateBasePriceStr(formatNumberDots(e.target.value))}
-                    placeholder="1.500.000"
-                    required
-                    className="w-full pl-3.5 pr-14 py-3 text-base font-bold text-emerald-800 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:border-emerald-700"
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
-                    VND / đêm
-                  </span>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+          <div className="bg-white rounded-3xl max-w-5xl xl:max-w-6xl w-full shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 sm:px-8 sm:py-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/60">
+              <div className="space-y-1 pr-6">
+                <div className="flex items-center gap-2 text-emerald-800 text-xs font-extrabold uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-emerald-700" />
+                  <span>Đăng Bán Hạng Phòng Mới</span>
                 </div>
-                <p className="text-xs text-slate-500 pt-0.5">
-                  Giá hiển thị: <strong className="text-emerald-800">{formatVND(parseNumberDots(createBasePriceStr))}</strong>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 text-balance">
+                  Thiết Lập Thông Số Hạng Phòng
+                </h3>
+                <p className="text-xs text-slate-500 text-pretty">
+                  Hạng phòng sau khi đăng bán sẽ hiển thị trực tiếp cho khách hàng lựa chọn và đặt phòng tức thì trên sàn.
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={closeCreateModal}
+                className="p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer self-start shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                    Số Khách Tối Đa
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={createMaxGuests}
-                    onChange={(e) => setCreateMaxGuests(Number(e.target.value))}
-                    required
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                  />
+            {/* Modal Body - 2 Columns Horizontal */}
+            <form onSubmit={handleCreateRoom} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="p-5 sm:p-8 overflow-y-auto flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-start">
+                {/* Left Column: Basic Information & Pricing */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Tên Hạng Phòng <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={createName}
+                      onChange={(e) => setCreateName(e.target.value)}
+                      placeholder="Ví dụ: Deluxe Suite Hướng Biển, Premier Garden Villa..."
+                      required
+                      className="w-full px-3.5 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Giá Cơ Sở / Đêm (VND) <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={createBasePriceStr}
+                        onChange={(e) => setCreateBasePriceStr(formatNumberDots(e.target.value))}
+                        placeholder="1.500.000"
+                        required
+                        className="w-full pl-3.5 pr-14 py-3 text-base font-bold text-emerald-800 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:border-emerald-700"
+                      />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
+                        VND / đêm
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 pt-0.5">
+                      Giá hiển thị: <strong className="text-emerald-800">{formatVND(parseNumberDots(createBasePriceStr))}</strong>
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        Số Khách Tối Đa
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="15"
+                        value={createMaxGuests}
+                        onChange={(e) => setCreateMaxGuests(Number(e.target.value))}
+                        required
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        Diện Tích (m²)
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        max="500"
+                        value={createAreaSqm}
+                        onChange={(e) => setCreateAreaSqm(Number(e.target.value))}
+                        required
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Cấu Hình Giường
+                    </label>
+                    <input
+                      type="text"
+                      value={createBedType}
+                      onChange={(e) => setCreateBedType(e.target.value)}
+                      placeholder="Ví dụ: 1 Giường King-size hoặc 2 Giường Đơn Twin"
+                      required
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={createHasSeaView}
+                        onChange={(e) => setCreateHasSeaView(e.target.checked)}
+                        className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-800">
+                        Hướng nhìn biển (Sea View)
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={createIsActive}
+                        onChange={(e) => setCreateIsActive(e.target.checked)}
+                        className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-800">
+                        Kích hoạt mở bán ngay
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                    Diện Tích (m²)
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="500"
-                    value={createAreaSqm}
-                    onChange={(e) => setCreateAreaSqm(Number(e.target.value))}
-                    required
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                  />
+                {/* Right Column: PMS Mapping, Description & Images */}
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center justify-between">
+                      <span>Tên / Ký Hiệu Hạng Phòng VietSage PMS (Đồng Bộ)</span>
+                      <span className="text-xs text-emerald-700 font-normal">Tùy chọn</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={createVietSageRoomTypeId}
+                      onChange={(e) => setCreateVietSageRoomTypeId(e.target.value)}
+                      placeholder="Ví dụ: Suite, Deluxe, hoặc Standard"
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                    />
+                    <p className="text-xs text-slate-600 pt-0.5 text-pretty">
+                      Nhập tên hoặc ký hiệu loại phòng trên VietSage PMS để hệ thống tự động ánh xạ tồn kho và phân phòng an toàn.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Mô Tả Tiện Nghi &amp; Điểm Nổi Bật
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={createDescription}
+                      onChange={(e) => setCreateDescription(e.target.value)}
+                      placeholder="Mô tả ban công riêng, bồn tắm nằm, quang cảnh nhìn ra biển..."
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700 resize-none"
+                    />
+                  </div>
+
+                  {/* Room Images Manager for Create */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        Hình Ảnh Hạng Phòng ({createRoomImages.length} ảnh)
+                      </label>
+                      <span className="text-xs text-slate-400 font-normal">Tùy chọn</span>
+                    </div>
+
+                    {createRoomImages.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 pt-1 max-h-36 overflow-y-auto">
+                        {createRoomImages.map((imgUrl, idx) => (
+                          <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group">
+                            <img src={imgUrl} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setCreateRoomImages((prev) => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="url"
+                        value={newCreateImageUrl}
+                        onChange={(e) => setNewCreateImageUrl(e.target.value)}
+                        placeholder="Dán link ảnh (https://...)"
+                        className="flex-1 px-3 py-2 text-xs rounded-xl bg-white border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newCreateImageUrl.trim()) return;
+                          if (!newCreateImageUrl.startsWith('http://') && !newCreateImageUrl.startsWith('https://')) {
+                            luxuryAlert.error({
+                              title: 'Đường Dẫn Không Hợp Lệ',
+                              message: 'Vui lòng nhập đường dẫn ảnh hợp lệ (bắt đầu bằng http:// hoặc https://).',
+                            });
+                            return;
+                          }
+                          setCreateRoomImages((prev) => [...prev, newCreateImageUrl.trim()]);
+                          setNewCreateImageUrl('');
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        + Thêm Ảnh
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Cấu Hình Giường
-                </label>
-                <input
-                  type="text"
-                  value={createBedType}
-                  onChange={(e) => setCreateBedType(e.target.value)}
-                  placeholder="Ví dụ: 1 Giường King-size hoặc 2 Giường Đơn Twin"
-                  required
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                  <span>Tên / Ký Hiệu Hạng Phòng VietSage PMS (Đồng Bộ)</span>
-                  <span className="text-xs text-slate-400 font-normal">Tùy chọn</span>
-                </label>
-                <input
-                  type="text"
-                  value={createVietSageRoomTypeId}
-                  onChange={(e) => setCreateVietSageRoomTypeId(e.target.value)}
-                  placeholder="Ví dụ: Suite, Deluxe, hoặc Standard"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-                <p className="text-xs text-slate-500 pt-0.5">
-                  Nhập tên hoặc ký hiệu loại phòng trên VietSage PMS để hệ thống tự động ánh xạ tồn kho và phân phòng an toàn (không cần nhập mã ID dài).
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Mô Tả Tiện Nghi &amp; Điểm Nổi Bật
-                </label>
-                <textarea
-                  rows={2}
-                  value={createDescription}
-                  onChange={(e) => setCreateDescription(e.target.value)}
-                  placeholder="Mô tả ban công riêng, bồn tắm nằm, quang cảnh nhìn ra biển..."
-                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={createHasSeaView}
-                    onChange={(e) => setCreateHasSeaView(e.target.checked)}
-                    className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
-                  />
-                  <span className="text-xs font-bold text-slate-800">
-                    Hướng nhìn biển (Sea View)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={createIsActive}
-                    onChange={(e) => setCreateIsActive(e.target.checked)}
-                    className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
-                  />
-                  <span className="text-xs font-bold text-slate-800">
-                    Kích hoạt mở bán ngay lập tức
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={closeCreateModal}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={isCreating}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{isCreating ? 'Đang tạo...' : 'Đăng Bán Phòng'}</span>
-                </button>
+              {/* Fixed Footer */}
+              <div className="p-4 sm:px-8 sm:py-4 border-t border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/80">
+                <span className="text-xs text-slate-500 hidden sm:inline-block">
+                  Kiểm tra kỹ giá cơ sở và thông số trước khi mở bán.
+                </span>
+                <div className="flex items-center gap-3 ml-auto">
+                  <button
+                    type="button"
+                    onClick={closeCreateModal}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-white transition-colors cursor-pointer"
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreating}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{isCreating ? 'Đang tạo...' : 'Đăng Bán Phòng'}</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1565,198 +1574,525 @@ export default function PartnerRoomsPage() {
 
       {/* 8. EDIT ROOM MODAL */}
       {editingRoom && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={closeEditModal}
-              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-1">
-              <Edit3 className="w-4 h-4 text-emerald-700" />
-              <span>Chỉnh Sửa Hạng Phòng</span>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 text-balance">
-              {editingRoom.name}
-            </h3>
-
-            <div className="mt-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-xs text-emerald-950 flex items-start gap-2">
-              <Info className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-              <span className="text-pretty">
-                Thông số cập nhật áp dụng cho hiển thị bán phòng trên kênh OTA. Việc phân bổ buồng phòng vật lý do hệ thống VietSage PMS điều hành.
-              </span>
-            </div>
-
-            <form onSubmit={handleSaveRoom} className="space-y-4 mt-5">
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Tên Hạng Phòng <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
-                  className="w-full px-3.5 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Giá Cơ Sở / Đêm (VND) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={editBasePriceStr}
-                    onChange={(e) => setEditBasePriceStr(formatNumberDots(e.target.value))}
-                    required
-                    className="w-full pl-3.5 pr-14 py-3 text-base font-bold text-emerald-800 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:border-emerald-700"
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
-                    VND / đêm
-                  </span>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+          <div className="bg-white rounded-3xl max-w-5xl xl:max-w-6xl w-full shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 sm:px-8 sm:py-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/60">
+              <div className="space-y-1 pr-6">
+                <div className="flex items-center gap-2 text-emerald-800 text-xs font-extrabold uppercase tracking-wider">
+                  <Edit3 className="w-4 h-4 text-emerald-700" />
+                  <span>Chỉnh Sửa Hạng Phòng</span>
                 </div>
-                <p className="text-xs text-slate-500 pt-0.5">
-                  Giá hiển thị: <strong className="text-emerald-800">{formatVND(parseNumberDots(editBasePriceStr))}</strong>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 text-balance">
+                  {editingRoom.name}
+                </h3>
+                <p className="text-xs text-slate-500 text-pretty">
+                  Thông số cập nhật áp dụng cho hiển thị bán phòng trên kênh OTA. Việc phân bổ buồng phòng vật lý do hệ thống VietSage PMS điều hành.
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer self-start shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                    Số Khách Tối Đa
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={editMaxGuests}
-                    onChange={(e) => setEditMaxGuests(Number(e.target.value))}
-                    required
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                  />
+            {/* Modal Body - 2 Columns Horizontal */}
+            <form onSubmit={handleSaveRoom} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="p-5 sm:p-8 overflow-y-auto flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-start">
+                {/* Left Column: Essential details, price, specifications & toggles */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Tên Hạng Phòng <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-3 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Giá Cơ Sở / Đêm (VND) <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={editBasePriceStr}
+                        onChange={(e) => setEditBasePriceStr(formatNumberDots(e.target.value))}
+                        required
+                        className="w-full pl-3.5 pr-14 py-3 text-base font-bold text-emerald-800 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:border-emerald-700"
+                      />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
+                        VND / đêm
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 pt-0.5">
+                      Giá hiển thị: <strong className="text-emerald-800">{formatVND(parseNumberDots(editBasePriceStr))}</strong>
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        Số Khách Tối Đa
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="15"
+                        value={editMaxGuests}
+                        onChange={(e) => setEditMaxGuests(Number(e.target.value))}
+                        required
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        Diện Tích (m²)
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        max="500"
+                        value={editAreaSqm}
+                        onChange={(e) => setEditAreaSqm(Number(e.target.value))}
+                        required
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Cấu Hình Giường
+                    </label>
+                    <input
+                      type="text"
+                      value={editBedType}
+                      onChange={(e) => setEditBedType(e.target.value)}
+                      placeholder="Ví dụ: 1 Giường King-size hoặc 2 Twin"
+                      required
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editHasSeaView}
+                        onChange={(e) => setEditHasSeaView(e.target.checked)}
+                        className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-800">
+                        Hướng nhìn biển (Sea View)
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={editIsActive}
+                        onChange={(e) => setEditIsActive(e.target.checked)}
+                        className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-800">
+                        Kích hoạt mở bán trên sàn
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                    Diện Tích (m²)
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="500"
-                    value={editAreaSqm}
-                    onChange={(e) => setEditAreaSqm(Number(e.target.value))}
-                    required
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                  />
+                {/* Right Column: VietSage PMS Mapping, Amenities Description & Room Images */}
+                <div className="space-y-4">
+                  {/* VietSage PMS Room Type Mapping */}
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                        <span>Tên / Ký Hiệu Hạng Phòng VietSage PMS (Đồng Bộ Bảo Mật)</span>
+                      </label>
+                      {editVietSageRoomTypeId && (
+                        <button
+                          type="button"
+                          onClick={() => setEditVietSageRoomTypeId('')}
+                          className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+                        >
+                          Cắt Liên Kết
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={editVietSageRoomTypeId}
+                      onChange={(e) => setEditVietSageRoomTypeId(e.target.value)}
+                      placeholder="Ví dụ: Suite, Deluxe, hoặc Standard"
+                      className="w-full px-3.5 py-2 text-sm rounded-xl bg-white border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                    />
+                    <p className="text-xs text-slate-600 text-pretty">
+                      {editVietSageRoomTypeId
+                        ? 'Hạng phòng này đang liên kết bảo mật với VietSage PMS. Đơn đặt phòng sẽ tự động gửi hold và phân phòng.'
+                        : 'Chưa liên kết PMS. Nhập tên/ký hiệu hạng phòng VietSage để kích hoạt đồng bộ tự động.'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                      Mô Tả Tiện Nghi
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700 resize-none"
+                    />
+                  </div>
+
+                  {/* Room Images Manager for Edit */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        Bộ Sưu Tập Hình Ảnh Hạng Phòng ({editRoomImages.length} ảnh)
+                      </label>
+                      <span className="text-xs text-slate-500 font-medium">
+                        Cập nhật sau đồng bộ PMS
+                      </span>
+                    </div>
+
+                    {/* Thumbnails grid */}
+                    {editRoomImages.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-2 pt-1 max-h-36 overflow-y-auto">
+                        {editRoomImages.map((imgUrl, idx) => (
+                          <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group">
+                            <img src={imgUrl} alt={`Ảnh ${idx + 1}`} className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setEditRoomImages((prev) => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors cursor-pointer"
+                              title="Xóa ảnh này"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-white border border-dashed border-slate-300 text-center text-xs text-slate-500 space-y-1">
+                        <BedDouble className="w-5 h-5 text-slate-400 mx-auto" />
+                        <p className="text-pretty">Hạng phòng chưa có ảnh (vừa đồng bộ từ PMS). Quý đối tác có thể dán link ảnh bên dưới để bổ sung bất kỳ lúc nào.</p>
+                      </div>
+                    )}
+
+                    {/* Input link ảnh */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="url"
+                        value={newEditImageUrl}
+                        onChange={(e) => setNewEditImageUrl(e.target.value)}
+                        placeholder="Dán link ảnh (https://...)"
+                        className="flex-1 px-3 py-2 text-xs rounded-xl bg-white border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newEditImageUrl.trim()) return;
+                          if (!newEditImageUrl.startsWith('http://') && !newEditImageUrl.startsWith('https://')) {
+                            luxuryAlert.error({
+                              title: 'Đường Dẫn Không Hợp Lệ',
+                              message: 'Vui lòng nhập đường dẫn ảnh hợp lệ (bắt đầu bằng http:// hoặc https://).',
+                            });
+                            return;
+                          }
+                          setEditRoomImages((prev) => [...prev, newEditImageUrl.trim()]);
+                          setNewEditImageUrl('');
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        + Thêm Ảnh
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Cấu Hình Giường
-                </label>
-                <input
-                  type="text"
-                  value={editBedType}
-                  onChange={(e) => setEditBedType(e.target.value)}
-                  placeholder="Ví dụ: 1 Giường King-size hoặc 2 Twin"
-                  required
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-              </div>
-
-              {/* VietSage PMS Room Type Mapping */}
-              <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
-                    <span>Tên / Ký Hiệu Hạng Phòng VietSage PMS (Đồng Bộ Bảo Mật)</span>
-                  </label>
-                  {editVietSageRoomTypeId && (
-                    <button
-                      type="button"
-                      onClick={() => setEditVietSageRoomTypeId('')}
-                      className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
-                    >
-                      Cắt Liên Kết
-                    </button>
-                  )}
+              {/* Fixed Footer */}
+              <div className="p-4 sm:px-8 sm:py-4 border-t border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/80">
+                <span className="text-xs text-slate-500 hidden sm:inline-block">
+                  Thay đổi sẽ được đồng bộ tức thì lên sàn OTA.
+                </span>
+                <div className="flex items-center gap-3 ml-auto">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-white transition-colors cursor-pointer"
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors flex items-center gap-2 shadow-2xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi'}</span>
+                  </button>
                 </div>
-                <input
-                  type="text"
-                  value={editVietSageRoomTypeId}
-                  onChange={(e) => setEditVietSageRoomTypeId(e.target.value)}
-                  placeholder="Ví dụ: Suite, Deluxe, hoặc Standard"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-white border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-                <p className="text-xs text-slate-600">
-                  {editVietSageRoomTypeId
-                    ? 'Hạng phòng này đang liên kết bảo mật với VietSage PMS. Đơn đặt phòng sẽ tự động gửi hold và phân phòng.'
-                    : 'Chưa liên kết PMS. Nhập tên/ký hiệu hạng phòng VietSage để kích hoạt đồng bộ tự động.'}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-                  Mô Tả Tiện Nghi
-                </label>
-                <textarea
-                  rows={2}
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={editHasSeaView}
-                    onChange={(e) => setEditHasSeaView(e.target.checked)}
-                    className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
-                  />
-                  <span className="text-xs font-bold text-slate-800">
-                    Hướng nhìn biển (Sea View)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={editIsActive}
-                    onChange={(e) => setEditIsActive(e.target.checked)}
-                    className="w-4 h-4 text-emerald-700 accent-emerald-700 rounded-sm cursor-pointer"
-                  />
-                  <span className="text-xs font-bold text-slate-800">
-                    Kích hoạt mở bán trên sàn
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={closeEditModal}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors flex items-center gap-2 shadow-2xs disabled:opacity-50 cursor-pointer whitespace-nowrap"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>{isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi'}</span>
-                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. VIETSAGE PMS 1-CLICK BATCH IMPORT MODAL */}
+      {showVietSageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-5xl xl:max-w-6xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-[#fbf8f2]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#24473d] text-[#e8b363] flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[#17201b] text-balance">
+                    Nhập Hạng Phòng Từ VietSage PMS
+                  </h3>
+                  <p className="text-xs text-[#69726b] text-pretty">
+                    Trích xuất danh mục phòng, giá cơ sở và kích hoạt quỹ phòng 30 ngày trực tiếp từ PMS sang kênh Booking OTA.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeVietSageSyncModal}
+                disabled={isImportingVietSage}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5 flex-1">
+              {isLoadingVietSagePreview ? (
+                <div className="py-16 flex flex-col items-center justify-center text-center space-y-3">
+                  <RefreshCw className="w-8 h-8 text-[#24473d] animate-spin" />
+                  <p className="text-sm font-bold text-slate-800">
+                    Đang kết nối VietSage PMS...
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Xác thực chữ ký số HMAC SHA-256 và tải danh mục phòng thực tế.
+                  </p>
+                </div>
+              ) : vietSageError ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-rose-900">
+                        Không thể tải danh mục phòng
+                      </h4>
+                      <p className="text-xs text-rose-700 text-pretty">
+                        {vietSageError}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        effectivePropertyId &&
+                        loadVietSagePreview(effectivePropertyId)
+                      }
+                      className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Thử lại kết nối
+                    </button>
+                  </div>
+                </div>
+              ) : vietSagePreviewData ? (
+                <div className="space-y-4">
+                  {/* Hotel Identity Card */}
+                  <div className="rounded-2xl border border-[#e8dfd1] bg-[#fcfaf7] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-[#24473d] text-white flex items-center justify-center font-bold text-xs">
+                        PMS
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-[#17201b]">
+                            {vietSagePreviewData.hotel_name}
+                          </h4>
+                          <span className="rounded bg-slate-200/80 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700 whitespace-nowrap">
+                            {vietSagePreviewData.hotel_code}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#69726b]">
+                          Email đối tác: <strong className="text-slate-800">{vietSagePreviewData.partner_email || user?.email || 'Đã liên kết'}</strong>
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 whitespace-nowrap self-start sm:self-auto">
+                      <Check className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>{vietSagePreviewData.total_pms_rooms} phòng thực tế trong PMS</span>
+                    </span>
+                  </div>
+
+                  {/* Room Selection Toolbar */}
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={
+                          vietSagePreviewData.room_types.length > 0 &&
+                          selectedRoomKeys.length ===
+                            vietSagePreviewData.room_types.length
+                        }
+                        onChange={(e) => toggleSelectAllRooms(e.target.checked)}
+                        className="w-4 h-4 text-[#24473d] accent-[#24473d] rounded cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-800">
+                        Chọn tất cả ({vietSagePreviewData.room_types.length} hạng phòng)
+                      </span>
+                    </label>
+
+                    <span className="text-xs font-bold text-[#24473d] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 whitespace-nowrap">
+                      Đã chọn {selectedRoomKeys.length} / {vietSagePreviewData.room_types.length}
+                    </span>
+                  </div>
+
+                  {/* Room Types List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {vietSagePreviewData.room_types.map((rt) => {
+                      const isSelected = selectedRoomKeys.includes(
+                        rt.normalized_key,
+                      );
+                      return (
+                        <div
+                          key={rt.normalized_key}
+                          onClick={() => toggleSelectRoomKey(rt.normalized_key)}
+                          className={`rounded-2xl border p-4 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-[#24473d] bg-[#fbf8f2] shadow-2xs'
+                              : 'border-slate-200 bg-white hover:border-slate-300 opacity-70'
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}} // handled by parent onClick
+                                className="w-4 h-4 text-[#24473d] accent-[#24473d] rounded mt-1 cursor-pointer shrink-0"
+                              />
+                              <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h5 className="text-sm font-bold text-slate-900">
+                                    {rt.name}
+                                  </h5>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">
+                                    {rt.bed_type}
+                                  </span>
+                                  {rt.action === 'CREATE' ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                                      + Tạo mới &amp; Quỹ phòng 30 ngày
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
+                                      Đồng bộ cập nhật
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                                  <span className="inline-flex items-center gap-1">
+                                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Tối đa {rt.max_guests} khách</span>
+                                  </span>
+                                  <span>•</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>{rt.area_sqm} m²</span>
+                                  </span>
+                                  <span>•</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <BedDouble className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>{rt.total_rooms} phòng thực tế</span>
+                                  </span>
+                                </div>
+
+                                {rt.sample_room_numbers &&
+                                  rt.sample_room_numbers.length > 0 && (
+                                    <p className="text-xs text-slate-500">
+                                      Phòng trong PMS: {rt.sample_room_numbers.map((n) => `P.${n}`).join(', ')}
+                                    </p>
+                                  )}
+                              </div>
+                            </div>
+
+                            <div className="text-left sm:text-right shrink-0">
+                              <span className="text-sm sm:text-base font-bold text-emerald-800 block">
+                                {formatVND(rt.base_price)}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                giá cơ sở / đêm
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-6 border-t border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/80">
+              <span className="text-xs text-slate-500 hidden sm:inline-block">
+                Hệ thống tự động kích hoạt tồn kho 30 ngày cho các phòng được chọn.
+              </span>
+              <div className="flex items-center gap-3 ml-auto">
+                <button
+                  type="button"
+                  onClick={closeVietSageSyncModal}
+                  disabled={isImportingVietSage}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-white transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteImport}
+                  disabled={isImportingVietSage || selectedRoomKeys.length === 0}
+                  className="px-6 py-2.5 rounded-xl bg-[#24473d] hover:bg-[#1b362e] text-white text-xs font-bold transition-all flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                >
+                  {isImportingVietSage ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang nhập dữ liệu...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#e8b363]" />
+                      <span>
+                        Xác Nhận Nhập ({selectedRoomKeys.length} Hạng Phòng)
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -198,6 +199,16 @@ function LoginContent() {
               )}
             </button>
           </form>
+
+          <div className="mt-6 pt-5 border-t border-outline-variant/30 text-center">
+            <span className="text-xs text-outline">Chưa có tài khoản đối tác khách sạn? </span>
+            <Link
+              href="/register"
+              className="text-xs font-bold text-primary hover:underline cursor-pointer"
+            >
+              Đăng ký tham gia ngay
+            </Link>
+          </div>
         </div>
       </div>
     </div>

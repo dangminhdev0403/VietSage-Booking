@@ -57,7 +57,7 @@ export class BookingsController {
 
   @Public()
   @RateLimit({
-    points: 15,
+    points: 120,
     duration: 60,
     keyPrefix: 'booking:lookup',
     errorMessage:

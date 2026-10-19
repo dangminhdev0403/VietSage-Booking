@@ -10,7 +10,6 @@ import {
   CreditCard,
   Building2,
   CalendarDays,
-  Headphones,
   Search,
   Bell,
   ChevronDown,
@@ -20,6 +19,7 @@ import {
   ShieldCheck,
   Hotel,
   BedDouble,
+  Users,
 } from 'lucide-react';
 import { luxuryAlert } from '@/lib/alert/luxury-alert';
 import { VietSageLogo } from '@/components/shared/vietsage-logo';
@@ -92,7 +92,7 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
           active: pathname.startsWith('/partner/payments'),
         },
         {
-          label: 'Quản lý Khách sạn',
+          label: 'Cài Đặt',
           href: '/partner/properties',
           icon: Building2,
           active:
@@ -120,16 +120,10 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
           active: pathname.startsWith('/admin/properties'),
         },
         {
-          label: 'Quản lý Phòng',
-          href: '/partner/rooms',
-          icon: BedDouble,
-          active: pathname.startsWith('/partner/rooms'),
-        },
-        {
-          label: 'Lịch phòng & Giá bán',
-          href: '/admin/allotments',
-          icon: CalendarDays,
-          active: pathname.startsWith('/admin/allotments'),
+          label: 'Người dùng & Đối tác',
+          href: '/admin/users',
+          icon: Users,
+          active: pathname.startsWith('/admin/users'),
         },
         {
           label: 'Doanh thu & Thanh toán',
@@ -426,55 +420,92 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
                 </div>
 
                 <div className="space-y-1">
-                  <Link
-                    href={isPartner ? '/partner' : '/admin'}
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                  >
-                    <LayoutDashboard className="w-4 h-4 text-primary" />
-                    <span>{isPartner ? 'Tổng quan cơ sở' : 'Tổng quan'}</span>
-                  </Link>
-                  <Link
-                    href={isPartner ? '/partner/bookings' : '/admin/bookings'}
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-primary" />
-                    <span>{isPartner ? 'Khách đặt phòng' : 'Đơn đặt phòng'}</span>
-                  </Link>
-                  <Link
-                    href={isPartner ? '/partner/payments' : '/admin/payments'}
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                  >
-                    <CreditCard className="w-4 h-4 text-primary" />
-                    <span>{isPartner ? 'Doanh thu tiền phòng' : 'Lịch sử thanh toán'}</span>
-                  </Link>
-                  <Link
-                    href={isPartner ? '/partner/rooms' : '/admin/properties'}
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                  >
-                    <BedDouble className="w-4 h-4 text-primary" />
-                    <span>{isPartner ? 'Quản lý phòng & Giá' : 'Cơ sở lưu trú & Phòng'}</span>
-                  </Link>
-                  <Link
-                    href={isPartner ? '/partner/allotments' : '/admin/allotments'}
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                  >
-                    <CalendarDays className="w-4 h-4 text-emerald-600" />
-                    <span>Lịch giá &amp; Tồn kho</span>
-                  </Link>
-                  {isPartner && (
-                    <Link
-                      href="/partner/properties"
-                      onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
-                    >
-                      <Building2 className="w-4 h-4 text-emerald-700" />
-                      <span>Cài đặt khách sạn</span>
-                    </Link>
+                  {isPartner ? (
+                    <>
+                      <Link
+                        href="/partner"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-emerald-700" />
+                        <span>Tổng quan cơ sở</span>
+                      </Link>
+                      <Link
+                        href="/partner/bookings"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <Calendar className="w-4 h-4 text-emerald-700" />
+                        <span>Khách đặt phòng</span>
+                      </Link>
+                      <Link
+                        href="/partner/rooms"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <BedDouble className="w-4 h-4 text-emerald-700" />
+                        <span>Quản lý phòng</span>
+                      </Link>
+                      <Link
+                        href="/partner/allotments"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <CalendarDays className="w-4 h-4 text-emerald-700" />
+                        <span>Lịch phòng &amp; Giá bán</span>
+                      </Link>
+                      <Link
+                        href="/partner/payments"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <CreditCard className="w-4 h-4 text-emerald-700" />
+                        <span>Doanh thu tiền phòng</span>
+                      </Link>
+                      <Link
+                        href="/partner/properties"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <Building2 className="w-4 h-4 text-emerald-700" />
+                        <span>Cài đặt khách sạn</span>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-primary" />
+                        <span>Tổng quan sàn</span>
+                      </Link>
+                      <Link
+                        href="/admin/bookings"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <span>Quản lý đơn đặt phòng</span>
+                      </Link>
+                      <Link
+                        href="/admin/properties"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <Building2 className="w-4 h-4 text-primary" />
+                        <span>Quản lý khách sạn</span>
+                      </Link>
+                      <Link
+                        href="/admin/payments"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
+                      >
+                        <CreditCard className="w-4 h-4 text-primary" />
+                        <span>Doanh thu &amp; Thanh toán</span>
+                      </Link>
+                    </>
                   )}
 
                   <div className="h-px bg-outline-variant/20 my-1" />

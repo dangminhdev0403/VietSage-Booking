@@ -19,6 +19,7 @@ import type {
   ChangePasswordDto,
   RefreshDto,
   RegisterDto,
+  RegisterPartnerDto,
   UpdateProfileDto,
 } from './dto/auth.dto';
 import type { Account } from '@prisma/client';
@@ -42,6 +43,21 @@ export class AuthController {
     const data = await this.authService.register(body);
     return ok(data);
   }
+
+  @Public()
+  @RateLimit({
+    points: 10,
+    duration: 60,
+    keyPrefix: 'auth:register-partner',
+    errorMessage:
+      'Quá nhiều yêu cầu đăng ký đối tác từ địa chỉ của bạn. Vui lòng thử lại sau 1 phút.',
+  })
+  @Post('register-partner')
+  async registerPartner(@Body() body: RegisterPartnerDto) {
+    const data = await this.authService.registerPartner(body);
+    return ok(data);
+  }
+
 
   @Public()
   @UseGuards(LocalAuthGuard)

@@ -19,6 +19,8 @@ import {
   RefreshDto,
   refreshSchema,
   RegisterDto,
+  RegisterPartnerDto,
+  registerPartnerSchema,
   UpdateProfileDto,
   updateProfileSchema,
 } from './dto/auth.dto';
@@ -46,6 +48,107 @@ export class AuthService {
       ),
     );
   }
+
+  async registerPartner(rawDto: RegisterPartnerDto) {
+    const parsed = registerPartnerSchema.safeParse(rawDto);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: 'Dữ liệu đăng ký đối tác không hợp lệ',
+        details: parsed.error.issues,
+      });
+    }
+
+    const {
+      username,
+      password,
+      display_name,
+      email,
+      phone,
+      property_name,
+      city,
+      address,
+      description,
+    } = parsed.data;
+
+    const existing = await this.prisma.account.findFirst({
+      where: {
+        OR: [{ username }, { email }],
+      },
+    });
+
+    if (existing) {
+      if (existing.username === username) {
+        throw new ConflictException('Tên đăng nhập đã được sử dụng');
+      }
+      throw new ConflictException('Email đã được đăng ký trên hệ thống');
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const cleanName = property_name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-');
+    const slug = `${cleanName || 'hotel'}-${Date.now()}`;
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const property = await tx.property.create({
+        data: {
+          name: property_name,
+          slug,
+          city,
+          address,
+          description: description || null,
+          isActive: false,
+        },
+      });
+
+      const account = await tx.account.create({
+        data: {
+          username,
+          passwordHash,
+          displayName: display_name,
+          email,
+          role: 'TRAVELER',
+          managedPropertyId: property.id,
+          isActive: true,
+        },
+      });
+
+      await tx.auditEvent.create({
+        data: {
+          actorId: account.id,
+          action: 'PARTNER_REGISTRATION_SUBMITTED',
+          boundedContext: 'identity-access',
+          resourceType: 'Account',
+          resourceId: account.id,
+          metadata: {
+            propertyName: property_name,
+            propertyId: property.id,
+            city,
+            address,
+            phone: phone || null,
+            description: description || null,
+            status: 'PENDING',
+          },
+        },
+      });
+
+      return { account, property };
+    });
+
+    return {
+      message:
+        'Đăng ký đối tác thành công! Đơn đăng ký của bạn đang chờ Ban quản trị duyệt.',
+      account_id: result.account.id,
+      property_id: result.property.id,
+      username: result.account.username,
+      status: 'PENDING_APPROVAL',
+    };
+  }
+
 
   async login(rawDto: LoginDto) {
     const parsed = loginSchema.safeParse(rawDto);

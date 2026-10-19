@@ -118,3 +118,39 @@
 
 - **Audit Mode**: Silent Execution mandatory. When auditing UI, strictly enforce Typography Floor >= 12px, Zero-Fluff Copy, Ruthless Pruning, In-Place Tab Isolation (zero disruptive redirects), verified via `node scripts/verify-ui-rules.cjs`.
 Migration/apply, dependency, provider write, deploy/cutover và commit/push là protected steps cần phê duyệt riêng.
+
+## 11. Cấu hình Docker & Deployment
+
+Chi tiết hướng dẫn: [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md).
+
+- **Ranh giới độc lập hạ tầng**: `booking-manager` giữ stack runtime, database và role riêng. Giai đoạn dùng chung VPS được dùng chung một PostgreSQL instance VietSage, nhưng tuyệt đối không dùng chung database/schema/role; không mount trực tiếp volume PostgreSQL.
+- **Ingress duy nhất**: Mọi traffic vào hệ thống phải qua Nginx unprivileged (`nginxinc/nginx-unprivileged:1.28-alpine`). Host mapping qua loopback `127.0.0.1:${BOOKING_NGINX_HTTP_PORT:-28080}:8080`. Frontend, Backend và PostgreSQL không publish cổng công khai trên production.
+- **Cô lập mạng nội bộ**: `edge` chỉ nối Nginx/frontend/backend. Backend nối external network VietSage `backend` để truy cập PostgreSQL và auth-service nội bộ; frontend/backend có network egress riêng. Database Booking dùng `booking_db` và `booking_user` quyền tối thiểu.
+- **Chuẩn Hardening Container bắt buộc**:
+  - Chạy bằng non-root user (`USER node`).
+  - Read-only root filesystem (`read_only: true`).
+  - Writable storage chỉ cấp qua `tmpfs` giới hạn (`/tmp`, `/app/.next/cache`, `/var/cache/nginx`).
+  - Không cho phép leo thang đặc quyền (`no-new-privileges:true`), thu hồi mọi capability (`cap_drop: [ALL]`).
+  - Giới hạn tài nguyên chặt chẽ: `mem_limit`, `cpus`, `pids_limit` trên từng service.
+  - Log rotation: Driver `json-file`, `max-size: "10m"`, `max-file: "5"`.
+- **Quản lý Secrets & Biến môi trường**:
+  - Tuyệt đối cấm commit file `.env`, credentials, secret keys vào Git.
+  - Phân vùng secret theo môi trường: `secrets/docker/*.env` (local) và `secrets/production/*.env` (VPS), luôn được ignore.
+  - Next.js build-time secret: Dùng ephemeral secret hoặc BuildKit secret mount (`--mount=type=secret,id=frontend_build_auth`), cấm nung secret thật vào image build.
+  - Tiền tố `NEXT_PUBLIC_*`: Chỉ dùng cho public client configuration. Mọi secret, backend internal URL, payment private key, sync token phải là server-only.
+- **Cổng di chuyển CSDL (Migration Gate) & Khởi động**:
+  - Trình tự phát hành bất biến: PostgreSQL dùng chung healthy -> one-shot `migrate` (`prisma migrate deploy`) -> start `backend`/`frontend`/`nginx`.
+  - Không chạy demo seed trên production. Chỉ thêm one-shot production bootstrap riêng khi có dữ liệu hệ thống bắt buộc chưa nằm trong migration.
+  - Service `backend` bắt buộc phụ thuộc `migrate` với `condition: service_completed_successfully`.
+  - CẤM TUYỆT ĐỐI trên production: `prisma migrate dev`, `prisma db push`, `prisma migrate reset`. Lỗi migration phải fail rollout ngay lập tức.
+- **Giám sát sức khỏe 2 tầng (Two-Tier Healthcheck)**:
+  - Liveness probe: `/health` hoặc `/api/health` (process alive, phản hồi ngay).
+  - Readiness probe: `/health/ready` (kiểm tra kết nối PostgreSQL thực tế, bounded timeout 3s).
+  - Container healthchecks phải cấu hình đầy đủ `interval`, `timeout`, `start-period`, `retries`.
+- **Database Connection Pool & Deadlines**:
+  - Mỗi backend instance giới hạn `DATABASE_POOL_MAX` = 10 kết nối; tổng pool luôn nhỏ hơn `max_connections` của PostgreSQL.
+  - Giới hạn timeout: connection timeout (2s), query/statement timeout (8-9s), transaction timeout (10s), HTTP keep-alive timeout (5s).
+- **Sao lưu & Khắc phục thảm họa (Disaster Recovery)**:
+  - Backup định kỳ PostgreSQL với custom format (`pg_dump -Fc`), kèm SHA-256 checksum và quyền `umask 077`.
+  - Diễn tập khôi phục (Restore rehearsal) BẮT BUỘC thực hiện trên tên database mới độc lập; TUYỆT ĐỐI CẤM restore đè database production live.
+  - Schema migration phải luôn tương thích ngược; rollback image container không thể đảo ngược thay đổi schema phá vỡ (breaking schema).

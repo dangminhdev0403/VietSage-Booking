@@ -7,7 +7,7 @@ Hệ thống Đặt phòng Trực tuyến (Online Travel Agency - OTA Booking Ma
 - **Kiến trúc**: OTA modular monolith, service-ready boundary, Authoritative OpenAPI Contract-First (`shared/api-contract/`).
 - **Design System**: Kế thừa trực tiếp từ Stitch Project `7411068166474105979` (**Aurum Haven** - Quiet Luxury / Warm Editorial Minimalism).
 - **Backend (`backend-booking`)**:
-  - NestJS 11 + Prisma ORM + PostgreSQL riêng của OTA.
+  - NestJS 11 + Prisma ORM + database PostgreSQL riêng của OTA. Production tạm dùng chung PostgreSQL instance VietSage nhưng tách database/role.
   - Vertical slices: Identity/Access, Catalog Projection, Booking Commerce, VietSageSync (ACL Adapter).
   - Global filters, standard response envelopes (`ApiSuccessEnvelope`, `ApiErrorEnvelope`), audit logging.
 - **Frontend (`frontend-booking`)**:
@@ -54,32 +54,35 @@ booking-manager/
 ### Cơ sở dữ liệu (PostgreSQL)
 Cấu hình kết nối cơ sở dữ liệu `DATABASE_URL` trong `backend-booking/.env`:
 ```env
-DATABASE_URL="[REDACTED]"
-JWT_SECRET="[REDACTED]"
-PORT=3001
-VIETSAGE_API_BASE_URL="http://localhost:4000/api/v1"
-VIETSAGE_PARTNER_API_KEY="[REDACTED]"
+DATABASE_URL="postgresql://booking_user:booking_password@localhost:5434/booking_db?schema=public"
+JWT_SECRET="development_jwt_secret_at_least_32_characters"
+PORT=8081
+CORS_ORIGINS="http://localhost:3000"
+VIETSAGE_API_BASE_URL="http://localhost:8080"
+VIETSAGE_HMAC_SECRET="development_hmac_secret_at_least_32_characters"
 ```
 
-Đẩy schema và seed dữ liệu mẫu:
+Môi trường phát triển mới có thể chạy migration và seed dữ liệu mẫu:
 ```bash
 cd backend-booking
-npx prisma db push
+npx prisma migrate deploy
 npm run db:seed
 ```
+
+Production chỉ chạy `prisma migrate deploy`; không chạy demo seed. Xem [`Architecture/DEPLOYMENT_GUIDE.md`](Architecture/DEPLOYMENT_GUIDE.md).
 
 ### Khởi chạy Backend
 ```bash
 cd backend-booking
 npm run start:dev
-# API chạy tại http://localhost:3001
+# API chạy tại http://localhost:8081
 ```
 
 ### Khởi chạy Frontend
 ```bash
 cd frontend-booking
 pnpm run dev
-# Web chạy tại http://localhost:3002
+# Web chạy tại http://localhost:3000
 ```
 
 ## 4. Xác thực Hợp đồng (Contract Parity)

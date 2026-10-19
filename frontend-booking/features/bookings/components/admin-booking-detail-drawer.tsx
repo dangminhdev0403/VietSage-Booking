@@ -84,7 +84,7 @@ export function AdminBookingDetailDrawer({
       />
 
       {/* Centered Rectangular Modal Container */}
-      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-5xl xl:max-w-6xl max-h-[92vh] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
         {/* 1. MODAL HEADER */}
         <div className="p-5 sm:p-6 border-b border-slate-200/80 bg-slate-50/80 flex items-center justify-between gap-4">
           <div className="space-y-1">

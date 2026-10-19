@@ -71,6 +71,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, string> = {
   '/admin/bookings': PERMISSIONS.BOOKINGS_READ,
   '/admin/payments': PERMISSIONS.PAYMENTS_READ,
   '/admin/settlements': PERMISSIONS.PAYMENTS_READ,
+  '/admin/users': PERMISSIONS.ADMIN_ACCESS,
   '/admin': PERMISSIONS.ADMIN_ACCESS,
   '/partner/rooms': PERMISSIONS.CATALOG_READ,
   '/partner/properties': PERMISSIONS.CATALOG_READ,

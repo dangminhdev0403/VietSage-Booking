@@ -49,3 +49,11 @@ graphify-out/
 account.json
 account*.json
 
+# Runtime secrets and env files
+secrets/**/*.env
+secrets/**/*.json
+!secrets/.gitkeep
+!secrets/**/.gitkeep
+!secrets/**/*.example
+
+

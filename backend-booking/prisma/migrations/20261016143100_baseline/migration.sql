@@ -1,5 +1,3 @@
-npm notice run backend-booking@0.0.1 npx
-npm notice run prisma migrate diff --from-empty --to-schema-datamodel .baseline-head.prisma --script
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 

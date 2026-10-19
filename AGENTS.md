@@ -15,6 +15,7 @@ Before editing, creating, deleting, moving, or refactoring files, read:
    - backend/domain work: `Architecture/MODULE_MAP.md` and `Architecture/BACKEND_GUIDE.md`
    - API contract work: `Architecture/CONTRACT_GUIDE.md`
    - VietSage integration/service-boundary work: `Architecture/MODULE_MAP.md`, `Architecture/CONTRACT_GUIDE.md`, and `Architecture/INTEGRATION_GUIDE.md`
+   - docker/deployment/infrastructure work: `Architecture/DEPLOYMENT_GUIDE.md`
    - complex-task planning/progress: the selected English `.hermes/plans/<timestamp>-<slug>.md`; `Architecture/PLANS.md` is historical milestone context only
 
 Do not load every markdown file by default. Load only the architecture entry point and the guide matching the task.

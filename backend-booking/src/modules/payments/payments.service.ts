@@ -27,6 +27,7 @@ import {
   STRIPE_CHECKOUT_EXPIRY_SECONDS,
   getCheckoutSessionIdempotencyKey,
 } from './stripe-localmate.constants';
+import { getRuntimeSecret } from '../../common/config/runtime-config';
 
 const BANK_CONFIG = {
   bank_code: 'MB',
@@ -379,7 +380,7 @@ export class PaymentsService {
           (p) =>
             p.purpose === 'DEPOSIT' &&
             Boolean(p.providerSessionId) &&
-            (p.status === 'OPEN' || p.status === 'PENDING'),
+            (p.status === 'OPEN' || p.status === 'PENDING' || p.status === 'SUCCESS'),
         );
 
     const targetSessionId = sessionId || payment?.providerSessionId;
@@ -420,9 +421,17 @@ export class PaymentsService {
               providerPaymentId,
             },
           });
+        });
 
-          await tx.paymentWebhookEvent.create({
-            data: {
+        // Non-blocking audit record for verification event
+        try {
+          await this.prisma.paymentWebhookEvent.upsert({
+            where: { providerEventId: `verify-sync-${targetSessionId}` },
+            update: {
+              status: 'PROCESSED',
+              processedAt: paidAt,
+            },
+            create: {
               providerEventId: `verify-sync-${targetSessionId}`,
               eventType: 'checkout.session.completed',
               payloadHash: crypto
@@ -433,7 +442,9 @@ export class PaymentsService {
               processedAt: paidAt,
             },
           });
-        });
+        } catch {
+          // Non-blocking on concurrent audit writes
+        }
 
         // Authoritative VietSage PMS Reservation Confirmation
         let pmsConfirmed = false;
@@ -445,10 +456,19 @@ export class PaymentsService {
 
         if (booking.holdId && this.vietSageSyncService) {
           try {
-            const confirmResult = await this.vietSageSyncService.confirmHold(
-              booking.holdId,
-              booking.id,
-            );
+            const confirmResult = await this.vietSageSyncService.confirmHold({
+              holdId: booking.holdId,
+              bookingId: booking.id,
+              hotelId: booking.property?.vietSageHotelId || booking.propertyId || undefined,
+              roomTypeId: booking.roomType?.vietSageRoomTypeId || booking.roomType?.name || booking.roomTypeId || undefined,
+              checkInDate: booking.checkIn ? new Date(booking.checkIn).toISOString().split('T')[0] : undefined,
+              checkOutDate: booking.checkOut ? new Date(booking.checkOut).toISOString().split('T')[0] : undefined,
+              guestName: booking.guestName || undefined,
+              guestEmail: booking.guestEmail || undefined,
+              guestPhone: booking.guestPhone || undefined,
+              amount: booking.totalPrice,
+              currency: booking.currency || 'VND',
+            });
             if (confirmResult && confirmResult.status === 'CONFIRMED') {
               pmsConfirmed = true;
               pmsReservationId = confirmResult.reservationId;
@@ -556,8 +576,10 @@ export class PaymentsService {
     payload: Buffer | string,
     signatureHeader?: string | null,
   ): Promise<{ received: boolean; status: string; duplicate?: boolean }> {
-    const webhookSecret =
-      process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_localmate_secret';
+    const webhookSecret = getRuntimeSecret(
+      'STRIPE_WEBHOOK_SECRET',
+      'whsec_test_localmate_secret',
+    );
 
     // Verify raw-body signature with 300s tolerance
     this.signatureVerifier.verify({
@@ -746,11 +768,19 @@ export class PaymentsService {
     let isCancelled = false;
     let targetBookingId = payment.bookingId;
     let bookingHoldId: string | null = null;
+    let bookingPropertyId: string | null = null;
+    let bookingRoomTypeId: string | null = null;
+    let bookingCheckInDate: string | undefined;
+    let bookingCheckOutDate: string | undefined;
+    let bookingGuestName: string | null = null;
+    let bookingGuestEmail: string | null = null;
+    let bookingGuestPhone: string | null = null;
 
     // Atomic CAS transition: PENDING -> CONFIRMING
     await this.prisma.$transaction(async (tx) => {
       const booking = await tx.booking.findUnique({
         where: { id: payment.bookingId },
+        include: { property: true, roomType: true },
       });
 
       if (!booking) {
@@ -759,6 +789,17 @@ export class PaymentsService {
 
       targetBookingId = booking.id;
       bookingHoldId = booking.holdId;
+      bookingPropertyId = booking.property?.vietSageHotelId || booking.propertyId;
+      bookingRoomTypeId = booking.roomType?.vietSageRoomTypeId || booking.roomType?.name || booking.roomTypeId;
+      bookingCheckInDate = booking.checkIn
+        ? new Date(booking.checkIn).toISOString().split('T')[0]
+        : undefined;
+      bookingCheckOutDate = booking.checkOut
+        ? new Date(booking.checkOut).toISOString().split('T')[0]
+        : undefined;
+      bookingGuestName = booking.guestName;
+      bookingGuestEmail = booking.guestEmail;
+      bookingGuestPhone = booking.guestPhone;
 
       const paidAt = new Date();
       const providerPaymentId =
@@ -836,10 +877,19 @@ export class PaymentsService {
 
     if (bookingHoldId && this.vietSageSyncService) {
       try {
-        const confirmResult = await this.vietSageSyncService.confirmHold(
-          bookingHoldId,
-          targetBookingId,
-        );
+        const confirmResult = await this.vietSageSyncService.confirmHold({
+          holdId: bookingHoldId,
+          bookingId: targetBookingId,
+          hotelId: bookingPropertyId || undefined,
+          roomTypeId: bookingRoomTypeId || undefined,
+          checkInDate: bookingCheckInDate,
+          checkOutDate: bookingCheckOutDate,
+          guestName: bookingGuestName || undefined,
+          guestEmail: bookingGuestEmail || undefined,
+          guestPhone: bookingGuestPhone || undefined,
+          amount: payment.amount,
+          currency: payment.currency,
+        });
         if (confirmResult && confirmResult.status === 'CONFIRMED') {
           pmsConfirmed = true;
           pmsReservationId = confirmResult.reservationId;
@@ -1212,10 +1262,19 @@ export class PaymentsService {
 
     if (hasHold && booking.holdId && this.vietSageSyncService) {
       try {
-        const confirmResult = await this.vietSageSyncService.confirmHold(
-          booking.holdId,
-          booking.id,
-        );
+        const confirmResult = await this.vietSageSyncService.confirmHold({
+          holdId: booking.holdId,
+          bookingId: booking.id,
+          hotelId: booking.property?.vietSageHotelId || booking.propertyId || undefined,
+          roomTypeId: booking.roomType?.vietSageRoomTypeId || booking.roomType?.name || booking.roomTypeId || undefined,
+          checkInDate: booking.checkIn ? new Date(booking.checkIn).toISOString().split('T')[0] : undefined,
+          checkOutDate: booking.checkOut ? new Date(booking.checkOut).toISOString().split('T')[0] : undefined,
+          guestName: booking.guestName || undefined,
+          guestEmail: booking.guestEmail || undefined,
+          guestPhone: booking.guestPhone || undefined,
+          amount: booking.totalPrice,
+          currency: booking.currency || 'VND',
+        });
         if (confirmResult && confirmResult.status === 'CONFIRMED') {
           pmsConfirmed = true;
           pmsReservationId = confirmResult.reservationId;

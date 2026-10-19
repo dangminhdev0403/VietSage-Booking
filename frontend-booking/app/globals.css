@@ -68,111 +68,153 @@ body {
    Aurum Haven Quiet Luxury SweetAlert2 Theme
    ========================================================================== */
 .aurum-swal-container {
-  backdrop-filter: blur(8px) !important;
-  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  background: rgba(15, 23, 42, 0.45) !important;
   z-index: 99999 !important;
 }
 
 .aurum-swal-popup {
   background: #ffffff !important;
-  border-radius: 1.5rem !important;
-  border: 1px solid rgba(197, 168, 128, 0.35) !important;
-  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(197, 168, 128, 0.15) !important;
-  padding: 2.25rem 2.25rem 2rem !important;
-  max-width: 32rem !important;
-  width: 90% !important;
+  border-radius: 1.25rem !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+  padding: 1.75rem 1.75rem 1.5rem !important;
+  max-width: 27rem !important;
+  width: calc(100% - 2rem) !important;
 }
 
 .aurum-swal-popup .swal2-icon {
   border: none !important;
-  margin: 0 auto 0.75rem !important;
+  margin: 0 auto 0.875rem !important;
   width: auto !important;
   height: auto !important;
 }
 
 .aurum-swal-title {
   font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
-  font-size: 1.35rem !important;
+  font-size: 1.15rem !important;
   font-weight: 600 !important;
   color: #0f172a !important;
   letter-spacing: -0.015em !important;
   padding: 0 !important;
-  margin-bottom: 0.5rem !important;
-  line-height: 1.35 !important;
+  margin-bottom: 0.35rem !important;
+  line-height: 1.4 !important;
   text-wrap: balance !important;
 }
 
 .aurum-swal-html {
   font-family: var(--font-sans), 'Be Vietnam Pro', system-ui, sans-serif !important;
   font-size: 0.875rem !important;
-  line-height: 1.6 !important;
-  color: #4d463c !important;
-  margin: 0.25rem 0 1.25rem 0 !important;
+  line-height: 1.55 !important;
+  color: #475569 !important;
+  margin: 0.25rem 0 1rem 0 !important;
   padding: 0 !important;
   text-wrap: pretty !important;
 }
 
 .aurum-swal-actions {
   display: flex !important;
-  gap: 0.75rem !important;
+  gap: 0.625rem !important;
   justify-content: center !important;
-  margin-top: 1rem !important;
+  margin-top: 1.25rem !important;
   width: 100% !important;
 }
 
 .aurum-swal-btn-confirm {
-  background-color: #725b38 !important;
+  background-color: #0f172a !important;
   color: #ffffff !important;
-  padding: 0.8rem 1.85rem !important;
-  border-radius: 9999px !important;
-  font-size: 0.75rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.06em !important;
-  border: none !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   cursor: pointer !important;
-  box-shadow: 0 6px 18px rgba(114, 91, 56, 0.25) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
   white-space: nowrap !important;
 }
 
 .aurum-swal-btn-confirm:hover {
-  background-color: #c5a880 !important;
-  color: #1a1c1a !important;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(197, 168, 128, 0.35) !important;
+  background-color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12) !important;
+  transform: translateY(-0.5px);
+}
+
+.aurum-swal-btn-confirm:active {
+  transform: translateY(0);
+}
+
+.aurum-swal-btn-danger {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 2px 0 rgba(225, 29, 72, 0.2) !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+}
+
+.aurum-swal-btn-danger:hover {
+  background-color: #be123c !important;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25) !important;
+  transform: translateY(-0.5px);
+}
+
+.aurum-swal-btn-danger:active {
+  transform: translateY(0);
 }
 
 .aurum-swal-btn-cancel {
-  background-color: transparent !important;
-  color: #4d463c !important;
-  padding: 0.8rem 1.85rem !important;
-  border-radius: 9999px !important;
-  font-size: 0.75rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.06em !important;
-  border: 1px solid #d1c5b8 !important;
+  background-color: #ffffff !important;
+  color: #475569 !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  border: 1px solid #e2e8f0 !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.15s ease !important;
   white-space: nowrap !important;
 }
 
 .aurum-swal-btn-cancel:hover {
-  background-color: #f4f3f1 !important;
+  background-color: #f8fafc !important;
   color: #0f172a !important;
-  border-color: #7f766a !important;
+  border-color: #cbd5e1 !important;
 }
 
 .aurum-swal-toast {
   background: #ffffff !important;
   color: #0f172a !important;
-  border: 1px solid rgba(197, 168, 128, 0.45) !important;
-  border-radius: 1.25rem !important;
-  box-shadow: 0 20px 32px -8px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(197, 168, 128, 0.2) !important;
-  padding: 0.85rem 1.25rem !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.aurum-swal-toast-title {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.01em !important;
+}
+
+.aurum-swal-toast-html {
+  font-size: 0.8125rem !important;
+  color: #475569 !important;
 }
 
 .aurum-swal-toast-progress {
-  background-color: #725b38 !important;
+  background-color: #0f172a !important;
+  height: 2px !important;
 }

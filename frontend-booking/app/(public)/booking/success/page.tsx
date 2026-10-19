@@ -21,34 +21,9 @@ function BookingSuccessContent() {
 
     let active = true;
 
-    // 1. Verify with backend & Stripe API to sync status immediately
-    verifyCheckoutPayment({
-      booking_code: bookingCode,
-      session_id: sessionId || undefined,
-      lookup_token: lookupToken || undefined,
-    })
-      .then(() => {
-        // Broadcast across tabs
-        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-          try {
-            const channel = new BroadcastChannel('ota_booking_sync');
-            channel.postMessage({
-              type: 'PAYMENT_SUCCESS',
-              booking_code: bookingCode,
-            });
-            channel.close();
-          } catch (err) {
-            console.warn('[BroadcastChannel Note]', err);
-          }
-        }
-      })
-      .catch((err) => {
-        console.warn('[Verify Checkout Note]', err);
-      });
-
-    // 2. If token is present, fetch and display full invoice immediately
-    if (lookupToken) {
-      lookupBooking(bookingCode, lookupToken)
+    const fetchInvoice = () => {
+      if (!lookupToken) return Promise.resolve();
+      return lookupBooking(bookingCode, lookupToken)
         .then((res) => {
           if (active && res) {
             setBookingData({
@@ -68,17 +43,50 @@ function BookingSuccessContent() {
               balance_due: res.balance_due,
               status: res.status,
               payment_status: res.payment_status || 'DEPOSIT_PAID',
+              assigned_room_number: (res as any).assigned_room_number ?? null,
               addons: res.addons,
               created_at: res.created_at,
             });
           }
         })
         .catch(() => {});
-    }
+    };
+
+    // Immediate initial fetch
+    fetchInvoice();
+
+    // Verify with backend & Stripe API to sync status immediately
+    verifyCheckoutPayment({
+      booking_code: bookingCode,
+      session_id: sessionId || undefined,
+      lookup_token: lookupToken || undefined,
+    })
+      .then(() => {
+        // Broadcast across tabs
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          try {
+            const channel = new BroadcastChannel('ota_booking_sync');
+            channel.postMessage({
+              type: 'PAYMENT_SUCCESS',
+              booking_code: bookingCode,
+            });
+            channel.close();
+          } catch (err) {
+            console.warn('[BroadcastChannel Note]', err);
+          }
+        }
+        // Refetch latest booking data to reflect confirmed & paid status
+        return fetchInvoice();
+      })
+      .catch((err) => {
+        console.warn('[Verify Checkout Note]', err);
+        fetchInvoice();
+      });
+
     return () => {
       active = false;
     };
-  }, [bookingCode, lookupToken]);
+  }, [bookingCode, lookupToken, sessionId]);
 
   const handleCloseTab = () => {
     if (typeof window !== 'undefined') {

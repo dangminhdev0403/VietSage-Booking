@@ -16,40 +16,40 @@ export interface LuxuryAlertOptions {
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info' | 'luxury';
 
-// Icon SVGs extracted from Stitch Aurum Haven UI Kit
+// Refined compact duotone icons (44x44px rounded-2xl with hairline rings and 20px crisp paths)
 const ICONS = {
   error: `
-    <div class="w-16 h-16 rounded-full bg-rose-100/90 text-rose-700 flex items-center justify-center border border-rose-300/80 shadow-sm mx-auto">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200/80 ring-4 ring-rose-50/60 shadow-xs mx-auto">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
       </svg>
     </div>
   `,
   success: `
-    <div class="w-16 h-16 rounded-full bg-emerald-100/90 text-emerald-700 flex items-center justify-center border border-emerald-300/80 shadow-sm mx-auto">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/80 ring-4 ring-emerald-50/60 shadow-xs mx-auto">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
       </svg>
     </div>
   `,
   warning: `
-    <div class="w-16 h-16 rounded-full bg-amber-100/90 text-amber-700 flex items-center justify-center border border-amber-300/80 shadow-sm mx-auto">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/80 ring-4 ring-amber-50/60 shadow-xs mx-auto">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
       </svg>
     </div>
   `,
   info: `
-    <div class="w-16 h-16 rounded-full bg-[#f5ede2] text-[#a48255] flex items-center justify-center border border-[#c5a880]/50 shadow-sm mx-auto">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+    <div class="w-11 h-11 rounded-2xl bg-stone-50 text-stone-700 flex items-center justify-center border border-stone-200/90 ring-4 ring-stone-100/70 shadow-xs mx-auto">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
       </svg>
     </div>
   `,
   luxury: `
-    <div class="w-16 h-16 rounded-full bg-[#f5ede2] text-[#a48255] flex items-center justify-center border border-[#c5a880]/60 shadow-sm mx-auto ring-4 ring-[#c5a880]/15">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+    <div class="w-11 h-11 rounded-2xl bg-[#faf6f0] text-[#8e6e3c] flex items-center justify-center border border-[#dfceb7] ring-4 ring-[#f4ede1]/80 shadow-xs mx-auto">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
       </svg>
     </div>
   `,
@@ -74,7 +74,7 @@ const LuxurySwal = Swal.mixin({
   hideClass: {
     popup: 'aurum-swal-hide',
   },
-  backdrop: 'rgba(15, 23, 42, 0.65)',
+  backdrop: 'rgba(15, 23, 42, 0.45)',
 });
 
 // Toast instance for non-blocking corner notifications
@@ -82,7 +82,7 @@ const LuxuryToast = Swal.mixin({
   toast: true,
   position: 'top-end',
   showConfirmButton: false,
-  timer: 4500,
+  timer: 4000,
   timerProgressBar: true,
   customClass: {
     popup: 'aurum-swal-toast',
@@ -121,24 +121,26 @@ function buildDetailsHtml(details?: unknown): string {
   if (Array.isArray(details) && details.length > 0) {
     const listItems = details
       .map((item) => {
-        if (typeof item === 'string') return `<li>${item}</li>`;
+        if (typeof item === 'string') {
+          return `<li class="flex items-start gap-2"><span class="text-slate-400 select-none text-xs leading-5">•</span><span class="flex-1">${item}</span></li>`;
+        }
         if (typeof item === 'object' && item !== null && 'message' in item) {
           const path = 'path' in item && Array.isArray(item.path) ? ` (${item.path.join('.')})` : '';
-          return `<li>${(item as { message: string }).message}${path}</li>`;
+          return `<li class="flex items-start gap-2"><span class="text-slate-400 select-none text-xs leading-5">•</span><span class="flex-1">${(item as { message: string }).message}${path}</span></li>`;
         }
-        return `<li>${JSON.stringify(item)}</li>`;
+        return `<li class="flex items-start gap-2"><span class="text-slate-400 select-none text-xs leading-5">•</span><span class="flex-1">${JSON.stringify(item)}</span></li>`;
       })
       .join('');
     return `
-      <div class="mt-3 p-3 rounded-xl bg-surface-container-low text-left text-xs text-on-surface-variant border border-outline-variant/30">
-        <ul class="list-disc list-inside space-y-1">${listItems}</ul>
+      <div class="mt-3.5 p-3 rounded-xl bg-slate-50/90 text-left text-xs text-slate-600 border border-slate-200/80">
+        <ul class="space-y-1.5">${listItems}</ul>
       </div>
     `;
   }
   if (typeof details === 'object') {
     return `
-      <div class="mt-3 p-3 rounded-xl bg-surface-container-low text-left text-xs text-on-surface-variant border border-outline-variant/30">
-        <pre class="font-mono text-xs overflow-x-auto">${JSON.stringify(details, null, 2)}</pre>
+      <div class="mt-3.5 p-3 rounded-xl bg-slate-50/90 text-left text-xs text-slate-600 border border-slate-200/80">
+        <pre class="font-mono text-xs overflow-x-auto whitespace-pre-wrap">${JSON.stringify(details, null, 2)}</pre>
       </div>
     `;
   }
@@ -231,7 +233,7 @@ export const luxuryAlert = {
       title: parsed.title,
       html: bodyHtml,
       iconHtml: parsed.options.customIconHtml || ICONS.error,
-      confirmButtonText: parsed.options.confirmText || 'Đã hiểu & Kiểm tra lại',
+      confirmButtonText: parsed.options.confirmText || 'Đã hiểu',
       showCancelButton: false,
       timer: parsed.options.timer,
       timerProgressBar: Boolean(parsed.options.timer),
@@ -258,7 +260,7 @@ export const luxuryAlert = {
       title: parsed.title,
       html: bodyHtml,
       iconHtml: parsed.options.customIconHtml || ICONS.success,
-      confirmButtonText: parsed.options.confirmText || 'Đã Hiểu',
+      confirmButtonText: parsed.options.confirmText || 'Hoàn tất',
       showCancelButton: false,
       timer: parsed.options.timer,
       timerProgressBar: Boolean(parsed.options.timer),
@@ -309,7 +311,7 @@ export const luxuryAlert = {
       title: parsed.title,
       html: bodyHtml,
       iconHtml: parsed.options.customIconHtml || ICONS.info,
-      confirmButtonText: parsed.options.confirmText || 'Đóng thông báo',
+      confirmButtonText: parsed.options.confirmText || 'Đã hiểu',
       showCancelButton: false,
       timer: parsed.options.timer,
       timerProgressBar: Boolean(parsed.options.timer),
@@ -343,8 +345,12 @@ export const luxuryAlert = {
       html: bodyHtml,
       iconHtml: options.isDangerous ? ICONS.error : ICONS.warning,
       showCancelButton: true,
-      confirmButtonText: options.confirmText || 'Xác nhận thực hiện',
+      confirmButtonText: options.confirmText || (options.isDangerous ? 'Xác nhận xóa' : 'Xác nhận'),
       cancelButtonText: options.cancelText || 'Hủy bỏ',
+      customClass: {
+        confirmButton: options.isDangerous ? 'aurum-swal-btn-danger' : 'aurum-swal-btn-confirm',
+        cancelButton: 'aurum-swal-btn-cancel',
+      },
       reverseButtons: true,
       focusCancel: true,
     });

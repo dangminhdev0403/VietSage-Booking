@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: booking-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-booking_db}
+      POSTGRES_USER: ${POSTGRES_USER:-booking_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-booking_password}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - booking_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-booking_user} -d $${POSTGRES_DB:-booking_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: ./backend-booking
+      dockerfile: Dockerfile
+      target: migration
+    container_name: booking-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-booking_user}:${POSTGRES_PASSWORD:-booking_password}@postgres:5432/${POSTGRES_DB:-booking_db}?schema=public"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend-booking
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: booking-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: "8081"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-booking_user}:${POSTGRES_PASSWORD:-booking_password}@postgres:5432/${POSTGRES_DB:-booking_db}?schema=public"
+      CORS_ORIGINS: "http://localhost:${FRONTEND_PORT:-3000}"
+      JWT_SECRET: local_docker_development_jwt_secret_64chars_key_abcdef1234567890
+      VIETSAGE_API_BASE_URL: "${VIETSAGE_API_BASE_URL:-http://host.docker.internal:8080}"
+      VIETSAGE_HMAC_SECRET: local_docker_development_hmac_secret_64chars_abcdef1234567890
+      STRIPE_SECRET_KEY: sk_test_simulated
+      STRIPE_WEBHOOK_SECRET: whsec_test_localmate_secret
+      STRIPE_CHECKOUT_RETURN_BASE_URL: "http://localhost:${FRONTEND_PORT:-3000}"
+      STRIPE_SIMULATED: "true"
+    ports:
+      - "${BACKEND_PORT:-8081}:8081"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8081/health/ready',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    build:
+      context: ./frontend-booking
+      dockerfile: Dockerfile
+    container_name: booking-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      INTERNAL_BACKEND_URL: http://backend:8081
+      AUTH_URL: "http://localhost:${FRONTEND_PORT:-3000}"
+      NEXTAUTH_URL: "http://localhost:${FRONTEND_PORT:-3000}"
+      AUTH_SECRET: local_docker_development_nextauth_secret_64chars_key_abcdef123456
+      NEXTAUTH_SECRET: local_docker_development_nextauth_secret_64chars_key_abcdef123456
+      AUTH_TRUST_HOST: "true"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  booking_postgres_data:

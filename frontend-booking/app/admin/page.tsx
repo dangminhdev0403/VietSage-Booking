@@ -16,7 +16,6 @@ import {
   Building2,
   RefreshCw,
   Eye,
-  Phone,
 } from 'lucide-react';
 import {
   useBookingsQuery,
@@ -39,6 +38,53 @@ function formatStayDates(checkIn: string, checkOut: string): string {
     // fallback
   }
   return `${checkIn} → ${checkOut}`;
+}
+
+function getBookingStatusBadge(status: string) {
+  switch (status) {
+    case 'CONFIRMED':
+      return {
+        label: 'Đã xác nhận',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dotClass: 'bg-emerald-500',
+      };
+    case 'CONFIRMING':
+      return {
+        label: 'Đang xác nhận',
+        badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+        dotClass: 'bg-sky-500',
+      };
+    case 'PENDING':
+      return {
+        label: 'Chờ thanh toán',
+        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        dotClass: 'bg-amber-500',
+      };
+    case 'CHECKED_IN':
+      return {
+        label: 'Đang lưu trú',
+        badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        dotClass: 'bg-indigo-500',
+      };
+    case 'CANCELLED':
+      return {
+        label: 'Đã hủy',
+        badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+        dotClass: 'bg-rose-500',
+      };
+    case 'COMPLETED':
+      return {
+        label: 'Hoàn thành',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dotClass: 'bg-emerald-500',
+      };
+    default:
+      return {
+        label: status,
+        badgeClass: 'bg-slate-100 text-slate-600 border-slate-200',
+        dotClass: 'bg-slate-400',
+      };
+  }
 }
 
 export default function AdminDashboardPage() {
@@ -111,17 +157,13 @@ export default function AdminDashboardPage() {
       <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-stone-600">
-            <Sparkles className={`w-4 h-4 ${isPartner ? 'text-emerald-600' : 'text-primary'}`} />
-            <span
-              className={`text-xs sm:text-sm font-extrabold uppercase tracking-widest ${
-                isPartner ? 'text-emerald-700' : 'text-primary'
-              }`}
-            >
-              {isPartner ? 'Đối Tác Cơ Sở' : 'Trung Tâm Điều Hành'}
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-primary whitespace-nowrap">
+              Trung Tâm Điều Hành
             </span>
             <span className="text-stone-300">•</span>
-            <span className="text-xs sm:text-sm text-stone-600 font-medium">
-              {isPartner ? 'Vận Hành Cơ Sở' : 'Điều Hành Hệ Thống'}
+            <span className="text-xs sm:text-sm text-stone-600 font-medium whitespace-nowrap">
+              Điều Hành Sàn OTA
             </span>
           </div>
 
@@ -153,7 +195,7 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={handleRefresh}
-            className="px-4 py-2.5 rounded-2xl bg-surface-container-lowest text-on-surface border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 text-sm font-bold cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl bg-surface-container-lowest text-on-surface border border-outline-variant/30 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 text-sm font-bold cursor-pointer whitespace-nowrap"
           >
             <RefreshCw className="w-4 h-4 text-primary" />
             <span>Làm mới số liệu</span>
@@ -161,14 +203,10 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/admin/bookings"
-            className={`px-4 py-2.5 rounded-2xl font-bold text-sm shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
-              isPartner
-                ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                : 'bg-primary hover:bg-[#684f2c] text-on-primary'
-            }`}
+            className="px-4 py-2.5 rounded-2xl font-bold text-sm shadow-xs transition-all flex items-center gap-2 cursor-pointer bg-primary hover:bg-[#684f2c] text-on-primary whitespace-nowrap"
           >
             <Calendar className="w-4 h-4" />
-            <span>{isPartner ? 'Đón tiếp khách đặt' : 'Quản lý đơn toàn sàn'}</span>
+            <span>Quản lý đơn toàn sàn</span>
           </Link>
         </div>
       </section>
@@ -379,7 +417,7 @@ export default function AdminDashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h2 className="text-lg sm:text-xl font-bold text-on-surface">
+                <h2 className="text-lg sm:text-xl font-bold text-on-surface text-balance">
                   Đơn Đặt Phòng Gần Đây
                 </h2>
                 <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-stone-100 text-stone-700 border border-stone-200 whitespace-nowrap">
@@ -415,7 +453,7 @@ export default function AdminDashboardPage() {
               <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-xs font-extrabold border-b border-slate-200/80">
                 <tr>
                   <th className="py-3 px-4 w-[130px] whitespace-nowrap">Mã Đặt</th>
-                  <th className="py-3 px-4 min-w-[200px]">Khách Sạn &amp; Hạng Phòng</th>
+                  <th className="py-3 px-4 min-w-[200px]">Cơ Sở &amp; Hạng Phòng</th>
                   <th className="py-3 px-4 w-[150px] whitespace-nowrap">Khách Hàng</th>
                   <th className="py-3 px-4 w-[140px] whitespace-nowrap">Lưu Trú</th>
                   <th className="py-3 px-4 w-[120px] text-right whitespace-nowrap">Tổng Tiền</th>
@@ -424,122 +462,90 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-900">
-                {recentBookings.map((b) => (
-                  <tr
-                    key={b.id}
-                    onClick={() => setSelectedBooking(b)}
-                    className="hover:bg-slate-50/80 cursor-pointer transition-colors group"
-                    title="Nhấn để xem chi tiết toàn bộ đơn đặt phòng"
-                  >
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 group-hover:bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-200/90 whitespace-nowrap transition-colors">
-                        {b.booking_code}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">
-                        {b.property_name || 'Khách sạn liên kết'}
-                      </div>
-                      <div className="text-xs text-slate-500 font-medium mt-0.5 truncate max-w-[220px]">
-                        {b.room_type_name || 'Tiêu chuẩn'}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="font-bold text-slate-900 text-sm truncate max-w-[140px]">
-                        {b.guest_name}
-                      </div>
-                      <div className="text-xs font-mono text-slate-500 mt-0.5 flex items-center gap-1">
-                        <Phone className="w-3 h-3 shrink-0 text-slate-400" />
-                        <span>{b.guest_phone}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="font-bold text-xs text-slate-900">
-                        {formatStayDates(b.check_in, b.check_out)}
-                      </div>
-                      <div className="text-xs text-slate-500 font-medium mt-0.5">
-                        {b.nights} đêm nghỉ
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <span className="font-mono text-sm font-black text-slate-900">
-                        {new Intl.NumberFormat('vi-VN', {
-                          style: 'currency',
-                          currency: 'VND',
-                        }).format(b.total_price)}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex flex-col gap-1 items-center">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${
-                            b.status === 'CONFIRMED'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : b.status === 'PENDING'
-                              ? 'bg-sky-50 text-sky-700 border-sky-200'
-                              : b.status === 'CHECKED_IN'
-                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                              : b.status === 'CANCELLED'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-slate-100 text-slate-600 border-slate-200'
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              b.status === 'CONFIRMED'
-                                ? 'bg-emerald-500'
-                                : b.status === 'PENDING'
-                                ? 'bg-sky-500'
-                                : b.status === 'CHECKED_IN'
-                                ? 'bg-indigo-500'
-                                : b.status === 'CANCELLED'
-                                ? 'bg-rose-500'
-                                : 'bg-slate-400'
-                            }`}
-                          />
-                          {b.status}
+                {recentBookings.map((b) => {
+                  const statusInfo = getBookingStatusBadge(b.status);
+
+                  return (
+                    <tr
+                      key={b.id}
+                      onClick={() => setSelectedBooking(b)}
+                      className="hover:bg-slate-50/80 cursor-pointer transition-colors group"
+                      title="Nhấn để xem chi tiết toàn bộ đơn đặt phòng"
+                    >
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 group-hover:bg-slate-200/80 px-2.5 py-1 rounded-lg border border-slate-200/90 whitespace-nowrap transition-colors">
+                          {b.booking_code}
                         </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div
+                          className="font-bold text-slate-900 text-sm truncate max-w-[240px]"
+                          title={`${b.property_name || 'Khách sạn liên kết'}${b.room_type_name ? ` · ${b.room_type_name}` : ''}`}
+                        >
+                          <span>{b.property_name || 'Khách sạn liên kết'}</span>
+                          {b.room_type_name && (
+                            <span className="text-xs text-slate-500 font-normal ml-1.5 truncate">
+                              · {b.room_type_name}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div
+                          className="font-bold text-slate-900 text-sm truncate max-w-[140px]"
+                          title={`Khách hàng: ${b.guest_name}${b.guest_phone ? ` • SĐT: ${b.guest_phone}` : ''}`}
+                        >
+                          {b.guest_name}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide border ${
+                          className="font-bold text-xs text-slate-900"
+                          title={`${formatStayDates(b.check_in, b.check_out)} • ${b.nights} đêm nghỉ`}
+                        >
+                          {formatStayDates(b.check_in, b.check_out)}
+                          <span className="text-slate-500 font-normal ml-1">({b.nights}đ)</span>
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <span className="font-mono text-sm font-black text-slate-900">
+                          {new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND',
+                          }).format(b.total_price)}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border whitespace-nowrap ${statusInfo.badgeClass}`}
+                          title={`Trạng thái: ${statusInfo.label} • Thanh toán: ${
                             b.payment_status === 'PAID'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              ? 'Đã thanh toán'
                               : b.payment_status === 'REFUNDED'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                              ? 'Đã hoàn tiền'
+                              : 'Chưa thanh toán'
                           }`}
                         >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              b.payment_status === 'PAID'
-                                ? 'bg-emerald-500'
-                                : b.payment_status === 'REFUNDED'
-                                ? 'bg-purple-500'
-                                : 'bg-amber-500'
-                            }`}
-                          />
-                          {b.payment_status === 'PAID'
-                            ? 'Đã thanh toán'
-                            : b.payment_status === 'REFUNDED'
-                            ? 'Đã hoàn tiền'
-                            : 'Chưa thanh toán'}
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusInfo.dotClass}`} />
+                          {statusInfo.label}
                         </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBooking(b);
-                        }}
-                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-primary hover:text-white text-slate-700 text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                        title="Xem chi tiết đơn đặt phòng"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Chi tiết</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBooking(b);
+                          }}
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-primary hover:text-white text-slate-700 text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs whitespace-nowrap"
+                          title="Xem chi tiết đơn đặt phòng"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Chi tiết</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

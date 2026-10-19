@@ -2,6 +2,26 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { getPermissionsForRole } from '@/lib/auth/rbac';
 
+const authSecret =
+  process.env.AUTH_SECRET ||
+  process.env.NEXTAUTH_SECRET ||
+  (process.env.NODE_ENV !== 'production'
+    ? 'vietsage-booking-development-auth-secret-2026'
+    : undefined);
+
+if (
+  process.env.NODE_ENV === 'production' &&
+  (!authSecret ||
+    authSecret.length < 32 ||
+    ['replace_with', 'changeme', '<redacted>', '«redacted:'].some((marker) =>
+      authSecret.toLowerCase().includes(marker),
+    ))
+) {
+  throw new Error(
+    'AUTH_SECRET or NEXTAUTH_SECRET must be a non-placeholder value of at least 32 characters in production',
+  );
+}
+
 interface AuthUserPayload {
   id?: string;
   role?: string;
@@ -289,5 +309,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   session: { strategy: 'jwt' },
-  secret: process.env.AUTH_SECRET || 'vietsage-booking-auth-secret-key-2026',
+  secret: authSecret,
 });

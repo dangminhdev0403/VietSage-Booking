@@ -53,6 +53,7 @@ export const createRoomTypeSchema = z.object({
   bed_count: z.number().int().min(1).optional(),
   has_sea_view: z.boolean().optional().default(false),
   amenities: z.array(z.string()).optional(),
+  room_images: z.array(z.string()).optional(),
   is_active: z.boolean().optional().default(true),
   vietsage_room_type_id: z.string().optional().nullable(),
 });
@@ -68,6 +69,7 @@ export const updateRoomTypeSchema = z.object({
   bed_count: z.number().int().min(1).optional(),
   has_sea_view: z.boolean().optional(),
   amenities: z.array(z.string()).optional(),
+  room_images: z.array(z.string()).optional(),
   is_active: z.boolean().optional(),
   vietsage_room_type_id: z.string().optional().nullable(),
 });

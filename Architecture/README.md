@@ -13,6 +13,7 @@ Bộ tài liệu có thẩm quyền cho `booking-manager` — OTA tích hợp v�
 7. [`INTEGRATION_GUIDE.md`](INTEGRATION_GUIDE.md) — quote/hold/confirm/cancel, mapping, webhook, retry/reconciliation và service readiness.
 8. [`GRAPHIFY_GUIDE.md`](GRAPHIFY_GUIDE.md) — cài đặt Graphify, graph-first navigation, scoped Repomix và freshness rules.
 9. [`PLANS.md`](PLANS.md) — Forward engineering roadmap cho OTA Platform; không ghi nhật ký hoàn tất vi mô.
+10. [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) — Chuẩn cấu hình Docker Compose, container hardening, secrets, migration gate, Nginx edge và operational runbooks.
 
 ## Routing
 
@@ -20,6 +21,8 @@ Bộ tài liệu có thẩm quyền cho `booking-manager` — OTA tích hợp v�
 - Booking/backend: thêm `BACKEND_GUIDE.md`.
 - API contract: thêm `CONTRACT_GUIDE.md`.
 - VietSage sync/service extraction: bắt buộc đọc `INTEGRATION_GUIDE.md`.
+- Triển khai VPS, cấu hình Docker, container hardening, secrets: đọc `DEPLOYMENT_GUIDE.md`.
 - Rà soát kiến trúc, impact analysis hoặc code chưa quen: đọc `GRAPHIFY_GUIDE.md`, query graph trước khi search file.
 
 OpenAPI và executable checks quyết định trạng thái implementation. Tài liệu không biến endpoint `planned`/stub thành production-ready.
+

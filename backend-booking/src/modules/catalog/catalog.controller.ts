@@ -108,6 +108,31 @@ export class CatalogController {
     return ok(data);
   }
 
+  @RequirePermission('catalog:manage')
+  @Get('properties/:id/vietsage-preview')
+  async previewVietSageRooms(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const data = await this.catalogService.previewVietSageRooms(id, user);
+    return ok(data);
+  }
+
+  @RequirePermission('catalog:manage')
+  @Post('properties/:id/vietsage-import')
+  async importVietSageRooms(
+    @Param('id') id: string,
+    @Body() body: { selected_keys?: string[] },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const data = await this.catalogService.importVietSageRooms(
+      id,
+      body?.selected_keys,
+      user,
+    );
+    return ok(data);
+  }
+
   @Public()
   @Get('services')
   async listServices(@Query('category') category?: string) {

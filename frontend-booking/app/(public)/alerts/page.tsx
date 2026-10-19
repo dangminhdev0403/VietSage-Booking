@@ -122,80 +122,80 @@ export default function AlertsShowcasePage() {
             {/* Booking Error Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-rose-200/60 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-rose-700 bg-rose-100/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-rose-700 bg-rose-100/80 px-2.5 py-0.5 rounded-full whitespace-nowrap">
                   Cảnh Báo Thông Tin
                 </span>
-                <h3 className="font-bold text-base text-on-surface mt-2">Cảnh Báo Lỗi Đặt Phòng</h3>
-                <p className="text-xs text-outline mt-1 leading-relaxed">
+                <h3 className="font-semibold text-base text-on-surface mt-2 text-balance">Cảnh Báo Lỗi Đặt Phòng</h3>
+                <p className="text-xs text-outline mt-1 leading-relaxed text-pretty">
                   Thông báo chi tiết và hướng dẫn khách hàng điều chỉnh thông tin ngày lưu trú và số liên hệ hợp lệ.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleTestBookingErrorAlert}
-                className="w-full py-3 px-4 rounded-full bg-rose-700 text-white text-xs font-bold uppercase tracking-wider hover:bg-rose-800 transition-all shadow-sm cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-rose-700 text-white text-xs font-medium hover:bg-rose-800 transition-colors shadow-xs cursor-pointer whitespace-nowrap"
               >
-                Kích Hoạt Alert Lỗi Đặt Phòng
+                Mở Hộp Thoại Lỗi Đặt Phòng
               </button>
             </div>
 
             {/* Confirm Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-amber-200/60 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full whitespace-nowrap">
                   Xác Nhận Thao Tác
                 </span>
-                <h3 className="font-bold text-base text-on-surface mt-2">Hộp Thoại Xác Nhận Hủy Phòng</h3>
-                <p className="text-xs text-outline mt-1 leading-relaxed">
+                <h3 className="font-semibold text-base text-on-surface mt-2 text-balance">Hộp Thoại Xác Nhận Hủy Phòng</h3>
+                <p className="text-xs text-outline mt-1 leading-relaxed text-pretty">
                   Hỏi ý kiến khách hàng hoặc quản trị viên với nút bấm xác nhận/hủy bỏ sang trọng.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleTestConfirmDialog}
-                className="w-full py-3 px-4 rounded-full bg-amber-900 text-white text-xs font-bold uppercase tracking-wider hover:bg-amber-950 transition-all shadow-sm cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-800 text-white text-xs font-medium hover:bg-amber-900 transition-colors shadow-xs cursor-pointer whitespace-nowrap"
               >
-                Kích Hoạt Xác Nhận Hủy
+                Mở Hộp Thoại Xác Nhận Hủy
               </button>
             </div>
 
             {/* Success Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-emerald-200/60 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full whitespace-nowrap">
                   Thành Công
                 </span>
-                <h3 className="font-bold text-base text-on-surface mt-2">Xác Nhận Giữ Chỗ 5 Sao</h3>
-                <p className="text-xs text-outline mt-1 leading-relaxed">
+                <h3 className="font-semibold text-base text-on-surface mt-2 text-balance">Xác Nhận Giữ Chỗ Nghỉ Dưỡng</h3>
+                <p className="text-xs text-outline mt-1 leading-relaxed text-pretty">
                   Hiển thị mã hồ sơ đặt phòng, thời gian giữ chỗ 30 phút và thông tin thanh toán.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleTestSuccessDialog}
-                className="w-full py-3 px-4 rounded-full bg-primary text-on-primary text-xs font-bold uppercase tracking-wider hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-emerald-800 text-white text-xs font-medium hover:bg-emerald-900 transition-colors shadow-xs cursor-pointer whitespace-nowrap"
               >
-                Kích Hoạt Alert Thành Công
+                Mở Hộp Thoại Thành Công
               </button>
             </div>
 
             {/* Privilege Dialog */}
             <div className="p-5 rounded-2xl bg-surface-container-low border border-[#c5a880]/40 space-y-3 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-[#725b38] bg-[#fedeb2] px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-[#725b38] bg-[#fedeb2] px-2.5 py-0.5 rounded-full whitespace-nowrap">
                   VIP Privilege
                 </span>
-                <h3 className="font-bold text-base text-on-surface mt-2">Thông Báo Đặc Quyền Gold</h3>
-                <p className="text-xs text-outline mt-1 leading-relaxed">
+                <h3 className="font-semibold text-base text-on-surface mt-2 text-balance">Thông Báo Đặc Quyền Gold</h3>
+                <p className="text-xs text-outline mt-1 leading-relaxed text-pretty">
                   Hộp thoại vinh danh hội viên cao cấp tặng Champagne và miễn phí trả phòng muộn.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleTestPrivilegeDialog}
-                className="w-full py-3 px-4 rounded-full bg-[#725b38] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#c5a880] hover:text-[#1a1c1a] transition-all shadow-sm cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#725b38] text-white text-xs font-medium hover:bg-[#856a42] transition-colors shadow-xs cursor-pointer whitespace-nowrap"
               >
-                Kích Hoạt Đặc Quyền VIP
+                Mở Thông Báo Đặc Quyền VIP
               </button>
             </div>
           </div>
@@ -219,30 +219,30 @@ export default function AlertsShowcasePage() {
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Đã thêm phòng nghỉ vào danh sách yêu thích!', 'luxury')}
-              className="py-3 px-3 rounded-2xl bg-amber-50 text-amber-900 text-xs font-bold hover:bg-amber-100 transition-all text-center border border-amber-300 cursor-pointer whitespace-nowrap"
+              className="py-2.5 px-3 rounded-xl bg-amber-50/80 text-amber-900 text-xs font-medium hover:bg-amber-100 transition-colors text-center border border-amber-200 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              SweetAlert2 Luxury
+              Toast Luxury
             </button>
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Đã lưu thông tin xác nhận thanh toán thành công!', 'success')}
-              className="py-3 px-3 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-all text-center border border-emerald-200 cursor-pointer whitespace-nowrap"
+              className="py-2.5 px-3 rounded-xl bg-emerald-50/80 text-emerald-800 text-xs font-medium hover:bg-emerald-100 transition-colors text-center border border-emerald-200 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              SweetAlert2 Success
+              Toast Success
             </button>
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Chỉ còn 1 phòng duy nhất cho kỳ nghỉ của bạn!', 'warning')}
-              className="py-3 px-3 rounded-2xl bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-all text-center border border-amber-200 cursor-pointer whitespace-nowrap"
+              className="py-2.5 px-3 rounded-xl bg-amber-50/80 text-amber-800 text-xs font-medium hover:bg-amber-100 transition-colors text-center border border-amber-200 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              SweetAlert2 Warning
+              Toast Warning
             </button>
             <button
               type="button"
               onClick={() => luxuryAlert.toast('Không thể kết nối ngân hàng đối soát lúc này.', 'error')}
-              className="py-3 px-3 rounded-2xl bg-rose-50 text-rose-800 text-xs font-bold hover:bg-rose-100 transition-all text-center border border-rose-200 cursor-pointer whitespace-nowrap"
+              className="py-2.5 px-3 rounded-xl bg-rose-50/80 text-rose-800 text-xs font-medium hover:bg-rose-100 transition-colors text-center border border-rose-200 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              SweetAlert2 Error
+              Toast Error
             </button>
           </div>
         </section>

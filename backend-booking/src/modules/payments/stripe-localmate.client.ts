@@ -5,6 +5,10 @@ import {
   STRIPE_CHECKOUT_EXPIRY_SECONDS,
   getCheckoutSessionIdempotencyKey,
 } from './stripe-localmate.constants';
+import {
+  getRuntimeSecret,
+  getRuntimeValue,
+} from '../../common/config/runtime-config';
 
 export interface CreateCheckoutSessionParams {
   paymentId: string;
@@ -39,6 +43,7 @@ export class StripeLocalMateClient {
 
   private isSimulated(): boolean {
     const key = process.env.STRIPE_SECRET_KEY;
+    if (process.env.NODE_ENV === 'production') return false;
     return (
       !key ||
       key.startsWith('sk_test_simulated') ||
@@ -75,11 +80,13 @@ export class StripeLocalMateClient {
       return session;
     }
 
-    const secretKey = process.env.STRIPE_SECRET_KEY!;
+    const secretKey = getRuntimeSecret('STRIPE_SECRET_KEY');
     const returnBaseUrl =
       params.returnBaseUrl ||
-      process.env.STRIPE_CHECKOUT_RETURN_BASE_URL ||
-      'http://localhost:3000';
+      getRuntimeValue(
+        'STRIPE_CHECKOUT_RETURN_BASE_URL',
+        'http://localhost:3000',
+      );
     const idempotencyKey = getCheckoutSessionIdempotencyKey(
       params.paymentId,
       params.checkoutAttemptId,
@@ -152,7 +159,7 @@ export class StripeLocalMateClient {
     if (this.isSimulated()) {
       return this.simulatedSessions.get(sessionId) ?? null;
     }
-    const secretKey = process.env.STRIPE_SECRET_KEY!;
+    const secretKey = getRuntimeSecret('STRIPE_SECRET_KEY');
     const res = await fetch(
       `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
       {

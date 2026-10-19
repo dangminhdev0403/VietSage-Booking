@@ -44,11 +44,18 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     prisma = {
+      $transaction: jest.fn((cb) => cb(prisma)),
       account: {
         findFirst: jest.fn(),
         findUnique: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+      },
+      property: {
+        create: jest.fn(),
+      },
+      auditEvent: {
+        create: jest.fn(),
       },
       refreshSession: {
         create: jest.fn(),
@@ -87,6 +94,54 @@ describe('AuthService', () => {
           email: 'new_user@example.com',
         }),
       ).rejects.toThrow(GoneException);
+    });
+  });
+
+  describe('registerPartner', () => {
+    it('should register a hotel partner and create an inactive property with audit log', async () => {
+      prisma.account.findFirst.mockResolvedValue(null);
+      prisma.property.create.mockResolvedValue({
+        id: 'prop-123',
+        name: 'Seaside Resort',
+        slug: 'seaside-resort-123',
+        city: 'Đà Nẵng',
+        address: '123 Beach Road',
+        isActive: false,
+      });
+      prisma.account.create.mockResolvedValue({
+        id: 'acc-123',
+        username: 'partner_owner',
+        displayName: 'Hotel Owner',
+        email: 'owner@resort.vn',
+        role: 'TRAVELER',
+        managedPropertyId: 'prop-123',
+        isActive: true,
+      });
+      prisma.auditEvent.create.mockResolvedValue({ id: 'audit-1' });
+
+      const result = await service.registerPartner({
+        username: 'partner_owner',
+        password: 'Password123!',
+        display_name: 'Hotel Owner',
+        email: 'owner@resort.vn',
+        phone: '0901234567',
+        property_name: 'Seaside Resort',
+        city: 'Đà Nẵng',
+        address: '123 Beach Road',
+        description: 'Boutique resort near beach',
+      });
+
+      expect(result.account_id).toBe('acc-123');
+      expect(result.property_id).toBe('prop-123');
+      expect(result.status).toBe('PENDING_APPROVAL');
+      expect(prisma.property.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: 'Seaside Resort',
+            isActive: false,
+          }),
+        }),
+      );
     });
   });
 

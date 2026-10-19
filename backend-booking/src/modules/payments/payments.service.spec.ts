@@ -1066,8 +1066,10 @@ describe('PaymentsService', () => {
 
       expect(result.status).toBe('PROCESSED');
       expect(vietSageSyncService.confirmHold).toHaveBeenCalledWith(
-        'vs-hold-active-123',
-        bookingWithHold.id,
+        expect.objectContaining({
+          holdId: 'vs-hold-active-123',
+          bookingId: bookingWithHold.id,
+        }),
       );
       expect(prisma.booking.update).toHaveBeenCalledWith({
         where: { id: bookingWithHold.id },
@@ -1192,8 +1194,10 @@ describe('PaymentsService', () => {
 
       expect(result.status).toBe('PROCESSED');
       expect(vietSageSyncService.confirmHold).toHaveBeenCalledWith(
-        'vs-hold-timeout-456',
-        bookingWithHold.id,
+        expect.objectContaining({
+          holdId: 'vs-hold-timeout-456',
+          bookingId: bookingWithHold.id,
+        }),
       );
       // CAS step marked it CONFIRMING
       expect(prisma.booking.updateMany).toHaveBeenCalledWith({

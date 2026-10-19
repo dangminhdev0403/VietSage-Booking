@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X,
   Copy,
@@ -20,6 +20,8 @@ import {
   MapPin,
   Star,
   Calendar,
+  Building2,
+  BedDouble,
 } from 'lucide-react';
 import {
   useCreateBookingMutation,
@@ -32,28 +34,51 @@ import { luxuryAlert } from '@/lib/alert/luxury-alert';
 import { LuxuryAlertBanner } from '@/components/shared/luxury-alert-banner';
 import { BookingInvoice, BookingInvoiceData } from './booking-invoice';
 
+function formatDateYMD(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addDaysToYMD(ymdStr: string, days: number): string {
+  const parts = ymdStr.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return ymdStr;
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  d.setDate(d.getDate() + days);
+  return formatDateYMD(d);
+}
+
+function diffDaysYMD(checkInStr: string, checkOutStr: string): number {
+  const p1 = checkInStr.split('-').map(Number);
+  const p2 = checkOutStr.split('-').map(Number);
+  if (p1.length !== 3 || p2.length !== 3 || p1.some(isNaN) || p2.some(isNaN)) return 0;
+  const d1 = new Date(p1[0], p1[1] - 1, p1[2]);
+  const d2 = new Date(p2[0], p2[1] - 1, p2[2]);
+  return Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
+}
+
 export function BookingModal({
   property,
+  initialRoomId,
   onClose,
 }: {
   property: Property;
+  initialRoomId?: string;
   onClose: () => void;
 }) {
+  const todayYMD = formatDateYMD(new Date());
+  const defaultCheckIn = addDaysToYMD(todayYMD, 1);
+
   const roomTypes = property.room_types || [];
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
-  const [checkIn, setCheckIn] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
-  });
-  const [checkOut, setCheckOut] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 3);
-    return d.toISOString().split('T')[0];
-  });
-  const [selectedRoomId, setSelectedRoomId] = useState(roomTypes[0]?.id || '');
+  const [checkIn, setCheckIn] = useState(() => defaultCheckIn);
+  const [checkOut, setCheckOut] = useState(() => addDaysToYMD(defaultCheckIn, 2));
+  const [selectedRoomId, setSelectedRoomId] = useState(
+    initialRoomId || roomTypes[0]?.id || '',
+  );
   const [specialRequests] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -74,13 +99,58 @@ export function BookingModal({
   const selectedRoom = roomTypes.find((r) => r.id === selectedRoomId) || roomTypes[0];
   const roomPrice = selectedRoom?.base_price || 4500000;
 
-  // Nights calculation
-  const d1 = new Date(checkIn);
-  const d2 = new Date(checkOut);
-  const nights = Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)));
+  // Nights calculation & Date Range Validity
+  const diffDays = diffDaysYMD(checkIn, checkOut);
+  const isValidDateRange = diffDays >= 1;
+  const nights = isValidDateRange ? diffDays : 0;
+
+  // Handlers for date changes & quick night selection
+  const handleCheckInChange = (newCheckIn: string) => {
+    setCheckIn(newCheckIn);
+    // Keep current nights (minimum 1 night) and automatically advance check-out
+    const currentNights = Math.max(1, nights);
+    const newCheckOut = addDaysToYMD(newCheckIn, currentNights);
+    setCheckOut(newCheckOut);
+    if (fieldErrors.dates) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.dates;
+        return copy;
+      });
+    }
+  };
+
+  const handleCheckOutChange = (newCheckOut: string) => {
+    setCheckOut(newCheckOut);
+    const newDiff = diffDaysYMD(checkIn, newCheckOut);
+    if (newDiff < 1) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        dates: 'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 đêm',
+      }));
+    } else if (fieldErrors.dates) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.dates;
+        return copy;
+      });
+    }
+  };
+
+  const handleSelectNights = (n: number) => {
+    const validNights = Math.max(1, n);
+    const newCheckOut = addDaysToYMD(checkIn, validNights);
+    setCheckOut(newCheckOut);
+    if (fieldErrors.dates) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy.dates;
+        return copy;
+      });
+    }
+  };
 
   // Authoritative server-side quote query
-  const isValidDateRange = !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d2 > d1;
   const quoteQuery = useBookingQuoteQuery(
     {
       property_id: property.id,
@@ -92,6 +162,7 @@ export function BookingModal({
     { enabled: Boolean(isValidDateRange && (selectedRoomId || roomTypes[0]?.id)) },
   );
 
+  const isQuoteFetching = quoteQuery.isFetching;
   const quote = quoteQuery.data;
 
   // Extract real-time stop-sell or allotment availability error
@@ -106,10 +177,17 @@ export function BookingModal({
     : null;
 
   // Pricing values (authoritative quote with local fallback directly: basePrice * nights)
-  const roomSubtotal = quote?.room_subtotal ?? roomPrice * nights;
-  const totalPrice = quote?.total_price ?? (roomPrice * nights);
+  const roomSubtotal = quote?.room_subtotal ?? (isValidDateRange ? roomPrice * nights : 0);
+  const totalPrice = quote?.total_price ?? (isValidDateRange ? roomPrice * nights : 0);
   const depositAmount = quote?.deposit_amount ?? Math.round(totalPrice * 0.3);
   const balanceDue = quote?.balance_due ?? (totalPrice - depositAmount);
+
+  const isSubmitDisabled =
+    createMutation.isPending ||
+    checkoutMutation.isPending ||
+    Boolean(quoteErrorMessage) ||
+    !isValidDateRange ||
+    isQuoteFetching;
 
   const handleCopy = (text: string, type: 'code' | 'token') => {
     if (navigator?.clipboard) {
@@ -161,35 +239,37 @@ export function BookingModal({
           }
         } catch {}
 
-        // 2. Fallback to booking lookup
-        const refreshed = await lookupBooking(
-          confirmedBooking.booking_code,
-          confirmedBooking.lookup_token,
-        );
+        // 2. Fallback to booking lookup if verify didn't resolve or on manual check
+        if (isManual) {
+          const refreshed = await lookupBooking(
+            confirmedBooking.booking_code,
+            confirmedBooking.lookup_token,
+          );
 
-        if (
-          refreshed &&
-          (refreshed.payment_status === 'DEPOSIT_PAID' ||
-            refreshed.payment_status === 'PAID' ||
-            refreshed.status === 'CONFIRMED')
-        ) {
-          setConfirmedBooking((prev) => ({
-            ...prev!,
-            status: refreshed.status,
-            payment_status: refreshed.payment_status || 'DEPOSIT_PAID',
-            paid_at: (refreshed as { paid_at?: string }).paid_at || new Date().toISOString(),
-          }));
-          await luxuryAlert.success({
-            title: 'Thanh Toán Cọc Thành Công',
-            message: 'Thanh toán cọc thành công! Hóa đơn xác nhận kỳ nghỉ của quý khách đã sẵn sàng.',
-            confirmText: 'Xem Hóa Đơn',
-          });
-        } else if (isManual) {
-          await luxuryAlert.info({
-            title: 'Đang Chờ Đối Soát',
-            message: 'Hệ thống đang chờ nhận thông báo giao dịch từ cổng thanh toán Stripe...',
-            confirmText: 'Đã Hiểu',
-          });
+          if (
+            refreshed &&
+            (refreshed.payment_status === 'DEPOSIT_PAID' ||
+              refreshed.payment_status === 'PAID' ||
+              refreshed.status === 'CONFIRMED')
+          ) {
+            setConfirmedBooking((prev) => ({
+              ...prev!,
+              status: refreshed.status,
+              payment_status: refreshed.payment_status || 'DEPOSIT_PAID',
+              paid_at: (refreshed as { paid_at?: string }).paid_at || new Date().toISOString(),
+            }));
+            await luxuryAlert.success({
+              title: 'Thanh Toán Cọc Thành Công',
+              message: 'Thanh toán cọc thành công! Hóa đơn xác nhận kỳ nghỉ của quý khách đã sẵn sàng.',
+              confirmText: 'Xem Hóa Đơn',
+            });
+          } else {
+            await luxuryAlert.info({
+              title: 'Đang Chờ Đối Soát',
+              message: 'Hệ thống đang chờ nhận thông báo giao dịch từ cổng thanh toán Stripe...',
+              confirmText: 'Đã Hiểu',
+            });
+          }
         }
       } catch (err) {
         console.warn('[Payment Check Silent Catch]', err);
@@ -209,10 +289,10 @@ export function BookingModal({
       confirmedBooking.status === 'CONFIRMED';
     if (isPaid) return;
 
-    // 1. Polling every 2.5 seconds
+    // 1. Polling every 4 seconds
     const interval = setInterval(() => {
       checkPaymentStatus(false);
-    }, 2500);
+    }, 4000);
 
     // 2. Visibility change & Window focus listener
     const handleFocus = () => {
@@ -358,7 +438,7 @@ export function BookingModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-surface-container-lowest rounded-3xl max-w-5xl lg:max-w-6xl w-full p-5 sm:p-6 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.2)] border border-outline-variant/40 relative my-auto max-h-[94vh] flex flex-col overflow-hidden">
+      <div className="bg-surface-container-lowest rounded-3xl max-w-5xl lg:max-w-6xl xl:max-w-7xl w-full p-5 sm:p-6 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.2)] border border-outline-variant/40 relative my-auto max-h-[94vh] flex flex-col overflow-hidden">
         <button
           onClick={onClose}
           type="button"
@@ -568,21 +648,76 @@ export function BookingModal({
             )}
 
             {/* 2-Column Split Body */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-0 overflow-y-auto lg:overflow-visible">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-5 flex-1 min-h-0 overflow-y-auto md:overflow-visible">
               {/* ================= CỘT TRÁI (COL 1 - 7): Tùy chọn phòng & Thông tin khách ================= */}
-              <div className="lg:col-span-7 flex flex-col space-y-3.5 lg:overflow-y-auto lg:pr-2 lg:max-h-[calc(94vh-130px)]">
+              <div className="md:col-span-7 flex flex-col space-y-3.5 md:overflow-y-auto md:pr-2 md:max-h-[calc(94vh-130px)]">
                 {/* 1. Lịch trình & Thông tin khách liên hệ (Combined Stay Dates & Guest Info) */}
                 <div className="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30 space-y-3">
                   {/* Row A: Stay Dates */}
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-xs uppercase tracking-wider font-bold text-primary flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
                         Thời Gian Lưu Trú
                       </span>
-                      <span className="text-xs text-outline font-medium">
-                        Tổng {nights} đêm nghỉ
-                      </span>
+                      {isValidDateRange ? (
+                        <span className="text-xs text-outline font-medium">
+                          Tổng <strong className="text-primary font-bold">{nights} đêm</strong> nghỉ
+                        </span>
+                      ) : (
+                        <span className="text-xs text-rose-600 font-semibold">
+                          Ngày trả phòng chưa hợp lệ
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Quick Duration Selection Buttons (1 đêm, 2 đêm, 3 đêm, 5 đêm, 7 đêm + stepper) */}
+                    <div className="mb-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs text-outline">
+                        <span className="font-semibold text-on-surface-variant">Chọn nhanh số đêm:</span>
+                        <div className="flex items-center gap-1 bg-surface-container rounded-lg p-0.5 border border-outline-variant/40">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectNights(Math.max(1, nights - 1))}
+                            disabled={nights <= 1}
+                            className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                            title="Giảm 1 đêm"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 text-xs font-bold text-primary whitespace-nowrap min-w-14 text-center">
+                            {isValidDateRange ? `${nights} đêm` : 'Tùy chọn'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectNights(nights + 1)}
+                            className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+                            title="Tăng 1 đêm"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {[1, 2, 3, 5, 7].map((num) => {
+                          const isActive = isValidDateRange && nights === num;
+                          return (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => handleSelectNights(num)}
+                              className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+                                isActive
+                                  ? 'bg-primary text-on-primary border-primary shadow-xs'
+                                  : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/50 hover:border-primary/60 hover:text-primary'
+                              }`}
+                            >
+                              {num} đêm
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2.5">
@@ -592,17 +727,9 @@ export function BookingModal({
                         </label>
                         <input
                           type="date"
+                          min={todayYMD}
                           value={checkIn}
-                          onChange={(e) => {
-                            setCheckIn(e.target.value);
-                            if (fieldErrors.dates) {
-                              setFieldErrors((prev) => {
-                                const copy = { ...prev };
-                                delete copy.dates;
-                                return copy;
-                              });
-                            }
-                          }}
+                          onChange={(e) => handleCheckInChange(e.target.value)}
                           className={`w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.dates
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
@@ -612,21 +739,13 @@ export function BookingModal({
                       </div>
                       <div className="space-y-1">
                         <label className="text-xs uppercase tracking-wider font-bold text-outline block">
-                          Trả phòng ({nights} đêm)
+                          Trả phòng {isValidDateRange ? `(${nights} đêm)` : '(chưa hợp lệ)'}
                         </label>
                         <input
                           type="date"
+                          min={addDaysToYMD(checkIn, 1)}
                           value={checkOut}
-                          onChange={(e) => {
-                            setCheckOut(e.target.value);
-                            if (fieldErrors.dates) {
-                              setFieldErrors((prev) => {
-                                const copy = { ...prev };
-                                delete copy.dates;
-                                return copy;
-                              });
-                            }
-                          }}
+                          onChange={(e) => handleCheckOutChange(e.target.value)}
                           className={`w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-container-lowest border transition-colors focus:outline-none ${
                             fieldErrors.dates
                               ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20'
@@ -791,54 +910,69 @@ export function BookingModal({
                               : 'border-outline-variant/50 bg-surface-container-lowest hover:border-primary-container/80'
                           }`}
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            {/* Left Info */}
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="radio"
-                                  name="room_selection"
-                                  checked={isSelected}
-                                  onChange={() => setSelectedRoomId(room.id)}
-                                  className="w-3.5 h-3.5 text-primary accent-primary cursor-pointer"
-                                />
-                                <span className="text-sm font-bold text-on-surface leading-tight">
-                                  {room.name}
-                                </span>
-                                {isSelected && (
-                                  <span className="text-xs font-bold text-primary bg-primary-container/30 px-1.5 py-0.5 rounded uppercase">
-                                    Đang chọn
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            {/* Left: Mini Thumbnail or BedDouble Emblem */}
+                            <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                              <div className="w-14 h-14 rounded-xl shrink-0 overflow-hidden border border-outline-variant/40 bg-surface-container flex items-center justify-center">
+                                {(() => {
+                                  const roomThumb =
+                                    room.room_images && room.room_images.length > 0
+                                      ? room.room_images[0]
+                                      : property.thumbnail_url || (property.images && property.images.length > 0 ? property.images[0] : null);
+                                  return roomThumb ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={roomThumb}
+                                      alt={room.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center bg-surface-container-low text-primary/70 p-1 text-center">
+                                      <BedDouble className="w-5 h-5 text-primary" />
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Center Info */}
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="radio"
+                                    name="room_selection"
+                                    checked={isSelected}
+                                    onChange={() => setSelectedRoomId(room.id)}
+                                    className="w-3.5 h-3.5 text-primary accent-primary cursor-pointer shrink-0"
+                                  />
+                                  <span className="text-sm font-bold text-on-surface leading-tight truncate">
+                                    {room.name}
                                   </span>
-                                )}
-                              </div>
+                                  {isSelected && (
+                                    <span className="text-xs font-bold text-primary bg-primary-container/30 px-1.5 py-0.5 rounded uppercase whitespace-nowrap">
+                                      Đang chọn
+                                    </span>
+                                  )}
+                                </div>
 
-                              {/* Prominent Core Room Attributes */}
-                              <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-on-surface-variant">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                  <Users className="w-3 h-3 text-primary" />
-                                  Tối đa {guestsCount} khách
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                  <Bed className="w-3 h-3 text-primary" />
-                                  {room.bed_type || (room.name.toLowerCase().includes('suite') ? '1 King hoặc 2 Twin' : '1 Giường King-size')}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                  <Maximize2 className="w-3 h-3 text-primary" />
-                                  {room.area_sqm ? `${room.area_sqm}m²` : (room.name.toLowerCase().includes('villa') ? '120m²' : room.name.toLowerCase().includes('suite') ? '75m²' : '62m²')}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
-                                  <Waves className="w-3 h-3 text-primary" />
-                                  {room.has_sea_view ? 'Hướng Biển' : (room.name.toLowerCase().includes('beach') || room.name.toLowerCase().includes('ocean') ? 'Hướng Biển' : 'Hướng Vườn')}
-                                </span>
-                              </div>
-
-                              {/* Included Privileges */}
-                              <div className="flex items-center gap-3 text-xs text-emerald-800 pt-0.5">
-                                <span className="inline-flex items-center gap-1">
-                                  <Coffee className="w-3 h-3 text-emerald-700" /> Buffet sáng bao gồm
-                                </span>
-                                <span>•</span>
-                                <span>Wifi tốc độ cao</span>
+                                {/* Prominent Core Room Attributes */}
+                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs text-on-surface-variant">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                    <Users className="w-3 h-3 text-primary" />
+                                    Tối đa {guestsCount} khách
+                                  </span>
+                                  {room.bed_type && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                      <Bed className="w-3 h-3 text-primary" />
+                                      {room.bed_type}
+                                    </span>
+                                  )}
+                                  {room.area_sqm && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant/40 whitespace-nowrap">
+                                      <Maximize2 className="w-3 h-3 text-primary" />
+                                      {room.area_sqm}m²
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -858,7 +992,7 @@ export function BookingModal({
               </div>
 
               {/* ================= CỘT PHẢI (COL 8 - 12): Tóm tắt chi phí & Thanh toán cọc 30% ================= */}
-              <div className="lg:col-span-5 flex flex-col justify-between">
+              <div className="md:col-span-5 flex flex-col justify-between">
                 <div className="bg-surface-container-low/80 rounded-2xl p-4.5 sm:p-5 border border-outline-variant/40 shadow-xs flex flex-col justify-between h-full space-y-4">
                   {/* Property Preview Banner */}
                   <div>
@@ -871,8 +1005,13 @@ export function BookingModal({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-primary-container/10 text-primary">
-                          <Sparkles className="w-6 h-6" />
+                        <div className="w-full h-full bg-gradient-to-br from-[#12241e] via-[#1a382f] to-[#254d42] flex flex-col items-center justify-center p-3 text-center relative overflow-hidden">
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(197,168,128,0.15),transparent_70%)] pointer-events-none" />
+                          <Building2 className="w-6 h-6 text-[#d4af37] mb-1" />
+                          <span className="text-white text-xs font-bold truncate max-w-[85%]">{property.name}</span>
+                          <span className="text-xs text-[#d4af37] font-medium whitespace-nowrap mt-0.5">
+                            Cơ sở lưu trú đã xác thực
+                          </span>
                         </div>
                       )}
                       <div className="absolute top-2 left-2 flex items-center gap-1 bg-surface-bright/90 backdrop-blur-xs px-2 py-0.5 rounded-full text-xs font-bold text-on-surface">
@@ -888,15 +1027,17 @@ export function BookingModal({
                       {property.name}
                     </h3>
                     <p className="text-xs text-outline truncate mt-0.5">
-                      {selectedRoom?.name || 'Phòng nghỉ dưỡng'} • {nights} đêm ({checkIn} → {checkOut})
+                      {selectedRoom?.name || 'Phòng nghỉ dưỡng'} • {isValidDateRange ? `${nights} đêm (${checkIn} → ${checkOut})` : 'Khoảng ngày chưa hợp lệ'}
                     </p>
                   </div>
 
                   {/* Price breakdown */}
                   <div className="space-y-2 text-xs pt-1 border-t border-outline-variant/30">
                     <div className="flex justify-between text-xs font-bold text-on-surface pt-1">
-                      <span>Tổng tiền phòng ({nights} đêm):</span>
-                      <span className="text-sm font-extrabold">{formatVND(totalPrice)}</span>
+                      <span>Tổng tiền phòng {isValidDateRange ? `(${nights} đêm):` : ':'}</span>
+                      <span className="text-sm font-extrabold">
+                        {isValidDateRange ? formatVND(totalPrice) : '---'}
+                      </span>
                     </div>
 
                     {/* 30% Deposit Prominent Highlight */}
@@ -908,12 +1049,14 @@ export function BookingModal({
                             Cọc 30% thanh toán ngay
                           </span>
                           <span className="text-xs text-amber-800 block mt-0.5">
-                            (70% còn lại {formatVND(balanceDue)} trả khi check-in)
+                            {isValidDateRange
+                              ? `(70% còn lại ${formatVND(balanceDue)} trả khi check-in)`
+                              : 'Vui lòng chọn ngày trả phòng hợp lệ'}
                           </span>
                         </div>
                         <div className="text-right">
                           <span className="text-lg sm:text-xl font-black text-amber-950">
-                            {formatVND(depositAmount)}
+                            {isValidDateRange ? formatVND(depositAmount) : '---'}
                           </span>
                         </div>
                       </div>
@@ -924,19 +1067,20 @@ export function BookingModal({
                   <div className="space-y-2 pt-2">
                     <button
                       type="submit"
-                      disabled={
-                        createMutation.isPending ||
-                        checkoutMutation.isPending ||
-                        Boolean(quoteErrorMessage) ||
-                        quoteQuery.isPending
-                      }
-                      className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-[#584323] text-on-primary font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                      disabled={isSubmitDisabled}
+                      className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-[#584323] text-on-primary font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                     >
-                      <CreditCard className="w-4 h-4" />
+                      {isQuoteFetching ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <CreditCard className="w-4 h-4" />
+                      )}
                       <span>
                         {createMutation.isPending || checkoutMutation.isPending
                           ? 'Đang kết nối cổng...'
-                          : quoteQuery.isPending
+                          : !isValidDateRange
+                          ? 'Vui Lòng Chọn Ngày Trả Phòng Hợp Lệ'
+                          : isQuoteFetching
                           ? 'Đang tính toán giá...'
                           : quoteErrorMessage
                           ? 'Hạng Phòng Tạm Khóa / Hết Chỗ'

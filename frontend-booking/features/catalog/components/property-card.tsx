@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Heart, Star, MapPin, BedDouble } from 'lucide-react';
+import { Heart, Star, MapPin, BedDouble, Building2 } from 'lucide-react';
 export type AllotmentInfo = {
   date: string;
   total_rooms: number;
@@ -48,16 +48,35 @@ export function PropertyCard({
     ? Math.min(...roomTypes.map((r) => r.base_price))
     : 14500000;
 
+  const thumbnail =
+    property.thumbnail_url ||
+    (property.images && property.images.length > 0 ? property.images[0] : null);
+
   return (
     <article className="group bg-surface-container-lowest rounded-3xl shadow-sm hover:shadow-[0_16px_36px_-4px_rgba(15,23,42,0.1),0_6px_16px_-2px_rgba(197,168,128,0.14)] transition-all duration-500 overflow-hidden flex flex-col border border-outline-variant/30">
       {/* Thumbnail Section */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-surface-container">
         <Link href={`/properties/${property.id}`} className="block w-full h-full">
-          <img
-            src={property.thumbnail_url || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80'}
-            alt={property.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-          />
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt={property.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#10221c] via-[#1a382f] to-[#254d42] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden group-hover:scale-105 transition-transform duration-700 ease-out">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(197,168,128,0.15),transparent_70%)] pointer-events-none" />
+              <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-2.5 shadow-sm">
+                <Building2 className="w-6 h-6 text-[#d4af37]" />
+              </div>
+              <span className="text-white font-bold text-sm line-clamp-1 max-w-[90%] text-balance">
+                {property.name}
+              </span>
+              <span className="mt-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-[#d4af37] border border-[#d4af37]/30 text-xs font-semibold whitespace-nowrap">
+                Khu nghỉ dưỡng xác thực • Sẵn sàng đón tiếp
+              </span>
+            </div>
+          )}
         </Link>
         
         {/* Badges on image */}

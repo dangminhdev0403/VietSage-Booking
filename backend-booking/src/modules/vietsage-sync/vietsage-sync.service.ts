@@ -14,6 +14,10 @@ import {
 } from 'node:crypto';
 import { Prisma, SyncStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  getRuntimeSecret,
+  getRuntimeValue,
+} from '../../common/config/runtime-config';
 
 export interface CreateHoldParams {
   hotelId: string;
@@ -45,6 +49,16 @@ export interface ConfirmHoldParams {
   bookingId: string;
   idempotencyKey?: string;
   operationKey?: string;
+  // Fallback booking metadata for on-the-fly hold reconstruction on PMS
+  hotelId?: string;
+  roomTypeId?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  amount?: number;
+  currency?: string;
 }
 
 export interface ConfirmHoldResult {
@@ -94,6 +108,27 @@ export interface ReconcileResult {
   reservationId?: string;
   result?: ConfirmHoldResult;
   error?: string;
+}
+
+export interface VietSageRoomCatalogItem {
+  name: string;
+  normalizedKey: string;
+  description: string;
+  basePrice: number;
+  totalRooms: number;
+  maxGuests: number;
+  bedType: string;
+  areaSqm: number;
+  amenities: string[];
+  sampleRoomNumbers: string[];
+}
+
+export interface VietSageRoomCatalogResult {
+  hotelId: string;
+  hotelName: string;
+  hotelCode: string;
+  partnerEmail: string;
+  roomTypes: VietSageRoomCatalogItem[];
 }
 
 export interface SignRequestOptions {
@@ -328,13 +363,15 @@ export function verifyHmacSignature(options: VerifySignatureOptions): {
 export class VietSageSyncService {
   private readonly logger = new Logger(VietSageSyncService.name);
 
-  private readonly baseUrl: string =
-    process.env.VIETSAGE_API_BASE_URL || 'http://localhost:4000/api/v1';
+  private readonly baseUrl = getRuntimeValue(
+    'VIETSAGE_API_BASE_URL',
+    'http://localhost:8080',
+  ).replace(/\/$/, '');
 
-  private readonly hmacSecret: string =
+  private readonly hmacSecret =
     process.env.VIETSAGE_HMAC_SECRET ||
     process.env.VIETSAGE_PARTNER_API_KEY ||
-    'vietsage_dev_partner_secret';
+    'vietsage_ota_partner_secret';
 
   private httpClient: (url: string, init?: RequestInit) => Promise<Response> = (
     url,
@@ -631,10 +668,37 @@ export class VietSageSyncService {
     });
 
     const path = `/channel-manager/direct-booking/holds/${holdId}/confirm`;
-    const payload = {
+
+    // Build fallback metadata from ConfirmHoldParams for PMS on-the-fly hold reconstruction
+    const fallbackHotelId = typeof holdIdOrParams === 'object' ? holdIdOrParams.hotelId : undefined;
+    const fallbackRoomTypeId = typeof holdIdOrParams === 'object' ? holdIdOrParams.roomTypeId : undefined;
+    const fallbackCheckInDate = typeof holdIdOrParams === 'object' ? holdIdOrParams.checkInDate : undefined;
+    const fallbackCheckOutDate = typeof holdIdOrParams === 'object' ? holdIdOrParams.checkOutDate : undefined;
+    const fallbackGuestName = typeof holdIdOrParams === 'object' ? holdIdOrParams.guestName : undefined;
+    const fallbackGuestEmail = typeof holdIdOrParams === 'object' ? holdIdOrParams.guestEmail : undefined;
+    const fallbackGuestPhone = typeof holdIdOrParams === 'object' ? holdIdOrParams.guestPhone : undefined;
+    const fallbackAmount = typeof holdIdOrParams === 'object' ? holdIdOrParams.amount : undefined;
+    const fallbackCurrency = typeof holdIdOrParams === 'object' ? holdIdOrParams.currency : undefined;
+
+    const payload: Record<string, unknown> = {
       hold_id: holdId,
       booking_id: bookingId,
     };
+
+    // Include fallback booking metadata if available
+    if (fallbackHotelId) payload.hotel_id = fallbackHotelId;
+    if (fallbackRoomTypeId) payload.room_type_id = fallbackRoomTypeId;
+    if (fallbackCheckInDate) payload.check_in_date = fallbackCheckInDate;
+    if (fallbackCheckOutDate) payload.check_out_date = fallbackCheckOutDate;
+    if (fallbackGuestName || fallbackGuestEmail || fallbackGuestPhone) {
+      payload.guest = {
+        name: fallbackGuestName || 'OTA Guest',
+        email: fallbackGuestEmail || '',
+        phone: fallbackGuestPhone || '',
+      };
+    }
+    if (fallbackAmount !== undefined) payload.amount = fallbackAmount;
+    if (fallbackCurrency) payload.currency = fallbackCurrency;
 
     const { headers } = this.signRequest('POST', path, payload, idempotencyKey);
     const url = `${this.baseUrl}${path}`;
@@ -1162,6 +1226,67 @@ export class VietSageSyncService {
     return {
       processed: processedCount,
       roomTypeId: targetRoomTypeId,
+    };
+  }
+
+  /**
+   * Tải danh mục loại phòng và số lượng phòng thực tế từ VietSage PMS (HMAC Signed)
+   */
+  async fetchRoomCatalog(
+    hotelIdentifier: string,
+    partnerEmail?: string,
+  ): Promise<VietSageRoomCatalogResult> {
+    const path = '/channel-manager/direct-booking/catalog-export';
+    const payload = {
+      hotel_id: hotelIdentifier,
+      ...(partnerEmail ? { partner_email: partnerEmail } : {}),
+    };
+
+    const { headers } = this.signRequest('POST', path, payload);
+    const url = `${this.baseUrl}${path}`;
+
+    const response = await this.httpClient(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(
+        `Failed to fetch room catalog from VietSage PMS: ${errorText}`,
+      );
+      throw new BadRequestException(
+        `Không thể tải danh mục phòng từ VietSage PMS: ${errorText}`,
+      );
+    }
+
+    const json = (await response.json()) as any;
+    const rawData = json?.data;
+    const data =
+      typeof rawData === 'object' && rawData !== null && 'data' in rawData
+        ? rawData.data
+        : (rawData ?? json);
+
+    return {
+      hotelId: data.hotel_id ?? '',
+      hotelName: data.hotel_name ?? '',
+      hotelCode: data.hotel_code ?? '',
+      partnerEmail: data.partner_email ?? '',
+      roomTypes: (data.room_types ?? []).map((rt: any) => ({
+        name: rt.name,
+        normalizedKey: rt.normalized_key,
+        description: rt.description ?? '',
+        basePrice: Number(rt.base_price ?? 0),
+        totalRooms: Number(rt.total_rooms ?? 0),
+        maxGuests: Number(rt.max_guests ?? 2),
+        bedType: rt.bed_type ?? 'DOUBLE',
+        areaSqm: Number(rt.area_sqm ?? 25),
+        amenities: Array.isArray(rt.amenities) ? rt.amenities : [],
+        sampleRoomNumbers: Array.isArray(rt.sample_room_numbers)
+          ? rt.sample_room_numbers
+          : [],
+      })),
     };
   }
 }

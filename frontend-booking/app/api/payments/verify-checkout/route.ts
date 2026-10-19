@@ -15,6 +15,15 @@ export async function POST(req: NextRequest) {
       headers['x-lookup-token'] = lookupToken;
     }
 
+    const forwardedFor = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+    if (forwardedFor) {
+      headers['x-forwarded-for'] = forwardedFor;
+    }
+    const realIp = req.headers.get('x-real-ip');
+    if (realIp) {
+      headers['x-real-ip'] = realIp;
+    }
+
     const res = await backendFetch('api/v1/payments/verify-checkout', {
       method: 'POST',
       headers,

@@ -12,6 +12,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { VietSageSyncModule } from './modules/vietsage-sync/vietsage-sync.module';
+import { HealthModule } from './modules/health/health.module';
 
 import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { RateLimitGuard } from './common/rate-limit/rate-limit.guard';
@@ -20,6 +21,7 @@ import { RateLimitGuard } from './common/rate-limit/rate-limit.guard';
   imports: [
     PrismaModule,
     RateLimitModule,
+    HealthModule,
     IdentityAccessModule,
     CatalogModule,
     BookingsModule,

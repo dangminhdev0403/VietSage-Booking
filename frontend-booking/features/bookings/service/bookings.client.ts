@@ -109,6 +109,15 @@ export async function verifyCheckoutPayment(payload: {
     headers,
     body: JSON.stringify(payload),
   });
+  if (res.status === 429) {
+    return {
+      booking_code: payload.booking_code,
+      status: 'PENDING',
+      payment_status: 'UNPAID',
+      is_paid: false,
+      lookup_token: payload.lookup_token,
+    };
+  }
   const data = await parseApiResponse(
     res,
     successSchema(

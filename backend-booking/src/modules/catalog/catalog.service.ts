@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { Prisma, RoomAllotment } from '@prisma/client';
+import { Prisma, type RoomAllotment } from '@prisma/client';
 import {
   type CreatePropertyDto,
   createPropertySchema,
@@ -22,10 +22,14 @@ import {
 } from './dto/catalog.dto';
 import type { AuthenticatedUser } from '../../common/auth/authenticated-user';
 import { resolvePropertyScope } from '../../common/auth/property-scope.helper';
+import { VietSageSyncService } from '../vietsage-sync/vietsage-sync.service';
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly vietSageSyncService: VietSageSyncService,
+  ) {}
 
   async listProperties(filter?: {
     city?: string;
@@ -193,6 +197,7 @@ export class CatalogService {
             hasSeaView: true,
             isActive: true,
             vietSageRoomTypeId: true,
+            roomImages: true,
             allotments: {
               where: {
                 date: {
@@ -247,6 +252,7 @@ export class CatalogService {
         has_sea_view: rt.hasSeaView,
         is_active: rt.isActive,
         amenities: rt.amenities ?? [],
+        room_images: (rt.roomImages as string[]) ?? [],
         vietsage_room_type_id: rt.vietSageRoomTypeId,
         allotments: (rt.allotments ?? []).map((a) => ({
           date: a.date.toISOString().split('T')[0],
@@ -691,6 +697,7 @@ export class CatalogService {
         bedCount: dto.bed_count ?? 1,
         hasSeaView: dto.has_sea_view ?? false,
         amenities: dto.amenities ?? [],
+        roomImages: dto.room_images ?? [],
         isActive: dto.is_active ?? true,
         vietSageRoomTypeId: dto.vietsage_room_type_id || null,
       },
@@ -708,6 +715,7 @@ export class CatalogService {
       bed_count: created.bedCount,
       has_sea_view: created.hasSeaView,
       amenities: created.amenities ?? [],
+      room_images: (created.roomImages as string[]) ?? [],
       is_active: created.isActive,
       vietsage_room_type_id: created.vietSageRoomTypeId,
       created_at: created.createdAt.toISOString(),
@@ -750,6 +758,7 @@ export class CatalogService {
         ...(dto.bed_count !== undefined ? { bedCount: dto.bed_count } : {}),
         ...(dto.has_sea_view !== undefined ? { hasSeaView: dto.has_sea_view } : {}),
         ...(dto.amenities !== undefined ? { amenities: dto.amenities } : {}),
+        ...(dto.room_images !== undefined ? { roomImages: dto.room_images } : {}),
         ...(dto.is_active !== undefined ? { isActive: dto.is_active } : {}),
         ...(dto.vietsage_room_type_id !== undefined
           ? { vietSageRoomTypeId: dto.vietsage_room_type_id || null }
@@ -769,6 +778,7 @@ export class CatalogService {
       bed_count: updated.bedCount,
       has_sea_view: updated.hasSeaView,
       amenities: updated.amenities ?? [],
+      room_images: (updated.roomImages as string[]) ?? [],
       is_active: updated.isActive,
       vietsage_room_type_id: updated.vietSageRoomTypeId,
       created_at: updated.createdAt.toISOString(),
@@ -819,5 +829,241 @@ export class CatalogService {
       soft_deleted: false,
       message: 'Hạng phòng đã được xóa hoàn toàn.',
     };
+  }
+
+  /**
+   * Xem trước danh mục phòng từ VietSage PMS trước khi nhập hàng loạt
+   */
+  async previewVietSageRooms(propertyId: string, actor: AuthenticatedUser) {
+    resolvePropertyScope(actor, propertyId);
+
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+      include: {
+        roomTypes: true,
+        partnerAccounts: true,
+      },
+    });
+
+    if (!property) {
+      throw new NotFoundException(`Không tìm thấy cơ sở lưu trú có id ${propertyId}`);
+    }
+
+    const partnerEmail =
+      (property.vietSageHotelId?.includes('@') ? property.vietSageHotelId : undefined) ||
+      property.partnerAccounts?.[0]?.email ||
+      (actor.role === 'HOTEL_PARTNER' ? actor.email : undefined) ||
+      actor.email;
+
+    const hotelIdentifier =
+      property.vietSageHotelId ||
+      partnerEmail ||
+      property.slug ||
+      property.name;
+
+    const catalog = await this.vietSageSyncService.fetchRoomCatalog(
+      hotelIdentifier,
+      partnerEmail,
+    );
+
+    const existingRoomTypes = property.roomTypes;
+
+    return {
+      hotel_id: catalog.hotelId,
+      hotel_name: catalog.hotelName,
+      hotel_code: catalog.hotelCode,
+      partner_email: catalog.partnerEmail || partnerEmail || '',
+      total_pms_rooms: catalog.roomTypes.reduce((sum, r) => sum + r.totalRooms, 0),
+      room_types: catalog.roomTypes.map((rt) => {
+        const existing = existingRoomTypes.find(
+          (e) =>
+            (e.vietSageRoomTypeId && e.vietSageRoomTypeId === rt.normalizedKey) ||
+            e.name.trim().toLowerCase() === rt.name.trim().toLowerCase(),
+        );
+
+        return {
+          name: rt.name,
+          normalized_key: rt.normalizedKey,
+          description: rt.description,
+          base_price: rt.basePrice,
+          total_rooms: rt.totalRooms,
+          max_guests: rt.maxGuests,
+          bed_type: rt.bedType,
+          area_sqm: rt.areaSqm,
+          amenities: rt.amenities,
+          sample_room_numbers: rt.sampleRoomNumbers,
+          action: existing ? ('UPDATE' as const) : ('CREATE' as const),
+          existing_id: existing?.id || null,
+        };
+      }),
+    };
+  }
+
+  /**
+   * Nhập hàng loạt danh mục phòng và khởi tạo tồn kho 30 ngày từ VietSage PMS
+   */
+  async importVietSageRooms(
+    propertyId: string,
+    selectedKeys?: string[],
+    actor?: AuthenticatedUser,
+  ) {
+    if (!actor) {
+      throw new UnauthorizedException('Yêu cầu xác thực tài khoản để nhập phòng');
+    }
+
+    resolvePropertyScope(actor, propertyId);
+
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+      include: {
+        roomTypes: true,
+        partnerAccounts: true,
+      },
+    });
+
+    if (!property) {
+      throw new NotFoundException(`Không tìm thấy cơ sở lưu trú có id ${propertyId}`);
+    }
+
+    const partnerEmail =
+      (property.vietSageHotelId?.includes('@') ? property.vietSageHotelId : undefined) ||
+      property.partnerAccounts?.[0]?.email ||
+      (actor.role === 'HOTEL_PARTNER' ? actor.email : undefined) ||
+      actor.email;
+
+    const hotelIdentifier =
+      property.vietSageHotelId ||
+      partnerEmail ||
+      property.slug ||
+      property.name;
+
+    const catalog = await this.vietSageSyncService.fetchRoomCatalog(
+      hotelIdentifier,
+      partnerEmail,
+    );
+
+    const filteredRooms =
+      selectedKeys && selectedKeys.length > 0
+        ? catalog.roomTypes.filter((rt) => selectedKeys.includes(rt.normalizedKey))
+        : catalog.roomTypes;
+
+    if (filteredRooms.length === 0) {
+      throw new BadRequestException('Không có hạng phòng nào được chọn để nhập');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      // Tự động liên kết vietSageHotelId nếu chưa có
+      if (!property.vietSageHotelId && catalog.hotelId) {
+        await tx.property.update({
+          where: { id: propertyId },
+          data: { vietSageHotelId: catalog.hotelId },
+        });
+      }
+
+      let createdCount = 0;
+      let updatedCount = 0;
+      const processedRoomTypes: Array<{ id: string; name: string; action: string }> = [];
+
+      // Chuẩn bị ngày tạo allotment (30 ngày tiếp theo)
+      const now = new Date();
+      const todayYear = now.getUTCFullYear();
+      const todayMonth = now.getUTCMonth();
+      const todayDate = now.getUTCDate();
+
+      for (const rt of filteredRooms) {
+        const existing = property.roomTypes.find(
+          (e) =>
+            (e.vietSageRoomTypeId && e.vietSageRoomTypeId === rt.normalizedKey) ||
+            e.name.trim().toLowerCase() === rt.name.trim().toLowerCase(),
+        );
+
+        let targetRoomTypeId: string;
+        const price = Math.round(rt.basePrice) > 0 ? Math.round(rt.basePrice) : 500000;
+        const totalRooms = rt.totalRooms > 0 ? rt.totalRooms : 5;
+
+        if (existing) {
+          // Cập nhật hạng phòng hiện có
+          const updated = await tx.roomType.update({
+            where: { id: existing.id },
+            data: {
+              vietSageRoomTypeId: rt.normalizedKey,
+              basePrice: price,
+              maxGuests: rt.maxGuests > 0 ? rt.maxGuests : existing.maxGuests,
+              bedType: rt.bedType || existing.bedType,
+              areaSqm: rt.areaSqm > 0 ? rt.areaSqm : existing.areaSqm,
+              amenities:
+                rt.amenities && rt.amenities.length > 0
+                  ? rt.amenities
+                  : ((existing.amenities as Prisma.InputJsonValue) ??
+                    Prisma.JsonNull),
+              isActive: true,
+            },
+          });
+          targetRoomTypeId = updated.id;
+          updatedCount++;
+          processedRoomTypes.push({ id: updated.id, name: updated.name, action: 'UPDATED' });
+        } else {
+          // Tạo mới hạng phòng
+          const created = await tx.roomType.create({
+            data: {
+              propertyId,
+              name: rt.name,
+              description: rt.description || `${rt.name} - Đồng bộ tự động từ VietSage PMS`,
+              maxGuests: rt.maxGuests > 0 ? rt.maxGuests : 2,
+              basePrice: price,
+              bedType: rt.bedType || 'DOUBLE',
+              bedCount: 1,
+              areaSqm: rt.areaSqm > 0 ? rt.areaSqm : 25,
+              hasSeaView: false,
+              amenities:
+                rt.amenities && rt.amenities.length > 0
+                  ? rt.amenities
+                  : ['WiFi miễn phí', 'Điều hòa không khí', 'Truyền hình vệ tinh', 'Bình nước nóng'],
+              vietSageRoomTypeId: rt.normalizedKey,
+              isActive: true,
+            },
+          });
+          targetRoomTypeId = created.id;
+          createdCount++;
+          processedRoomTypes.push({ id: created.id, name: created.name, action: 'CREATED' });
+        }
+
+        // Tạo/Cập nhật tồn kho ban đầu cho 30 ngày để phòng có thể nhận booking ngay lập tức
+        for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+          const allotmentDate = new Date(Date.UTC(todayYear, todayMonth, todayDate + dayOffset));
+          await tx.roomAllotment.upsert({
+            where: {
+              roomTypeId_date: {
+                roomTypeId: targetRoomTypeId,
+                date: allotmentDate,
+              },
+            },
+            create: {
+              roomTypeId: targetRoomTypeId,
+              date: allotmentDate,
+              totalRooms,
+              bookedRooms: 0,
+              price,
+              isBlocked: false,
+            },
+            update: {
+              totalRooms,
+              price,
+            },
+          });
+        }
+      }
+
+      return {
+        success: true,
+        property_id: propertyId,
+        hotel_name: catalog.hotelName,
+        hotel_code: catalog.hotelCode,
+        created_count: createdCount,
+        updated_count: updatedCount,
+        total_processed: filteredRooms.length,
+        room_types: processedRoomTypes,
+      };
+    });
   }
 }
