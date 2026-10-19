@@ -81,7 +81,7 @@ export default function AdminPaymentsPage() {
           <div className="flex items-center gap-2 text-outline text-xs font-bold uppercase tracking-wider">
             <CreditCard className={`w-4 h-4 ${isPartner ? 'text-emerald-600' : 'text-primary'}`} />
             <span className={isPartner ? 'text-emerald-700' : 'text-primary'}>
-              {isPartner ? 'Doanh Thu & Tiền Cọc' : 'Quản Trị Thanh Toán'}
+              {isPartner ? 'Kênh Đối Tác' : 'Kênh Quản Trị OTA'}
             </span>
             {isPartner && managedPropertyName && (
               <>
@@ -91,7 +91,7 @@ export default function AdminPaymentsPage() {
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight mt-1 text-balance">
-            {isPartner ? 'Doanh Thu & Tiền Cọc' : 'Lịch Sử Giao Dịch & Thanh Toán'}
+            Doanh Thu & Thanh Toán
           </h1>
         </div>
 

@@ -221,7 +221,7 @@ export default function AdminBookingsPage() {
           <div className="flex items-center gap-2 text-slate-500 text-xs sm:text-sm font-extrabold uppercase tracking-wider">
             <Calendar className={`w-4 h-4 ${isPartner ? 'text-emerald-600' : 'text-primary'}`} />
             <span className={isPartner ? 'text-emerald-700' : 'text-primary'}>
-              {isPartner ? 'Đối Tác Cơ Sở' : 'Quản Trị Hệ Thống'}
+              {isPartner ? 'Kênh Đối Tác' : 'Kênh Quản Trị OTA'}
             </span>
             {isPartner && managedPropertyName && (
               <>
@@ -231,7 +231,7 @@ export default function AdminBookingsPage() {
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1 text-balance">
-            {isPartner ? 'Danh Sách Đặt Phòng' : 'Danh Sách Đơn Đặt'}
+            Quản Lý Đơn Đặt Phòng
           </h1>
         </div>
 

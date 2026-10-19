@@ -283,7 +283,7 @@ export default function PartnerDashboardPage() {
             </div>
             <div>
               <div className="text-sm font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
-                Hạng Phòng Cơ Sở
+                Quản Lý Phòng &amp; Giá
               </div>
               <div className="text-xs text-slate-500">Thông số phòng &amp; tiện ích</div>
             </div>

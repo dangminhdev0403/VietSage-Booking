@@ -29,8 +29,10 @@ import {
   CheckCircle2,
   PauseCircle,
   TrendingUp,
+  Building2,
 } from 'lucide-react';
-import { usePropertyDetailQuery } from '@/features/catalog/hooks/use-catalog';
+import { useSearchParams } from 'next/navigation';
+import { usePropertyDetailQuery, usePropertiesQuery } from '@/features/catalog/hooks/use-catalog';
 import {
   createRoomType,
   updateRoomType,
@@ -71,6 +73,8 @@ const parseNumberDots = (val: string): number => {
 
 export default function PartnerRoomsPage() {
   const { data: session, status: authStatus } = useSession();
+  const searchParams = useSearchParams();
+  const queryPropId = searchParams.get('propertyId');
 
   const user = session?.user as
     | {
@@ -80,14 +84,25 @@ export default function PartnerRoomsPage() {
       }
     | undefined;
 
-  const managedPropertyId = user?.managedPropertyId ?? '';
+  const isAdmin = user?.role === 'ADMIN' || !user?.managedPropertyId;
+  const { data: allPropsData } = usePropertiesQuery({}, { enabled: isAdmin && authStatus === 'authenticated' });
+  const allProperties = allPropsData?.items || [];
+
+  const [adminSelectedPropId, setAdminSelectedPropId] = useState<string>('');
+
+  const effectivePropertyId = useMemo(() => {
+    if (user?.managedPropertyId) return user.managedPropertyId;
+    if (adminSelectedPropId) return adminSelectedPropId;
+    if (queryPropId && allProperties.some((p) => p.id === queryPropId)) return queryPropId;
+    return allProperties[0]?.id || '';
+  }, [user?.managedPropertyId, adminSelectedPropId, queryPropId, allProperties]);
 
   const {
     data: property,
     isLoading,
     refetch,
-  } = usePropertyDetailQuery(managedPropertyId, {
-    enabled: authStatus === 'authenticated' && Boolean(managedPropertyId),
+  } = usePropertyDetailQuery(effectivePropertyId, {
+    enabled: authStatus === 'authenticated' && Boolean(effectivePropertyId),
   });
 
   // Filter & Search & View Mode States
@@ -207,7 +222,7 @@ export default function PartnerRoomsPage() {
     setIsCreating(true);
     try {
       await createRoomType({
-        property_id: managedPropertyId,
+        property_id: effectivePropertyId,
         name: createName.trim(),
         description: createDescription.trim() || undefined,
         max_guests: Number(createMaxGuests) || 2,
@@ -420,17 +435,34 @@ export default function PartnerRoomsPage() {
         <div>
           <div className="flex items-center gap-2 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider">
             <BedDouble className="w-4 h-4 text-emerald-700" />
-            <span>Kênh Quản Trị Đối Tác • Quản Lý Phòng Để Bán</span>
+            <span>Kênh Quản Trị OTA &amp; Đối Tác • Quản Lý Phòng</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1 text-balance">
-            Quản Lý Phòng Để Bán &amp; Bảng Giá Cơ Sở
+            Quản Lý Phòng
           </h1>
           <p className="text-sm sm:text-base text-slate-600 mt-1 text-pretty">
-            Đăng bán, cấu hình thông số kỹ thuật và thiết lập giá cơ sở niêm yết cho từng hạng phòng của khách sạn trên sàn OTA.
+            Cấu hình các hạng phòng, giá bán niêm yết, tiện ích và trạng thái mở bán trên kênh OTA.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          {isAdmin && allProperties.length > 0 && (
+            <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+              <Building2 className="w-4 h-4 text-emerald-700 shrink-0" />
+              <select
+                value={effectivePropertyId}
+                onChange={(e) => setAdminSelectedPropId(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer max-w-[220px] truncate"
+              >
+                {allProperties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button
             onClick={() => refetch()}
             disabled={isLoading}
@@ -446,7 +478,7 @@ export default function PartnerRoomsPage() {
             className="px-5 py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-98 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
-            <span>Đăng Bán Phòng Mới</span>
+            <span>+ Thêm Phòng Mới</span>
           </button>
         </div>
       </div>

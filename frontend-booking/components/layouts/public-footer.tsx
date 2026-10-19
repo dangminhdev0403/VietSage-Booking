@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { VietSageLogo } from '@/components/shared/vietsage-logo';
 
-export function PublicFooter() {
+function PublicFooterContent() {
   const pathname = usePathname();
 
   if (pathname === '/login') {
@@ -35,5 +35,13 @@ export function PublicFooter() {
         </div>
       </div>
     </footer>
+  );
+}
+
+export function PublicFooter() {
+  return (
+    <Suspense fallback={null}>
+      <PublicFooterContent />
+    </Suspense>
   );
 }

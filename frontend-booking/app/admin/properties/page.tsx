@@ -134,15 +134,15 @@ export default function AdminPropertiesPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-outline text-xs font-bold uppercase tracking-widest">
-            <span>{managedPropertyId ? 'Đối Tác Cơ Sở' : 'Quản Trị Hệ Thống'}</span>
+            <span>{managedPropertyId ? 'Kênh Đối Tác' : 'Kênh Quản Trị OTA'}</span>
             <ChevronRight className="w-3.5 h-3.5 text-outline-variant" />
             <span className={managedPropertyId ? 'text-emerald-700 font-extrabold' : 'text-primary font-extrabold'}>
-              {managedPropertyId ? 'Hồ Sơ Cơ Sở & Phòng' : 'Mạng Lưới Khách Sạn'}
+              Quản Lý Khách Sạn
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight text-balance">
-            {managedPropertyId ? (managedPropertyName || 'Hồ Sơ Cơ Sở') : 'Danh Mục Khách Sạn Đối Tác'}
+            {managedPropertyId ? (managedPropertyName || 'Quản Lý Khách Sạn') : 'Quản Lý Khách Sạn'}
           </h1>
         </div>
 
@@ -155,7 +155,7 @@ export default function AdminPropertiesPage() {
               className="flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl transition-all shadow-xs text-xs font-bold cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Đăng Cơ Sở Mới</span>
+              <span>+ Thêm Khách Sạn Mới</span>
             </button>
           )}
 
@@ -164,7 +164,7 @@ export default function AdminPropertiesPage() {
             className="flex items-center gap-2 px-4 py-2.5 bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container text-on-surface rounded-2xl transition-all shadow-2xs text-xs font-bold cursor-pointer"
           >
             <RefreshCw className="w-4 h-4 text-primary" />
-            <span>{managedPropertyId ? 'Làm Mới Hồ Sơ' : 'Làm Mới Danh Mục'}</span>
+            <span>Làm Mới</span>
           </button>
         </div>
       </div>
@@ -185,20 +185,20 @@ export default function AdminPropertiesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <div className="flex items-center justify-between text-outline text-xs uppercase font-bold tracking-wider mb-2">
-            <span>{managedPropertyId ? 'Cơ Sở Quản Lý' : 'Tổng Đối Tác Khách Sạn'}</span>
+            <span>Tổng Số Khách Sạn</span>
             <Building2 className="w-4 h-4 text-primary" />
           </div>
           <div className="text-2xl font-black text-on-surface">
-            {managedPropertyId ? (managedPropertyName || '1 Cơ sở') : properties.length}
+            {managedPropertyId ? (managedPropertyName || '1 Khách sạn') : properties.length}
           </div>
           <div className="text-xs text-tertiary font-medium mt-1">
-            {managedPropertyId ? 'Trực thuộc tài khoản đối tác' : 'Đang phân phối trên OTA'}
+            Đang mở bán trên kênh OTA
           </div>
         </div>
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <div className="flex items-center justify-between text-outline text-xs uppercase font-bold tracking-wider mb-2">
-            <span>{managedPropertyId ? 'Hạng Phòng Cơ Sở' : 'Tổng Hạng Phòng Sàn'}</span>
+            <span>Tổng Số Hạng Phòng</span>
             <BedDouble className="w-4 h-4 text-primary" />
           </div>
           <div className="text-2xl font-black text-on-surface">{totalRoomTypes}</div>
@@ -207,7 +207,7 @@ export default function AdminPropertiesPage() {
 
         <div className="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 shadow-2xs">
           <div className="flex items-center justify-between text-outline text-xs uppercase font-bold tracking-wider mb-2">
-            <span>{managedPropertyId ? 'Tiêu Chuẩn Cơ Sở' : 'Địa Điểm Phủ Sóng'}</span>
+            <span>Thành Phố / Điểm Đến</span>
             <MapPin className="w-4 h-4 text-primary" />
           </div>
           <div className="text-2xl font-black text-on-surface">
@@ -348,12 +348,19 @@ export default function AdminPropertiesPage() {
 
                     <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                       <Link
+                        href={`/partner/rooms?propertyId=${prop.id}`}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      >
+                        <BedDouble className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Quản Lý Phòng</span>
+                      </Link>
+                      <Link
                         href={`/properties/${prop.id}`}
                         target="_blank"
                         className="px-3.5 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold flex items-center gap-1.5 transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-primary" />
-                        <span>Xem Trên OTA</span>
+                        <span>Xem Kênh OTA</span>
                       </Link>
                     </div>
                   </div>
@@ -369,10 +376,10 @@ export default function AdminPropertiesPage() {
                 <div className="space-y-3 pt-3 border-t border-outline-variant/20">
                   <div className="flex items-center justify-between">
                     <span className="text-xs uppercase tracking-wider font-extrabold text-outline">
-                      Các Hạng Phòng Phân Phối ({prop.room_types?.length || 0})
+                      Danh Sách Phòng & Giá Bán ({prop.room_types?.length || 0})
                     </span>
                     <span className="text-xs text-tertiary font-semibold">
-                      Đã đồng bộ với PMS
+                      Đồng bộ VietSage PMS
                     </span>
                   </div>
 

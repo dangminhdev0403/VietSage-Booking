@@ -13,7 +13,9 @@ export default function PublicLayout({
         <PublicHeader />
       </React.Suspense>
       <main className="flex-1">{children}</main>
-      <PublicFooter />
+      <React.Suspense fallback={null}>
+        <PublicFooter />
+      </React.Suspense>
     </div>
   );
 }

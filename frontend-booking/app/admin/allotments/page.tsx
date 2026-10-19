@@ -272,12 +272,12 @@ export default function AdminAllotmentsPage() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-outline text-xs font-bold uppercase tracking-widest">
             <CalendarDays className="w-4 h-4 text-primary" />
-            <span>{isPartner ? 'Đối Tác Cơ Sở' : 'Quản Trị Quỹ Phòng'}</span>
+            <span>{isPartner ? 'Kênh Đối Tác' : 'Kênh Quản Trị OTA'}</span>
             <span className="text-outline-variant">•</span>
-            <span className="text-primary font-extrabold">{isPartner ? 'Quỹ Phòng & Giá Bán' : 'Tồn Kho & Giá Động'}</span>
+            <span className="text-primary font-extrabold">Lịch Phòng & Giá Bán</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight text-balance">
-            {isPartner ? 'Lịch Quỹ Phòng & Giá Bán' : 'Lịch Tồn Kho & Giá Động'}
+            Lịch Phòng & Giá Bán
           </h1>
         </div>
 

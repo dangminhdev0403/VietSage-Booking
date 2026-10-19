@@ -62,37 +62,37 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
   const navItems = isPartner
     ? [
         {
-          label: 'Tổng quan cơ sở',
+          label: 'Tổng quan',
           href: '/partner',
           icon: LayoutDashboard,
           active: pathname === '/partner',
         },
         {
-          label: 'Khách đặt phòng',
+          label: 'Quản lý Đơn đặt phòng',
           href: '/partner/bookings',
           icon: Calendar,
           active: pathname.startsWith('/partner/bookings'),
         },
         {
-          label: 'Doanh thu tiền phòng',
-          href: '/partner/payments',
-          icon: CreditCard,
-          active: pathname.startsWith('/partner/payments'),
-        },
-        {
-          label: 'Hạng phòng cơ sở',
+          label: 'Quản lý Phòng',
           href: '/partner/rooms',
           icon: BedDouble,
           active: pathname.startsWith('/partner/rooms'),
         },
         {
-          label: 'Lịch giá & Tồn kho',
+          label: 'Lịch phòng & Giá bán',
           href: '/partner/allotments',
           icon: CalendarDays,
           active: pathname.startsWith('/partner/allotments'),
         },
         {
-          label: 'Cài đặt khách sạn',
+          label: 'Doanh thu & Thanh toán',
+          href: '/partner/payments',
+          icon: CreditCard,
+          active: pathname.startsWith('/partner/payments'),
+        },
+        {
+          label: 'Quản lý Khách sạn',
           href: '/partner/properties',
           icon: Building2,
           active:
@@ -102,34 +102,40 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
       ]
     : [
         {
-          label: 'Tổng quan toàn sàn',
+          label: 'Tổng quan',
           href: '/admin',
           icon: LayoutDashboard,
           active: pathname === '/admin',
         },
         {
-          label: 'Đơn đặt phòng sàn',
+          label: 'Quản lý Đơn đặt phòng',
           href: '/admin/bookings',
           icon: Calendar,
           active: pathname.startsWith('/admin/bookings'),
         },
         {
-          label: 'Dòng tiền & Đối soát',
-          href: '/admin/payments',
-          icon: CreditCard,
-          active: pathname.startsWith('/admin/payments'),
-        },
-        {
-          label: 'Mạng lưới khách sạn',
+          label: 'Quản lý Khách sạn',
           href: '/admin/properties',
           icon: Building2,
           active: pathname.startsWith('/admin/properties'),
         },
         {
-          label: 'Lịch tồn kho & Giá sàn',
+          label: 'Quản lý Phòng',
+          href: '/partner/rooms',
+          icon: BedDouble,
+          active: pathname.startsWith('/partner/rooms'),
+        },
+        {
+          label: 'Lịch phòng & Giá bán',
           href: '/admin/allotments',
           icon: CalendarDays,
           active: pathname.startsWith('/admin/allotments'),
+        },
+        {
+          label: 'Doanh thu & Thanh toán',
+          href: '/admin/payments',
+          icon: CreditCard,
+          active: pathname.startsWith('/admin/payments'),
         },
       ];
 
@@ -144,12 +150,12 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
 
   const scopeBadgeLabel = isPartner
     ? managedPropertyName
-      ? `Đối tác: ${managedPropertyName}`
-      : 'Cơ sở đối tác liên kết'
-    : 'Quản trị toàn sàn OTA';
+      ? `Khách sạn: ${managedPropertyName}`
+      : 'Khách sạn đối tác'
+    : 'Kênh Quản Trị OTA & PMS';
 
-  const portalTitle = isPartner ? 'Đối Tác Cơ Sở' : 'Quản Trị Hệ Thống';
-  const portalSubtitle = isPartner ? 'Vận hành cơ sở' : 'Điều hành hệ thống';
+  const portalTitle = isPartner ? 'Quản Trị Khách Sạn' : 'Kênh Quản Trị OTA';
+  const portalSubtitle = isPartner ? 'Vận hành phòng & Đơn đặt' : 'Đồng bộ VietSage PMS';
 
   const activeNavItemClass = isPartner
     ? 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200/90 shadow-2xs'
@@ -253,7 +259,7 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
             href="/"
             className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-outline-variant/30 text-xs sm:text-sm font-bold text-stone-600 hover:text-stone-900 hover:bg-surface-container transition-colors"
           >
-            <span>Về Cổng Khách Hàng OTA</span>
+            <span>Kênh Khách Đặt Phòng (OTA)</span>
           </Link>
         </div>
       </aside>
@@ -450,7 +456,7 @@ export function AdminShell({ children, sessionUser, isPartner: isPartnerProp }: 
                     className="flex items-center gap-2.5 px-3 py-2 rounded-2xl hover:bg-surface-container text-xs font-bold text-on-surface transition-colors"
                   >
                     <BedDouble className="w-4 h-4 text-primary" />
-                    <span>{isPartner ? 'Hạng phòng cơ sở' : 'Cơ sở lưu trú & Phòng'}</span>
+                    <span>{isPartner ? 'Quản lý phòng & Giá' : 'Cơ sở lưu trú & Phòng'}</span>
                   </Link>
                   <Link
                     href={isPartner ? '/partner/allotments' : '/admin/allotments'}
