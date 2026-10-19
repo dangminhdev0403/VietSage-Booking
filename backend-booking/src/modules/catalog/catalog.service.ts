@@ -95,6 +95,7 @@ export class CatalogService {
           starRating: true,
           thumbnailUrl: true,
           images: true,
+          vietSageHotelId: true,
           createdAt: true,
           roomTypes: {
             where: { isActive: true },
@@ -105,6 +106,7 @@ export class CatalogService {
               maxGuests: true,
               basePrice: true,
               amenities: true,
+              vietSageRoomTypeId: true,
             },
           },
         },
@@ -124,6 +126,7 @@ export class CatalogService {
         star_rating: p.starRating,
         thumbnail_url: p.thumbnailUrl,
         images: p.images ?? [],
+        vietsage_hotel_id: p.vietSageHotelId,
         room_types: p.roomTypes.map((rt) => ({
           id: rt.id,
           name: rt.name,
@@ -131,6 +134,7 @@ export class CatalogService {
           max_guests: rt.maxGuests,
           base_price: rt.basePrice,
           amenities: rt.amenities ?? [],
+          vietsage_room_type_id: rt.vietSageRoomTypeId,
         })),
         created_at: p.createdAt.toISOString(),
       })),
@@ -154,6 +158,7 @@ export class CatalogService {
         starRating: true,
         thumbnailUrl: true,
         images: true,
+        vietSageHotelId: true,
         createdAt: true,
         roomTypes: {
           select: {
@@ -168,6 +173,7 @@ export class CatalogService {
             bedCount: true,
             hasSeaView: true,
             isActive: true,
+            vietSageRoomTypeId: true,
             allotments: {
               where: {
                 date: {
@@ -204,6 +210,7 @@ export class CatalogService {
       star_rating: p.starRating,
       thumbnail_url: p.thumbnailUrl,
       images: p.images ?? [],
+      vietsage_hotel_id: p.vietSageHotelId,
       room_types: p.roomTypes.map((rt) => ({
         id: rt.id,
         name: rt.name,
@@ -216,6 +223,7 @@ export class CatalogService {
         has_sea_view: rt.hasSeaView,
         is_active: rt.isActive,
         amenities: rt.amenities ?? [],
+        vietsage_room_type_id: rt.vietSageRoomTypeId,
         allotments: (rt.allotments ?? []).map((a) => ({
           date: a.date.toISOString().split('T')[0],
           total_rooms: a.totalRooms,
@@ -482,6 +490,7 @@ export class CatalogService {
         description: dto.description,
         starRating: dto.star_rating ?? 4,
         thumbnailUrl: dto.thumbnail_url,
+        vietSageHotelId: dto.vietsage_hotel_id || null,
       },
     });
 
@@ -492,6 +501,7 @@ export class CatalogService {
       city: p.city,
       address: p.address,
       star_rating: p.starRating,
+      vietsage_hotel_id: p.vietSageHotelId,
       created_at: p.createdAt.toISOString(),
     };
   }
@@ -531,6 +541,9 @@ export class CatalogService {
         ...(dto.thumbnail_url !== undefined ? { thumbnailUrl: dto.thumbnail_url || null } : {}),
         ...(dto.images !== undefined ? { images: dto.images } : {}),
         ...(dto.is_active !== undefined ? { isActive: dto.is_active } : {}),
+        ...(dto.vietsage_hotel_id !== undefined
+          ? { vietSageHotelId: dto.vietsage_hotel_id || null }
+          : {}),
       },
     });
 
@@ -545,6 +558,7 @@ export class CatalogService {
       thumbnail_url: updated.thumbnailUrl,
       images: updated.images,
       is_active: updated.isActive,
+      vietsage_hotel_id: updated.vietSageHotelId,
       updated_at: updated.updatedAt.toISOString(),
     };
   }
@@ -637,6 +651,7 @@ export class CatalogService {
         hasSeaView: dto.has_sea_view ?? false,
         amenities: dto.amenities ?? [],
         isActive: dto.is_active ?? true,
+        vietSageRoomTypeId: dto.vietsage_room_type_id || null,
       },
     });
 
@@ -653,6 +668,7 @@ export class CatalogService {
       has_sea_view: created.hasSeaView,
       amenities: created.amenities ?? [],
       is_active: created.isActive,
+      vietsage_room_type_id: created.vietSageRoomTypeId,
       created_at: created.createdAt.toISOString(),
       updated_at: created.updatedAt.toISOString(),
     };
@@ -694,6 +710,9 @@ export class CatalogService {
         ...(dto.has_sea_view !== undefined ? { hasSeaView: dto.has_sea_view } : {}),
         ...(dto.amenities !== undefined ? { amenities: dto.amenities } : {}),
         ...(dto.is_active !== undefined ? { isActive: dto.is_active } : {}),
+        ...(dto.vietsage_room_type_id !== undefined
+          ? { vietSageRoomTypeId: dto.vietsage_room_type_id || null }
+          : {}),
       },
     });
 
@@ -710,6 +729,7 @@ export class CatalogService {
       has_sea_view: updated.hasSeaView,
       amenities: updated.amenities ?? [],
       is_active: updated.isActive,
+      vietsage_room_type_id: updated.vietSageRoomTypeId,
       created_at: updated.createdAt.toISOString(),
       updated_at: updated.updatedAt.toISOString(),
     };

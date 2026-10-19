@@ -1,168 +1,1202 @@
 {
-  "version": "1.0.0",
-  "name": "Booking Manager OTA API",
-  "endpoints": [
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Booking Manager OTA API",
+    "version": "1.0.0",
+    "description": "API contract for booking-manager (OTA Platform) integrated with VietSage."
+  },
+  "servers": [
     {
-      "method": "POST",
-      "path": "/api/v1/auth/login",
-      "implementation_status": "implemented",
-      "description": "Authenticate user and issue tokens"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/auth/refresh",
-      "implementation_status": "implemented",
-      "description": "Refresh access token using refresh token"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/auth/me",
-      "implementation_status": "implemented",
-      "description": "Get current user profile and active permissions"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/properties",
-      "implementation_status": "implemented",
-      "description": "List properties with destination and date filtering"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/properties",
-      "implementation_status": "implemented",
-      "description": "Create a new property (Admin only)"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/properties/{id}",
-      "implementation_status": "implemented",
-      "description": "Get detailed property information by ID"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/properties/{id}",
-      "implementation_status": "implemented",
-      "description": "Update property information (Hotel Partner or Admin)"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/services",
-      "implementation_status": "implemented",
-      "description": "List add-on travel and hospitality services"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/services",
-      "implementation_status": "implemented",
-      "description": "Create an add-on service (Admin only)"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/bookings",
-      "implementation_status": "implemented",
-      "description": "List bookings for partner or admin"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/bookings",
-      "implementation_status": "implemented",
-      "description": "Create a new OTA booking"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/bookings/summary",
-      "implementation_status": "implemented",
-      "description": "Get aggregate booking metrics and status summary"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/bookings/{id}",
-      "implementation_status": "implemented",
-      "description": "Get booking details by ID or booking code"
-    },
-    {
-      "method": "PATCH",
-      "path": "/api/v1/bookings/{id}/status",
-      "implementation_status": "implemented",
-      "description": "Cancel booking reservation (local OTA mutation)"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/vietsage/sync",
-      "implementation_status": "planned",
-      "description": "Trigger bi-directional sync with VietSage PMS"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/auth/profile",
-      "implementation_status": "implemented",
-      "description": "Update staff or partner profile"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/auth/change-password",
-      "implementation_status": "implemented",
-      "description": "Change account password"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/properties/{id}/allotments",
-      "implementation_status": "implemented",
-      "description": "Get scoped room allotments for an authorized property"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/allotments/update",
-      "implementation_status": "implemented",
-      "description": "Update room allotment and rate quota"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/bookings/lookup",
-      "implementation_status": "implemented",
-      "description": "Look up booking by code and contact for guest"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/payments",
-      "implementation_status": "implemented",
-      "description": "List payment transactions with optional property and status filter"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/payments/create-intent",
-      "implementation_status": "implemented",
-      "description": "Create payment intent for the booking owner or verified guest contact"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/payments/confirm",
-      "implementation_status": "implemented",
-      "description": "Confirm payment settlement (Admin only)"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/payments/booking/{bookingId}",
-      "implementation_status": "implemented",
-      "description": "Get payment details for the booking owner or verified guest contact"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/room-types",
-      "implementation_status": "implemented",
-      "description": "Create a new room type for partner or admin property"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/room-types/{id}",
-      "implementation_status": "implemented",
-      "description": "Update room type specifications and base price"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/room-types/{id}",
-      "implementation_status": "implemented",
-      "description": "Delete or deactivate room type"
+      "url": "http://localhost:8080",
+      "description": "Local development server"
     }
-  ]
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Authenticate user and issue tokens",
+        "operationId": "login",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token using refresh token",
+        "operationId": "refreshToken",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refresh_token"
+                ],
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Get current user profile and active permissions",
+        "operationId": "getProfile",
+        "x-implementation-status": "implemented",
+        "responses": {
+          "200": {
+            "description": "Current profile"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/properties": {
+      "get": {
+        "summary": "List properties with destination and date filtering",
+        "operationId": "listProperties",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of hotels & properties"
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "summary": "Create a new property (Admin only)",
+        "operationId": "createProperty",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "city",
+                  "address"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "star_rating": {
+                    "type": "number"
+                  },
+                  "thumbnail_url": {
+                    "type": "string"
+                  },
+                  "vietsage_hotel_id": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/properties/{id}": {
+      "get": {
+        "summary": "Get detailed property information by ID",
+        "operationId": "getProperty",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property details"
+          }
+        },
+        "security": []
+      },
+      "put": {
+        "summary": "Update property information (Hotel Partner or Admin)",
+        "operationId": "updateProperty",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "star_rating": {
+                    "type": "number"
+                  },
+                  "thumbnail_url": {
+                    "type": "string"
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_active": {
+                    "type": "boolean"
+                  },
+                  "vietsage_hotel_id": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/services": {
+      "get": {
+        "summary": "List add-on travel and hospitality services",
+        "operationId": "listServices",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of add-on services"
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "summary": "Create an add-on service (Admin only)",
+        "operationId": "createService",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "category",
+                  "price"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "integer"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings": {
+      "get": {
+        "summary": "List bookings for partner or admin",
+        "operationId": "listBookings",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of reservations"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a new OTA booking",
+        "operationId": "createBooking",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "property_id",
+                  "room_type_id",
+                  "guest_name",
+                  "guest_email",
+                  "guest_phone",
+                  "check_in",
+                  "check_out"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string"
+                  },
+                  "room_type_id": {
+                    "type": "string"
+                  },
+                  "guest_name": {
+                    "type": "string"
+                  },
+                  "guest_email": {
+                    "type": "string"
+                  },
+                  "guest_phone": {
+                    "type": "string"
+                  },
+                  "check_in": {
+                    "type": "string"
+                  },
+                  "check_out": {
+                    "type": "string"
+                  },
+                  "special_requests": {
+                    "type": "string"
+                  },
+                  "service_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/bookings/summary": {
+      "get": {
+        "summary": "Get aggregate booking metrics and status summary",
+        "operationId": "getBookingSummary",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking aggregate metrics summary"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}": {
+      "get": {
+        "summary": "Get booking details by ID or booking code",
+        "operationId": "getBooking",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking details"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{id}/status": {
+      "patch": {
+        "summary": "Cancel booking reservation (local OTA mutation)",
+        "operationId": "updateBookingStatus",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "CANCELLED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/vietsage/sync": {
+      "post": {
+        "summary": "Trigger bi-directional sync with VietSage PMS",
+        "operationId": "syncVietSage",
+        "x-implementation-status": "planned",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sync_type": {
+                    "type": "string",
+                    "enum": [
+                      "all",
+                      "inventory",
+                      "bookings"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sync completed"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/profile": {
+      "put": {
+        "summary": "Update staff or partner profile",
+        "operationId": "updateProfile",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "put": {
+        "summary": "Change account password",
+        "operationId": "changePassword",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "old_password",
+                  "new_password"
+                ],
+                "properties": {
+                  "old_password": {
+                    "type": "string"
+                  },
+                  "new_password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/properties/{id}/allotments": {
+      "get": {
+        "summary": "Get scoped room allotments for an authorized property",
+        "operationId": "getPropertyAllotments",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room allotments for month"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/allotments/update": {
+      "post": {
+        "summary": "Update room allotment and rate quota",
+        "operationId": "updateAllotment",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "room_type_id",
+                  "date"
+                ],
+                "properties": {
+                  "room_type_id": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string"
+                  },
+                  "total_rooms": {
+                    "type": "integer"
+                  },
+                  "price": {
+                    "type": "integer"
+                  },
+                  "is_blocked": {
+                    "type": "boolean"
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "total_rooms"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "price"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "is_blocked"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Allotment updated"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/lookup": {
+      "post": {
+        "summary": "Look up booking by code and contact for guest",
+        "operationId": "lookupBooking",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "booking_code",
+                  "contact"
+                ],
+                "properties": {
+                  "booking_code": {
+                    "type": "string"
+                  },
+                  "contact": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking details"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/payments": {
+      "get": {
+        "summary": "List payment transactions with optional property and status filter",
+        "operationId": "listPayments",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of payment transactions"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/create-intent": {
+      "post": {
+        "summary": "Create payment intent for the booking owner or verified guest contact",
+        "operationId": "createPaymentIntent",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "booking_id"
+                ],
+                "properties": {
+                  "booking_id": {
+                    "type": "string"
+                  },
+                  "payment_method": {
+                    "type": "string",
+                    "enum": [
+                      "BANK_TRANSFER",
+                      "PAY_AT_HOTEL"
+                    ]
+                  },
+                  "contact": {
+                    "type": "string",
+                    "description": "Exact guest email or normalized phone; required when no bearer token is supplied"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment intent created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/v1/payments/confirm": {
+      "post": {
+        "summary": "Confirm payment settlement (Admin only)",
+        "operationId": "confirmPayment",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "booking_id": {
+                    "type": "string"
+                  },
+                  "transaction_ref": {
+                    "type": "string"
+                  }
+                },
+                "oneOf": [
+                  {
+                    "required": [
+                      "booking_id"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "transaction_ref"
+                    ]
+                  }
+                ],
+                "not": {
+                  "required": [
+                    "booking_id",
+                    "transaction_ref"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment confirmed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/payments/booking/{bookingId}": {
+      "get": {
+        "summary": "Get payment details for the booking owner or verified guest contact",
+        "operationId": "getPaymentByBookingId",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contact",
+            "in": "query",
+            "required": false,
+            "description": "Exact guest email or normalized phone; required when no bearer token is supplied",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment details"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ]
+      }
+    },
+    "/api/v1/room-types": {
+      "post": {
+        "summary": "Create a new room type for partner or admin property",
+        "operationId": "createRoomType",
+        "x-implementation-status": "implemented",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "base_price"
+                ],
+                "properties": {
+                  "property_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "max_guests": {
+                    "type": "integer",
+                    "default": 2
+                  },
+                  "base_price": {
+                    "type": "integer"
+                  },
+                  "area_sqm": {
+                    "type": "number"
+                  },
+                  "bed_type": {
+                    "type": "string"
+                  },
+                  "bed_count": {
+                    "type": "integer"
+                  },
+                  "has_sea_view": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "amenities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "vietsage_room_type_id": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Room type created successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/room-types/{id}": {
+      "put": {
+        "summary": "Update room type specifications and base price",
+        "operationId": "updateRoomType",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "max_guests": {
+                    "type": "integer"
+                  },
+                  "base_price": {
+                    "type": "integer"
+                  },
+                  "area_sqm": {
+                    "type": "number"
+                  },
+                  "bed_type": {
+                    "type": "string"
+                  },
+                  "bed_count": {
+                    "type": "integer"
+                  },
+                  "has_sea_view": {
+                    "type": "boolean"
+                  },
+                  "amenities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_active": {
+                    "type": "boolean"
+                  },
+                  "vietsage_room_type_id": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Room type updated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete or deactivate room type",
+        "operationId": "deleteRoomType",
+        "x-implementation-status": "implemented",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room type deleted or deactivated successfully"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "accountRoleSchema": {
+        "type": "string",
+        "enum": [
+          "ADMIN"
+        ]
+      }
+    }
+  }
 }

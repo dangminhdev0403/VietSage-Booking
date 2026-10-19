@@ -92,6 +92,7 @@ export const roomTypeSummarySchema = z.object({
   has_sea_view: z.boolean().nullable().optional(),
   room_images: z.array(z.string()).default([]).optional(),
   is_active: z.boolean().nullable().optional(),
+  vietsage_room_type_id: z.string().nullable().optional(),
   allotments: z.array(z.object({
     date: z.string(),
     total_rooms: z.number(),
@@ -112,6 +113,7 @@ export const propertyItemSchema = z.object({
   star_rating: z.number(),
   thumbnail_url: z.string().nullable().optional(),
   images: z.array(z.string()).default([]),
+  vietsage_hotel_id: z.string().nullable().optional(),
   room_types: z.array(roomTypeSummarySchema).default([]),
   created_at: z.string(),
 });

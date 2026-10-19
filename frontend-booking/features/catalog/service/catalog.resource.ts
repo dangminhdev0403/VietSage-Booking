@@ -12,6 +12,7 @@ import {
   updateAllotment,
   updateProperty,
   type PropertyFilter,
+  type CreatePropertyPayload,
   type UpdatePropertyPayload,
 } from './catalog.client';
 
@@ -64,14 +65,7 @@ export const catalogResource = createResource<void>()({
       mutationFn: ({
         variables,
       }: {
-        variables: {
-          name: string;
-          city: string;
-          address: string;
-          description?: string;
-          star_rating?: number;
-          thumbnail_url?: string;
-        };
+        variables: CreatePropertyPayload;
       }) => createProperty(variables),
       invalidates: [{ type: 'query', operation: 'properties' }],
     }),

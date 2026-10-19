@@ -172,6 +172,10 @@
                   },
                   "thumbnail_url": {
                     "type": "string"
+                  },
+                  "vietsage_hotel_id": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }
@@ -259,6 +263,10 @@
                   },
                   "is_active": {
                     "type": "boolean"
+                  },
+                  "vietsage_hotel_id": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }
@@ -1050,6 +1058,10 @@
                   "is_active": {
                     "type": "boolean",
                     "default": true
+                  },
+                  "vietsage_room_type_id": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }
@@ -1122,6 +1134,10 @@
                   },
                   "is_active": {
                     "type": "boolean"
+                  },
+                  "vietsage_room_type_id": {
+                    "type": "string",
+                    "nullable": true
                   }
                 }
               }

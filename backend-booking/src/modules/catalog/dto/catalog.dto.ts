@@ -7,6 +7,7 @@ export const createPropertySchema = z.object({
   description: z.string().optional(),
   star_rating: z.number().min(1).max(5).optional().default(4),
   thumbnail_url: z.string().url().optional(),
+  vietsage_hotel_id: z.string().optional().nullable(),
 });
 export type CreatePropertyDto = z.infer<typeof createPropertySchema>;
 
@@ -53,6 +54,7 @@ export const createRoomTypeSchema = z.object({
   has_sea_view: z.boolean().optional().default(false),
   amenities: z.array(z.string()).optional(),
   is_active: z.boolean().optional().default(true),
+  vietsage_room_type_id: z.string().optional().nullable(),
 });
 export type CreateRoomTypeDto = z.input<typeof createRoomTypeSchema>;
 
@@ -67,6 +69,7 @@ export const updateRoomTypeSchema = z.object({
   has_sea_view: z.boolean().optional(),
   amenities: z.array(z.string()).optional(),
   is_active: z.boolean().optional(),
+  vietsage_room_type_id: z.string().optional().nullable(),
 });
 export type UpdateRoomTypeDto = z.input<typeof updateRoomTypeSchema>;
 
@@ -79,6 +82,7 @@ export const updatePropertySchema = z.object({
   thumbnail_url: z.string().url().optional().or(z.literal('')),
   images: z.array(z.string()).optional(),
   is_active: z.boolean().optional(),
+  vietsage_hotel_id: z.string().optional().nullable(),
 });
 export type UpdatePropertyDto = z.input<typeof updatePropertySchema>;
 

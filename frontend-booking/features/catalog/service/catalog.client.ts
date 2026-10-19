@@ -51,6 +51,7 @@ export type CreatePropertyPayload = {
   description?: string;
   star_rating?: number;
   thumbnail_url?: string;
+  vietsage_hotel_id?: string | null;
 };
 
 export async function createProperty(payload: CreatePropertyPayload) {
@@ -142,6 +143,7 @@ export type CreateRoomTypePayload = {
   has_sea_view?: boolean;
   amenities?: string[];
   is_active?: boolean;
+  vietsage_room_type_id?: string | null;
 };
 
 export type UpdateRoomTypePayload = {
@@ -155,6 +157,7 @@ export type UpdateRoomTypePayload = {
   has_sea_view?: boolean;
   amenities?: string[];
   is_active?: boolean;
+  vietsage_room_type_id?: string | null;
 };
 
 export async function createRoomType(payload: CreateRoomTypePayload) {
@@ -203,6 +206,7 @@ export type UpdatePropertyPayload = {
   thumbnail_url?: string;
   images?: string[];
   is_active?: boolean;
+  vietsage_hotel_id?: string | null;
 };
 
 export async function updateProperty(id: string, payload: UpdatePropertyPayload) {

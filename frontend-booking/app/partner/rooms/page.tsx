@@ -52,6 +52,7 @@ type RoomTypeItem = {
   has_sea_view?: boolean | null;
   amenities?: string[];
   is_active?: boolean | null;
+  vietsage_room_type_id?: string | null;
 };
 
 // Formats number to '1.000.000 ₫'
@@ -128,6 +129,7 @@ export default function PartnerRoomsPage() {
   const [createBasePriceStr, setCreateBasePriceStr] = useState('1.800.000');
   const [createHasSeaView, setCreateHasSeaView] = useState(false);
   const [createIsActive, setCreateIsActive] = useState(true);
+  const [createVietSageRoomTypeId, setCreateVietSageRoomTypeId] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   // Edit Modal State
@@ -140,6 +142,7 @@ export default function PartnerRoomsPage() {
   const [editBasePriceStr, setEditBasePriceStr] = useState('2.000.000');
   const [editHasSeaView, setEditHasSeaView] = useState(false);
   const [editIsActive, setEditIsActive] = useState(true);
+  const [editVietSageRoomTypeId, setEditVietSageRoomTypeId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Status Action Loading
@@ -162,6 +165,7 @@ export default function PartnerRoomsPage() {
     setCreateBasePriceStr('1.800.000');
     setCreateHasSeaView(false);
     setCreateIsActive(true);
+    setCreateVietSageRoomTypeId('');
     setIsCreateOpen(true);
   };
 
@@ -195,6 +199,7 @@ export default function PartnerRoomsPage() {
       ),
     );
     setEditIsActive(room.is_active !== false);
+    setEditVietSageRoomTypeId(room.vietsage_room_type_id || '');
   };
 
   const closeEditModal = () => {
@@ -231,6 +236,7 @@ export default function PartnerRoomsPage() {
         bed_type: createBedType.trim() || undefined,
         has_sea_view: createHasSeaView,
         is_active: createIsActive,
+        vietsage_room_type_id: createVietSageRoomTypeId.trim() || undefined,
       });
 
       await luxuryAlert.success({
@@ -282,6 +288,7 @@ export default function PartnerRoomsPage() {
         bed_type: editBedType.trim() || undefined,
         has_sea_view: editHasSeaView,
         is_active: editIsActive,
+        vietsage_room_type_id: editVietSageRoomTypeId.trim() ? editVietSageRoomTypeId.trim() : null,
       });
 
       await luxuryAlert.success({
@@ -761,7 +768,7 @@ export default function PartnerRoomsPage() {
                             <div className="font-bold text-slate-900 group-hover:text-emerald-800 text-sm sm:text-base leading-snug transition-colors text-balance">
                               {room.name}
                             </div>
-                            <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold border whitespace-nowrap ${
                                   hasSeaView
@@ -771,6 +778,15 @@ export default function PartnerRoomsPage() {
                               >
                                 {hasSeaView ? 'View Biển' : 'View Vườn'}
                               </span>
+                              {room.vietsage_room_type_id ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap font-mono">
+                                  PMS: {room.vietsage_room_type_id}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                                  Chưa gán PMS
+                                </span>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -986,7 +1002,7 @@ export default function PartnerRoomsPage() {
                       {/* Header: Name and Status Badge */}
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span
                               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border whitespace-nowrap ${
                                 isRoomActive
@@ -1001,6 +1017,15 @@ export default function PartnerRoomsPage() {
                               />
                               <span>{isRoomActive ? 'Đang mở bán' : 'Tạm dừng bán'}</span>
                             </span>
+                            {room.vietsage_room_type_id ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap font-mono">
+                                PMS: {room.vietsage_room_type_id}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                                Chưa gán PMS
+                              </span>
+                            )}
                           </div>
                           <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug text-balance">
                             {room.name}
@@ -1461,6 +1486,23 @@ export default function PartnerRoomsPage() {
               </div>
 
               <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                  <span>Mã Hạng Phòng VietSage PMS (Room Type ID)</span>
+                  <span className="text-xs text-slate-400 font-normal">Tùy chọn</span>
+                </label>
+                <input
+                  type="text"
+                  value={createVietSageRoomTypeId}
+                  onChange={(e) => setCreateVietSageRoomTypeId(e.target.value)}
+                  placeholder="Ví dụ: 60abcf94-a596-4540-8c0b-d6a270a4bfbf"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                />
+                <p className="text-xs text-slate-500 pt-0.5">
+                  Nhập mã ID hạng phòng từ VietSage PMS để liên kết tồn kho và đồng bộ đơn đặt phòng.
+                </p>
+              </div>
+
+              <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
                   Mô Tả Tiện Nghi &amp; Điểm Nổi Bật
                 </label>
@@ -1627,6 +1669,36 @@ export default function PartnerRoomsPage() {
                   required
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 font-medium text-slate-900 focus:outline-hidden focus:border-emerald-700"
                 />
+              </div>
+
+              {/* VietSage PMS Room Type Mapping */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                    <span>Mã Hạng Phòng VietSage PMS (Room Type ID)</span>
+                  </label>
+                  {editVietSageRoomTypeId && (
+                    <button
+                      type="button"
+                      onClick={() => setEditVietSageRoomTypeId('')}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+                    >
+                      Cắt Liên Kết
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={editVietSageRoomTypeId}
+                  onChange={(e) => setEditVietSageRoomTypeId(e.target.value)}
+                  placeholder="Ví dụ: 60abcf94-a596-4540-8c0b-d6a270a4bfbf"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-white border border-slate-200 font-mono text-slate-900 focus:outline-hidden focus:border-emerald-700"
+                />
+                <p className="text-xs text-slate-600">
+                  {editVietSageRoomTypeId
+                    ? 'Hạng phòng này đang liên kết với VietSage PMS. Đơn đặt phòng sẽ tự động gửi hold và phân phòng.'
+                    : 'Chưa liên kết PMS. Hạng phòng bán trên OTA dựa trên tồn kho cục bộ.'}
+                </p>
               </div>
 
               <div className="space-y-1">

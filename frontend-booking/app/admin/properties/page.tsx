@@ -19,10 +19,15 @@ import {
   Plus,
   X,
   Save,
+  Link2,
+  Edit,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import {
   usePropertiesQuery,
   useCreatePropertyMutation,
+  useUpdatePropertyMutation,
 } from '@/features/catalog/hooks/use-catalog';
 import { luxuryAlert } from '@/lib/alert/luxury-alert';
 
@@ -50,9 +55,22 @@ export default function AdminPropertiesPage() {
   const [newPropDescription, setNewPropDescription] = useState('');
   const [newPropStarRating, setNewPropStarRating] = useState(5.0);
   const [newPropThumbnail, setNewPropThumbnail] = useState('');
+  const [newPropVietSageHotelId, setNewPropVietSageHotelId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Edit & Link PMS Modal State
+  const [editingProperty, setEditingProperty] = useState<any | null>(null);
+  const [editPropName, setEditPropName] = useState('');
+  const [editPropCity, setEditPropCity] = useState('Phú Quốc');
+  const [editPropAddress, setEditPropAddress] = useState('');
+  const [editPropDescription, setEditPropDescription] = useState('');
+  const [editPropStarRating, setEditPropStarRating] = useState(5.0);
+  const [editPropThumbnail, setEditPropThumbnail] = useState('');
+  const [editPropVietSageHotelId, setEditPropVietSageHotelId] = useState('');
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+
   const createPropertyMutation = useCreatePropertyMutation();
+  const updatePropertyMutation = useUpdatePropertyMutation();
 
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +84,11 @@ export default function AdminPropertiesPage() {
         description: newPropDescription.trim() || undefined,
         star_rating: Number(newPropStarRating),
         thumbnail_url: newPropThumbnail.trim() || undefined,
+        vietsage_hotel_id: newPropVietSageHotelId.trim() || undefined,
       });
       await luxuryAlert.success({
-        title: 'Đăng Cơ Sở Thành Công',
-        message: 'Đăng cơ sở lưu trú mới thành công vào hệ thống!',
+        title: 'Đăng Khách Sạn Thành Công',
+        message: 'Khách sạn mới đã được khởi tạo và cấu hình liên kết PMS thành công!',
         confirmText: 'Hoàn Tất',
       });
       setIsCreateModalOpen(false);
@@ -77,15 +96,62 @@ export default function AdminPropertiesPage() {
       setNewPropAddress('');
       setNewPropDescription('');
       setNewPropThumbnail('');
+      setNewPropVietSageHotelId('');
       refetch();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Không thể đăng cơ sở lưu trú';
+      const message = err instanceof Error ? err.message : 'Không thể đăng khách sạn';
       luxuryAlert.error({
-        title: 'Đăng Cơ Sở Thất Bại',
+        title: 'Đăng Khách Sạn Thất Bại',
         message,
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEditModal = (prop: any) => {
+    setEditingProperty(prop);
+    setEditPropName(prop.name || '');
+    setEditPropCity(prop.city || 'Phú Quốc');
+    setEditPropAddress(prop.address || '');
+    setEditPropDescription(prop.description || '');
+    setEditPropStarRating(prop.star_rating || 5.0);
+    setEditPropThumbnail(prop.thumbnail_url || '');
+    setEditPropVietSageHotelId(prop.vietsage_hotel_id || '');
+  };
+
+  const handleSaveEditProperty = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProperty || !editPropName.trim() || !editPropAddress.trim()) return;
+    setIsEditSubmitting(true);
+    try {
+      await updatePropertyMutation.mutateAsync({
+        id: editingProperty.id,
+        payload: {
+          name: editPropName.trim(),
+          city: editPropCity.trim(),
+          address: editPropAddress.trim(),
+          description: editPropDescription.trim() || undefined,
+          star_rating: Number(editPropStarRating),
+          thumbnail_url: editPropThumbnail.trim() || undefined,
+          vietsage_hotel_id: editPropVietSageHotelId.trim() ? editPropVietSageHotelId.trim() : null,
+        },
+      });
+      await luxuryAlert.success({
+        title: 'Cập Nhật Thành Công',
+        message: 'Thông tin khách sạn và mã kết nối VietSage PMS đã được cập nhật!',
+        confirmText: 'Hoàn Tất',
+      });
+      setEditingProperty(null);
+      refetch();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Không thể cập nhật khách sạn';
+      luxuryAlert.error({
+        title: 'Cập Nhật Thất Bại',
+        message,
+      });
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
@@ -344,9 +410,31 @@ export default function AdminPropertiesPage() {
                         <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
                         <span>{prop.address}, {prop.city}</span>
                       </div>
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        {prop.vietsage_hotel_id ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold whitespace-nowrap">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Đã kết nối VietSage PMS:</span>
+                            <code className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 font-mono text-xs">{prop.vietsage_hotel_id}</code>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold whitespace-nowrap">
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Chưa liên kết VietSage PMS</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(prop)}
+                        className="px-3.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Link2 className="w-3.5 h-3.5" />
+                        <span>Liên Kết PMS / Sửa</span>
+                      </button>
                       <Link
                         href={`/partner/rooms?propertyId=${prop.id}`}
                         className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
@@ -511,6 +599,23 @@ export default function AdminPropertiesPage() {
               </div>
 
               <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface flex items-center justify-between">
+                  <span>Mã Khách Sạn VietSage PMS (Hotel ID)</span>
+                  <span className="text-xs text-outline font-normal">Tùy chọn</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: cmq2k2lm0003f2oui3ifqp808"
+                  value={newPropVietSageHotelId}
+                  onChange={(e) => setNewPropVietSageHotelId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-mono"
+                />
+                <p className="text-xs text-outline">
+                  Nhập mã ID khách sạn từ VietSage PMS để kích hoạt cơ chế đồng bộ và gán phòng tự động.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold text-on-surface">Mô Tả Giới Thiệu Cơ Sở</label>
                 <textarea
                   rows={3}
@@ -535,7 +640,155 @@ export default function AdminPropertiesPage() {
                   className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Đang Lưu...' : 'Xác Nhận Đăng Cơ Sở'}</span>
+                  <span>{isSubmitting ? 'Đang Lưu...' : 'Xác Nhận Đăng Khách Sạn'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL: LIÊN KẾT VIETSAGE PMS & CHỈNH SỬA KHÁCH SẠN */}
+      {editingProperty && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-surface-container-lowest w-full max-w-xl rounded-3xl shadow-2xl border border-outline-variant/30 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-outline-variant/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                  <Link2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-on-surface">Kết Nối VietSage PMS & Chỉnh Sửa</h3>
+                  <p className="text-xs text-outline">Liên kết mã khách sạn PMS hoặc cập nhật thông tin hiển thị</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProperty(null)}
+                className="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditProperty} className="p-6 space-y-4">
+              {/* VietSage Connection Section */}
+              <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-primary flex items-center gap-1.5">
+                    <Link2 className="w-4 h-4" />
+                    <span>Mã Khách Sạn VietSage PMS (vietsage_hotel_id)</span>
+                  </label>
+                  {editPropVietSageHotelId && (
+                    <button
+                      type="button"
+                      onClick={() => setEditPropVietSageHotelId('')}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+                    >
+                      Cắt Kết Nối
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: cmq2k2lm0003f2oui3ifqp808"
+                  value={editPropVietSageHotelId}
+                  onChange={(e) => setEditPropVietSageHotelId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary font-mono"
+                />
+                <p className="text-xs text-outline">
+                  {editPropVietSageHotelId
+                    ? 'Hệ thống đang liên kết với khách sạn này trên VietSage PMS. Đơn đặt phòng OTA sẽ tự động gửi hold và phân phòng.'
+                    : 'Chưa có mã liên kết. Khách sạn này hoạt động độc lập trên sàn OTA cho đến khi được gán Hotel ID từ VietSage.'}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface">Tên Khách Sạn / Resort *</label>
+                <input
+                  type="text"
+                  required
+                  value={editPropName}
+                  onChange={(e) => setEditPropName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-on-surface">Tỉnh / Thành Phố *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editPropCity}
+                    onChange={(e) => setEditPropCity(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-on-surface">Hạng Sao</label>
+                  <select
+                    value={editPropStarRating}
+                    onChange={(e) => setEditPropStarRating(parseFloat(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary cursor-pointer"
+                  >
+                    <option value={5.0}>5 Sao (Luxury Resort)</option>
+                    <option value={4.5}>4.5 Sao (Premium)</option>
+                    <option value={4.0}>4 Sao (Boutique / High-end)</option>
+                    <option value={3.5}>3.5 Sao (Comfort)</option>
+                    <option value={3.0}>3 Sao (Standard)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface">Địa Chỉ Chi Tiết *</label>
+                <input
+                  type="text"
+                  required
+                  value={editPropAddress}
+                  onChange={(e) => setEditPropAddress(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface">URL Hình Ảnh Đại Diện (Thumbnail)</label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={editPropThumbnail}
+                  onChange={(e) => setEditPropThumbnail(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface">Mô Tả Giới Thiệu</label>
+                <textarea
+                  rows={3}
+                  value={editPropDescription}
+                  onChange={(e) => setEditPropDescription(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface focus:outline-hidden focus:border-primary resize-none"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setEditingProperty(null)}
+                  className="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-xs font-bold text-on-surface hover:bg-surface-container cursor-pointer transition-colors"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-[#684f2c] text-on-primary text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isEditSubmitting ? 'Đang Lưu...' : 'Lưu Thay Đổi & Kết Nối'}</span>
                 </button>
               </div>
             </form>
