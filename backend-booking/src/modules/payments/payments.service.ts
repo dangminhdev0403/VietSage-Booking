@@ -1182,15 +1182,16 @@ export class PaymentsService {
 
     const { booking_id, transaction_ref } = parsed.data;
 
-    let booking: Booking | null = null;
+    let booking: any = null;
     if (booking_id) {
       booking = await this.prisma.booking.findUnique({
         where: { id: booking_id },
+        include: { property: true, roomType: true },
       });
     } else if (transaction_ref) {
       const payment = await this.prisma.payment.findUnique({
         where: { transactionRef: transaction_ref },
-        include: { booking: true },
+        include: { booking: { include: { property: true, roomType: true } } },
       });
       if (payment) {
         booking = payment.booking;
